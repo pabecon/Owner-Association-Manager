@@ -1,6 +1,5 @@
 import { db } from "./db";
-import { buildings, apartments, expenses, payments, announcements } from "@shared/schema";
-import { sql } from "drizzle-orm";
+import { buildings, apartments, expenses, payments, announcements, federations } from "@shared/schema";
 
 export async function seedDatabase() {
   const existingBuildings = await db.select().from(buildings);
@@ -8,7 +7,13 @@ export async function seedDatabase() {
 
   console.log("Seeding database with initial data...");
 
+  const [fed1] = await db.insert(federations).values({
+    name: "Federatia Asociatiilor Sector 2",
+    description: "Federatia asociatiilor de proprietari din Sectorul 2, Bucuresti",
+  }).returning();
+
   const [bloc1] = await db.insert(buildings).values({
+    federationId: fed1.id,
     name: "Bloc A1",
     address: "Str. Mihai Eminescu nr. 45, Sector 2, Bucuresti",
     totalApartments: 20,
@@ -19,6 +24,7 @@ export async function seedDatabase() {
   }).returning();
 
   const [bloc2] = await db.insert(buildings).values({
+    federationId: fed1.id,
     name: "Bloc B3",
     address: "Bd. Unirii nr. 12, Sector 3, Bucuresti",
     totalApartments: 16,

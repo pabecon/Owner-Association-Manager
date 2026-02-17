@@ -10,19 +10,54 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone } from "lucide-react";
+import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield } from "lucide-react";
 import { useLocation, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const menuItems = [
-  { title: "Panou Principal", url: "/", icon: LayoutDashboard },
-  { title: "Apartamente", url: "/apartments", icon: Home },
-  { title: "Cheltuieli", url: "/expenses", icon: Receipt },
-  { title: "Plati", url: "/payments", icon: CreditCard },
-  { title: "Anunturi", url: "/announcements", icon: Megaphone },
-];
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
+  admin: "Administrator",
+  manager: "Gestor",
+  owner: "Proprietar",
+  tenant: "Chirias",
+};
+
+interface RoleInfo {
+  highestRole: string;
+  permissions: Record<string, boolean>;
+  roles: { role: string }[];
+}
 
 export function AppSidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
+  const { data: roleInfo } = useQuery<RoleInfo>({
+    queryKey: ["/api/me/roles"],
+  });
+
+  const perms = roleInfo?.permissions || {};
+  const highestRole = roleInfo?.highestRole;
+
+  const menuItems = [
+    { title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true },
+    { title: "Apartamente", url: "/apartments", icon: Home, visible: !!perms.viewAllApartments || !!perms.viewOwnApartment },
+    { title: "Cheltuieli", url: "/expenses", icon: Receipt, visible: !!perms.viewAllExpenses || !!perms.viewOwnExpenses },
+    { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
+    { title: "Anunturi", url: "/announcements", icon: Megaphone, visible: !!perms.viewAllAnnouncements || !!perms.viewOwnAnnouncements },
+    { title: "Utilizatori", url: "/users", icon: Users, visible: !!perms.viewUserManagement },
+  ];
+
+  const visibleItems = menuItems.filter((item) => item.visible);
+
+  const initials = [user?.firstName, user?.lastName]
+    .filter(Boolean)
+    .map((n) => n?.[0]?.toUpperCase())
+    .join("");
+
+  const displayName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "Utilizator" : "";
 
   return (
     <Sidebar>
@@ -42,7 +77,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigare</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {visibleItems.map((item) => {
                 const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
                 return (
                   <SidebarMenuItem key={item.title}>
@@ -60,7 +95,23 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <p className="text-xs text-muted-foreground text-center">v1.0 AdminBloc</p>
+        {user && (
+          <div className="flex items-center gap-3">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={user.profileImageUrl || undefined} alt={displayName} />
+              <AvatarFallback className="text-xs">{initials || "U"}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-xs font-medium truncate" data-testid="text-sidebar-username">{displayName}</span>
+              {highestRole && (
+                <Badge variant="secondary" className="w-fit mt-0.5 text-[10px]" data-testid="badge-sidebar-role">
+                  <Shield className="w-3 h-3 mr-1" />
+                  {ROLE_LABELS[highestRole] || highestRole}
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
