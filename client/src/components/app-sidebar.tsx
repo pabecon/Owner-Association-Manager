@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +11,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield } from "lucide-react";
+import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -31,11 +32,20 @@ interface RoleInfo {
   roles: { role: string }[];
 }
 
+interface ListConfig {
+  key: string;
+  label: string;
+}
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
+  });
+  const { data: listConfigs } = useQuery<ListConfig[]>({
+    queryKey: ["/api/liste-config"],
   });
 
   const perms = roleInfo?.permissions || {};
@@ -92,6 +102,37 @@ export function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel
+            className="cursor-pointer select-none flex items-center justify-between gap-2"
+            onClick={() => setListsOpen(!listsOpen)}
+            data-testid="button-toggle-liste-generale"
+          >
+            <span>Liste Generale</span>
+            {listsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </SidebarGroupLabel>
+          {listsOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {(listConfigs || []).map((config) => {
+                  const url = `/liste-generale/${config.key}`;
+                  const isActive = location === url;
+                  return (
+                    <SidebarMenuItem key={config.key}>
+                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
+                        <Link href={url} data-testid={`link-nav-lista-${config.key}`}>
+                          <List className="w-4 h-4" />
+                          <span className="text-xs">{config.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">

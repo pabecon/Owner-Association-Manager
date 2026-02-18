@@ -323,6 +323,40 @@ export async function registerRoutes(
     res.json(filtered.slice(0, 10));
   });
 
+  // Reference Lists - Generic CRUD routes
+  const { referenceListConfigs } = await import("./reference-lists");
+  for (const [key, config] of Object.entries(referenceListConfigs)) {
+    const basePath = `/api/liste/${key}`;
+
+    app.get(basePath, ...auth, async (_req, res) => {
+      const data = await storage.getRefListAll(config.table);
+      res.json(data);
+    });
+
+    app.post(basePath, ...auth, requireRole("admin"), async (req, res) => {
+      const parsed = config.insertSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: (parsed as any).error.message });
+      const item = await storage.createRefListItem(config.table, (parsed as any).data);
+      res.json(item);
+    });
+
+    app.delete(`${basePath}/:id`, ...auth, requireRole("admin"), async (req, res) => {
+      await storage.deleteRefListItem(config.table, req.params.id as string);
+      res.json({ ok: true });
+    });
+  }
+
+  // Reference list config endpoint for frontend
+  app.get("/api/liste-config", ...auth, async (_req, res) => {
+    const { referenceListConfigs } = await import("./reference-lists");
+    const configs = Object.entries(referenceListConfigs).map(([key, config]) => ({
+      key: config.key,
+      label: config.label,
+      columns: config.columns,
+    }));
+    res.json(configs);
+  });
+
   return httpServer;
 }
 

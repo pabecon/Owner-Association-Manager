@@ -11,6 +11,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
+import { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 export interface IStorage {
   getFederations(): Promise<Federation[]>;
@@ -53,6 +54,10 @@ export interface IStorage {
   getUserRolesByScope(scope: { federationId?: string; buildingId?: string }): Promise<UserRoleRecord[]>;
   createUserRole(data: InsertUserRole): Promise<UserRoleRecord>;
   deleteUserRole(id: string): Promise<void>;
+
+  getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
+  createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
+  deleteRefListItem(table: PgTableWithColumns<any>, id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -216,6 +221,19 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserRole(id: string): Promise<void> {
     await db.delete(userRoles).where(eq(userRoles.id, id));
+  }
+
+  async getRefListAll(table: PgTableWithColumns<any>): Promise<any[]> {
+    return db.select().from(table);
+  }
+
+  async createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any> {
+    const [item] = await db.insert(table).values(data).returning();
+    return item;
+  }
+
+  async deleteRefListItem(table: PgTableWithColumns<any>, id: string): Promise<void> {
+    await db.delete(table).where(eq(table.id, id));
   }
 }
 

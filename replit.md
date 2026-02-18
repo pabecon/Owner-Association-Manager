@@ -39,6 +39,13 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Announcements**: title, content, priority (normal/important/urgent), buildingId
 - **UserRoles**: userId, role, federationId/buildingId/apartmentId (scope)
 
+### Reference Lists (17 tables under "Liste Generale")
+Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB table, API routes, and a generic UI page.
+- Atribute Fiscale, Banci, Conturi Bancare, Conexiuni Bancare, Conturi Toshl
+- Cote TVA, Curs Valutar BNR, Orase/Judete, Prefixe Telefonice
+- Sectoare Bucuresti, Serii CI, Tari, Tipuri Drumuri
+- Tipuri Factura E-Factura, Tipuri Moneda, TVA Parteneri ANAF, Unitati de Masura
+
 ## API Routes (all prefixed with /api, all require auth)
 - GET /api/auth/me - Current user info with roles and permissions
 - GET/POST /api/federations
@@ -50,6 +57,9 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - GET /api/users - List users (with role info)
 - POST /api/user-roles - Assign role to user
 - DELETE /api/user-roles/:id - Remove role
+- GET /api/liste-config - Reference list configs (columns, labels)
+- GET/POST /api/liste/:key - Get/create reference list items (admin+ for POST)
+- DELETE /api/liste/:key/:id - Delete reference list item (admin+)
 
 ## Security
 - All mutating endpoints validate scope ownership (isInBuildingScope, isInApartmentScope, isInFederationScope)
