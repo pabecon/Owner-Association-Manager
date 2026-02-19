@@ -8,8 +8,6 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
-import { useAuth } from "@/hooks/use-auth";
-import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Federations from "@/pages/federations";
@@ -18,7 +16,6 @@ import Apartments from "@/pages/apartments";
 import Expenses from "@/pages/expenses";
 import Payments from "@/pages/payments";
 import Announcements from "@/pages/announcements";
-import Landing from "@/pages/landing";
 import UsersPage from "@/pages/users";
 import ListaGenerala from "@/pages/lista-generala";
 
@@ -63,18 +60,6 @@ function AuthenticatedApp() {
         </div>
       </div>
     </SidebarProvider>
-  );
-}
-
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <Skeleton className="w-12 h-12 rounded-md" />
-        <Skeleton className="w-32 h-4" />
-        <Skeleton className="w-48 h-3" />
-      </div>
-    </div>
   );
 }
 
