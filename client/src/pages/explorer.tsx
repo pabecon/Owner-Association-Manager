@@ -8,6 +8,7 @@ import {
   Network, Users, Building2, ArrowUpDown, Layers, Home, ChevronRight,
   MapPin, Phone, Mail, User, FileText, Car, Package
 } from "lucide-react";
+import { DocumentManager } from "@/components/document-manager";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 
@@ -448,7 +449,14 @@ export default function Explorer() {
             </div>
           )}
 
-          {currentLevel === "floor" && (
+          {currentLevel === "floor" && selectedStaircase && selectedFloor !== null && (
+            <div className="space-y-4">
+              <DocumentManager
+                entityType="floor"
+                entityId={selectedStaircase.id}
+                floorNumber={selectedFloor}
+                title={`Plan Planta - ${getFloorLabel(selectedFloor)}`}
+              />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {floorUnits.map(unit => {
                 const uType = (unit.unitType || "apartment") as UnitType;
@@ -498,6 +506,7 @@ export default function Explorer() {
                   <p className="text-muted-foreground text-sm">Nicio unitate pe aceasta planta</p>
                 </CardContent></Card>
               )}
+            </div>
             </div>
           )}
         </>

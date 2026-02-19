@@ -15,6 +15,7 @@ import { insertBuildingSchema } from "@shared/schema";
 import type { Building, Association } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Building2, Search, Trash2, MapPin, Layers, Users } from "lucide-react";
+import { DocumentManager } from "@/components/document-manager";
 import { z } from "zod";
 
 const formSchema = insertBuildingSchema.extend({
@@ -235,6 +236,9 @@ export default function Buildings() {
                     <Users className="w-3 h-3 mr-1" />
                     {getAssociationName(bld.associationId)}
                   </Badge>
+                </div>
+                <div className="pt-3 border-t">
+                  <DocumentManager entityType="building" entityId={bld.id} title="Planuri / Documente Bloc" compact />
                 </div>
               </CardContent>
             </Card>

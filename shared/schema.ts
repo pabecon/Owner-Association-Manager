@@ -118,6 +118,27 @@ export const userRoles = pgTable("user_roles", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const entityTypeEnum = ["building", "staircase", "floor", "apartment"] as const;
+export type EntityType = typeof entityTypeEnum[number];
+
+export const documents = pgTable("documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  floorNumber: integer("floor_number"),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  objectPath: text("object_path").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDocumentSchema = createInsertSchema(documents).omit({ id: true, createdAt: true });
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type Document = typeof documents.$inferSelect;
+
 export const insertFederationSchema = createInsertSchema(federations).omit({ id: true, createdAt: true });
 export const insertAssociationSchema = createInsertSchema(associations).omit({ id: true, createdAt: true });
 export const insertBuildingSchema = createInsertSchema(buildings).omit({ id: true });

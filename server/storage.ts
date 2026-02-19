@@ -8,8 +8,9 @@ import {
   type Association, type InsertAssociation,
   type Staircase, type InsertStaircase,
   type UserRoleRecord, type InsertUserRole,
+  type Document, type InsertDocument,
   buildings, apartments, expenses, payments, announcements,
-  federations, associations, staircases, userRoles,
+  federations, associations, staircases, userRoles, documents,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -70,6 +71,12 @@ export interface IStorage {
   getUserRolesByScope(scope: { federationId?: string; buildingId?: string }): Promise<UserRoleRecord[]>;
   createUserRole(data: InsertUserRole): Promise<UserRoleRecord>;
   deleteUserRole(id: string): Promise<void>;
+
+  getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]>;
+  getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]>;
+  createDocument(data: InsertDocument): Promise<Document>;
+  deleteDocument(id: string): Promise<void>;
+  getDocument(id: string): Promise<Document | undefined>;
 
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
@@ -289,6 +296,28 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserRole(id: string): Promise<void> {
     await db.delete(userRoles).where(eq(userRoles.id, id));
+  }
+
+  async getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]> {
+    return db.select().from(documents).where(and(eq(documents.entityType, entityType), eq(documents.entityId, entityId))).orderBy(desc(documents.createdAt));
+  }
+
+  async getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]> {
+    return db.select().from(documents).where(and(eq(documents.entityType, "floor"), eq(documents.entityId, staircaseId), eq(documents.floorNumber, floorNumber))).orderBy(desc(documents.createdAt));
+  }
+
+  async createDocument(data: InsertDocument): Promise<Document> {
+    const [doc] = await db.insert(documents).values(data).returning();
+    return doc;
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
+  }
+
+  async getDocument(id: string): Promise<Document | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    return doc;
   }
 
   async getRefListAll(table: PgTableWithColumns<any>): Promise<any[]> {

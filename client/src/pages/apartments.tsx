@@ -15,6 +15,7 @@ import { insertApartmentSchema, UNIT_TYPE_LABELS, type UnitType } from "@shared/
 import type { Apartment, Building, Staircase } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Home, User, Phone, Mail, Search, Layers, ArrowUpDown, Building2, Car, Package } from "lucide-react";
+import { DocumentManager } from "@/components/document-manager";
 import { z } from "zod";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
@@ -338,6 +339,9 @@ export default function Apartments() {
                     {apt.surface && <span>{apt.surface} mp</span>}
                     {apt.rooms && <span>{apt.rooms} camere</span>}
                     {apt.residents && <span>{apt.residents} {Number(apt.residents) === 1 ? "persoana" : "persoane"}</span>}
+                  </div>
+                  <div className="pt-3 border-t mt-3">
+                    <DocumentManager entityType="apartment" entityId={apt.id} title="Documente Unitate" compact />
                   </div>
                 </CardContent>
               </Card>

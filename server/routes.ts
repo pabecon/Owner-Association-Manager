@@ -7,11 +7,13 @@ import {
   insertBuildingSchema, insertApartmentSchema, insertExpenseSchema,
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
   insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
+  insertDocumentSchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
 import { users } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray } from "drizzle-orm";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 function isInBuildingScope(req: AuthenticatedRequest, buildingId: string): boolean {
   if (req.permissions?.viewAllBuildings) return true;
@@ -402,6 +404,32 @@ export async function registerRoutes(
       columns: config.columns,
     }));
     res.json(configs);
+  });
+
+  registerObjectStorageRoutes(app);
+
+  app.get("/api/documents/:entityType/:entityId", ...auth, async (req, res) => {
+    const entityType = req.params.entityType as string;
+    const entityId = req.params.entityId as string;
+    const floorNumber = req.query.floorNumber as string | undefined;
+    if (entityType === "floor" && floorNumber !== undefined) {
+      const docs = await storage.getDocumentsByFloor(entityId, Number(floorNumber));
+      return res.json(docs);
+    }
+    const docs = await storage.getDocumentsByEntity(entityType, entityId);
+    res.json(docs);
+  });
+
+  app.post("/api/documents", ...auth, async (req, res) => {
+    const parsed = insertDocumentSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const doc = await storage.createDocument(parsed.data);
+    res.json(doc);
+  });
+
+  app.delete("/api/documents/:id", ...auth, async (req, res) => {
+    await storage.deleteDocument(req.params.id as string);
+    res.json({ ok: true });
   });
 
   return httpServer;

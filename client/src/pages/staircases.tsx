@@ -15,6 +15,7 @@ import { insertStaircaseSchema } from "@shared/schema";
 import type { Staircase, Building } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Search, Trash2, Layers, Building2, ArrowUpDown } from "lucide-react";
+import { DocumentManager } from "@/components/document-manager";
 import { z } from "zod";
 
 const formSchema = insertStaircaseSchema.extend({
@@ -209,7 +210,7 @@ export default function Staircases() {
                     <Trash2 className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
                   <Badge variant="secondary" className="text-xs">
                     <Layers className="w-3 h-3 mr-1" />
                     {staircase.floors} etaje
@@ -220,6 +221,9 @@ export default function Staircases() {
                   <Badge variant="outline" className="text-xs">
                     ~{(staircase.floors || 0) * (staircase.apartmentsPerFloor || 0)} apartamente
                   </Badge>
+                </div>
+                <div className="pt-3 border-t">
+                  <DocumentManager entityType="staircase" entityId={staircase.id} title="Scheme / Planuri Scara" compact />
                 </div>
               </CardContent>
             </Card>
