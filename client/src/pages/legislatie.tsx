@@ -1,11 +1,12 @@
 import { useRoute } from "wouter";
-import { useCallback } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { LAW_114_1996_CONTENT, type LawSection } from "@/lib/law-content-114-1996";
-import { Scale, ExternalLink, FileText, BookOpen, ListOrdered } from "lucide-react";
+import { Scale, ExternalLink, FileText, BookOpen, ListOrdered, Search, X } from "lucide-react";
 
 const LAW_CONTENT_MAP: Record<string, LawSection[]> = {
   "legea-114-1996": LAW_114_1996_CONTENT,
@@ -26,11 +27,11 @@ function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; 
 
   return (
     <Card className="p-5 mb-6" data-testid="card-law-toc">
-      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+      <div className="flex items-center gap-2 mb-3 pb-2 border-b">
         <ListOrdered className="w-4 h-4 text-muted-foreground shrink-0" />
         <h2 className="text-sm font-bold uppercase tracking-wide">Cuprins</h2>
       </div>
-      <div className="space-y-1">
+      <div className="space-y-0">
         {chapters.map((ch) => {
           const { number, description } = parseChapterInfo(ch.title || "");
           const articleCount = ch.children?.filter(c => c.type === "article").length || 0;
@@ -38,12 +39,12 @@ function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; 
             <button
               key={ch.id}
               onClick={() => onNavigate(ch.id!)}
-              className="w-full text-left rounded-md px-3 py-2 hover-elevate active-elevate-2 flex items-start gap-3 group"
+              className="w-full text-left rounded-md px-3 py-1 hover-elevate active-elevate-2 flex items-center gap-3"
               data-testid={`link-toc-${ch.id}`}
             >
-              <span className="text-xs font-semibold text-muted-foreground shrink-0 mt-0.5 min-w-[90px]">{number}</span>
+              <span className="text-xs font-semibold text-muted-foreground shrink-0 min-w-[90px]">{number}</span>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium">{description}</span>
+                <span className="text-sm">{description}</span>
                 {articleCount > 0 && (
                   <span className="text-xs text-muted-foreground ml-2">({articleCount} {articleCount === 1 ? "articol" : "articole"})</span>
                 )}
@@ -56,60 +57,117 @@ function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; 
   );
 }
 
-function LawSectionRenderer({ section, depth = 0 }: { section: LawSection; depth?: number }) {
+function normalizeText(text: string) {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function sectionMatchesSearch(section: LawSection, term: string): boolean {
+  const norm = normalizeText(term);
+  if (section.title && normalizeText(section.title).includes(norm)) return true;
+  if (section.content && normalizeText(section.content).includes(norm)) return true;
+  if (section.items?.some(item => normalizeText(item).includes(norm))) return true;
+  if (section.children?.some(child => sectionMatchesSearch(child, term))) return true;
+  return false;
+}
+
+function highlightText(text: string, term: string) {
+  if (!term || term.length < 2) return text;
+  const normTerm = normalizeText(term);
+  const normText = normalizeText(text);
+  const parts: { start: number; end: number }[] = [];
+  let idx = 0;
+  while (idx < normText.length) {
+    const found = normText.indexOf(normTerm, idx);
+    if (found === -1) break;
+    parts.push({ start: found, end: found + term.length });
+    idx = found + 1;
+  }
+  if (parts.length === 0) return text;
+
+  const result: (string | JSX.Element)[] = [];
+  let lastEnd = 0;
+  parts.forEach((p, i) => {
+    if (p.start > lastEnd) result.push(text.substring(lastEnd, p.start));
+    result.push(
+      <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 rounded-sm px-0.5">{text.substring(p.start, p.end)}</mark>
+    );
+    lastEnd = p.end;
+  });
+  if (lastEnd < text.length) result.push(text.substring(lastEnd));
+  return <>{result}</>;
+}
+
+function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: LawSection; depth?: number; searchTerm?: string }) {
   if (section.type === "chapter") {
+    const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
+    if (!matches) return null;
     return (
       <div className="mb-8" id={section.id} data-testid={`section-${section.id}`}>
         <div className="flex items-center gap-3 mb-4 pb-2 border-b">
           <BookOpen className="w-5 h-5 text-muted-foreground shrink-0" />
-          <h2 className="text-base font-bold uppercase tracking-wide">{section.title}</h2>
+          <h2 className="text-base font-bold uppercase tracking-wide">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h2>
         </div>
         {section.children?.map((child, i) => (
-          <LawSectionRenderer key={i} section={child} depth={depth + 1} />
+          <LawSectionRenderer key={i} section={child} depth={depth + 1} searchTerm={searchTerm} />
         ))}
       </div>
     );
   }
 
   if (section.type === "article") {
+    const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
+    if (!matches) return null;
     return (
       <div className="mb-5 pl-4" id={section.id} data-testid={`article-${section.id}`}>
-        <h3 className="text-sm font-semibold mb-1.5">{section.title}</h3>
+        <h3 className="text-sm font-semibold mb-1.5">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h3>
         {section.content && (
-          <p className="text-sm leading-relaxed text-foreground mb-2">{section.content}</p>
+          <p className="text-sm leading-relaxed text-foreground mb-2">{searchTerm ? highlightText(section.content, searchTerm) : section.content}</p>
         )}
         {section.items && section.items.length > 0 && (
           <div className="ml-4 space-y-1.5">
             {section.items.map((item, i) => (
               <div key={i} className="flex gap-2 text-sm leading-relaxed">
                 <span className="text-muted-foreground shrink-0 mt-0.5">-</span>
-                <span>{item}</span>
+                <span>{searchTerm ? highlightText(item, searchTerm) : item}</span>
               </div>
             ))}
           </div>
         )}
         {section.children?.map((child, i) => (
-          <LawSectionRenderer key={i} section={child} depth={depth + 1} />
+          <LawSectionRenderer key={i} section={child} depth={depth + 1} searchTerm={searchTerm} />
         ))}
       </div>
     );
   }
 
   if (section.type === "note") {
+    const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
+    if (!matches) return null;
     return (
       <div className="mt-2 ml-4 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground italic" data-testid="law-note">
-        {section.content}
+        {searchTerm ? highlightText(section.content || "", searchTerm) : section.content}
       </div>
     );
   }
 
   if (section.type === "paragraph") {
+    const matches = searchTerm ? (section.content && normalizeText(section.content).includes(normalizeText(searchTerm))) : true;
+    if (!matches) return null;
     return (
-      <p className="text-sm leading-relaxed mb-4">{section.content}</p>
+      <p className="text-sm leading-relaxed mb-4">{searchTerm ? highlightText(section.content || "", searchTerm) : section.content}</p>
     );
   }
 
   return null;
+}
+
+function countMatches(sections: LawSection[], term: string): number {
+  let count = 0;
+  for (const s of sections) {
+    if (s.type === "article" && sectionMatchesSearch(s, term)) count++;
+    if (s.children) count += countMatches(s.children, term);
+  }
+  return count;
 }
 
 export default function Legislatie() {
@@ -117,6 +175,12 @@ export default function Legislatie() {
   const selectedId = params?.lawId || null;
   const selectedLaw = selectedId ? LEGISLATION_ITEMS.find(l => l.id === selectedId) : null;
   const lawContent = selectedId ? LAW_CONTENT_MAP[selectedId] : null;
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const matchCount = useMemo(() => {
+    if (!lawContent || searchTerm.length < 2) return 0;
+    return countMatches(lawContent, searchTerm);
+  }, [lawContent, searchTerm]);
 
   const scrollToChapter = useCallback((chapterId: string) => {
     const el = document.getElementById(chapterId);
@@ -164,10 +228,46 @@ export default function Legislatie() {
           <LawTableOfContents sections={lawContent} onNavigate={scrollToChapter} />
         )}
 
+        {lawContent && (
+          <div className="mb-6 relative" data-testid="search-law-container">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Cautati in textul legii..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-20"
+              data-testid="input-search-law"
+            />
+            {searchTerm.length >= 2 && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <span className="text-xs text-muted-foreground" data-testid="text-search-count">
+                  {matchCount} {matchCount === 1 ? "rezultat" : "rezultate"}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setSearchTerm("")}
+                  data-testid="button-clear-search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {lawContent ? (
           <Card className="p-6" data-testid="card-law-content">
+            {searchTerm.length >= 2 && matchCount === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <Search className="w-10 h-10 mb-3 opacity-40" />
+                <p className="text-sm font-medium">Niciun rezultat gasit</p>
+                <p className="text-xs mt-1">Incercati alt termen de cautare.</p>
+              </div>
+            )}
             {lawContent.map((section, i) => (
-              <LawSectionRenderer key={i} section={section} />
+              <LawSectionRenderer key={i} section={section} searchTerm={searchTerm.length >= 2 ? searchTerm : ""} />
             ))}
             <div className="mt-8 pt-4 border-t flex items-center justify-between gap-4 flex-wrap">
               <p className="text-xs text-muted-foreground">
