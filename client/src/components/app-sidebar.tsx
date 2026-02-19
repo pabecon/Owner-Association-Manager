@@ -11,20 +11,14 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight, Network, ArrowUpDown, FolderTree, GitBranch } from "lucide-react";
+import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight, Network, ArrowUpDown, FolderTree, GitBranch, Table2 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const ROLE_LABELS: Record<string, string> = {
-  super_admin: "Super Admin",
-  admin: "Administrator",
-  manager: "Gestor",
-  owner: "Proprietar",
-  tenant: "Chirias",
-};
+import { ROLE_LABELS, type UserRole } from "@shared/schema";
 
 interface RoleInfo {
   highestRole: string;
@@ -64,6 +58,7 @@ export function AppSidebar() {
     { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
     { title: "Anunturi", url: "/announcements", icon: Megaphone, visible: !!perms.viewAllAnnouncements || !!perms.viewOwnAnnouncements },
     { title: "Utilizatori", url: "/users", icon: Users, visible: !!perms.viewUserManagement },
+    { title: "Matrice Permisiuni", url: "/permissions-matrix", icon: Table2, visible: !!perms.viewUserManagement || !!perms.manageUsers },
   ];
 
   const visibleItems = menuItems.filter((item) => item.visible);
@@ -153,7 +148,7 @@ export function AppSidebar() {
               {highestRole && (
                 <Badge variant="secondary" className="w-fit mt-0.5 text-[10px]" data-testid="badge-sidebar-role">
                   <Shield className="w-3 h-3 mr-1" />
-                  {ROLE_LABELS[highestRole] || highestRole}
+                  {ROLE_LABELS[highestRole as UserRole] || highestRole}
                 </Badge>
               )}
             </div>

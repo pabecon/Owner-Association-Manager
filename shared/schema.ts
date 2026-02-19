@@ -170,11 +170,97 @@ export type UserRoleRecord = typeof userRoles.$inferSelect;
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Administrator",
-  admin: "Administrator",
-  manager: "Gestor",
+  admin: "Gestor Super Admin",
+  manager: "Administrator",
   owner: "Proprietar",
   tenant: "Chirias",
 };
+
+export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  super_admin: "Acces absolut la toata platforma. Doar proprietarul platformei.",
+  admin: "Creat de Super Admin. Drepturi configurabile la nivel de federatie/asociatie.",
+  manager: "Administrator de federatie sau asociatie. Gestioneaza blocuri si scari.",
+  owner: "Proprietar de imobil. Poate vedea datele proprii si crea chiriasi.",
+  tenant: "Chirias. Acces doar la datele proprii, doar citire.",
+};
+
+export const ROLE_CREATED_BY: Record<UserRole, string> = {
+  super_admin: "Sistem (unic)",
+  admin: "Super Administrator",
+  manager: "Super Admin / Gestor Super Admin",
+  owner: "Super Admin / Gestor / Administrator",
+  tenant: "Proprietar",
+};
+
+export const ROLE_SCOPE_LABELS: Record<UserRole, string> = {
+  super_admin: "Platforma intreaga",
+  admin: "Federatii / Asociatii atribuite",
+  manager: "Federatii / Asociatii atribuite",
+  owner: "Imobilul propriu",
+  tenant: "Unitatea inchiriata",
+};
+
+export interface PermissionMatrixEntry {
+  key: string;
+  label: string;
+  category: "hierarchy" | "financial" | "users" | "content" | "reports" | "documents";
+  categoryLabel: string;
+  roles: Record<UserRole, "full" | "scoped" | "own" | "none">;
+}
+
+export const PERMISSION_MATRIX: PermissionMatrixEntry[] = [
+  { key: "create_federation", label: "Creare federatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "full", manager: "none", owner: "none", tenant: "none" } },
+  { key: "edit_federation", label: "Editare federatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "none", owner: "none", tenant: "none" } },
+  { key: "delete_federation", label: "Stergere federatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_association", label: "Creare asociatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "full", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_association", label: "Editare asociatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "delete_association", label: "Stergere asociatii", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_building", label: "Creare blocuri", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_building", label: "Editare blocuri", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "delete_building", label: "Stergere blocuri", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_staircase", label: "Creare scari", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_staircase", label: "Editare scari", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "delete_staircase", label: "Stergere scari", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_unit", label: "Creare unitati (apart./box/parcare)", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_unit", label: "Editare unitati", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "none" } },
+  { key: "delete_unit", label: "Stergere unitati", category: "hierarchy", categoryLabel: "Ierarhie", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+
+  { key: "view_all_expenses", label: "Vizualizare toate cheltuielile", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "view_own_expenses", label: "Vizualizare cheltuieli proprii", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "create_expense", label: "Creare cheltuieli", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_expense", label: "Editare cheltuieli", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "delete_expense", label: "Stergere cheltuieli", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "view_all_payments", label: "Vizualizare toate platile", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "view_own_payments", label: "Vizualizare plati proprii", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "register_payment", label: "Inregistrare plati", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_payment", label: "Editare/Confirmare plati", category: "financial", categoryLabel: "Financiar", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+
+  { key: "create_gestor", label: "Creare Gestori Super Admin", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_admin", label: "Creare Administratori", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "full", manager: "none", owner: "none", tenant: "none" } },
+  { key: "create_owner", label: "Creare Proprietari", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "create_tenant", label: "Creare Chiriasi", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "none" } },
+  { key: "assign_roles", label: "Atribuire roluri", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "scoped", manager: "none", owner: "none", tenant: "none" } },
+  { key: "remove_roles", label: "Revocare roluri", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "scoped", manager: "none", owner: "none", tenant: "none" } },
+  { key: "view_user_list", label: "Vizualizare lista utilizatori", category: "users", categoryLabel: "Gestionare Utilizatori", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+
+  { key: "create_announcement", label: "Creare anunturi", category: "content", categoryLabel: "Continut", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "edit_announcement", label: "Editare anunturi", category: "content", categoryLabel: "Continut", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "delete_announcement", label: "Stergere anunturi", category: "content", categoryLabel: "Continut", roles: { super_admin: "full", admin: "none", manager: "none", owner: "none", tenant: "none" } },
+  { key: "view_announcements", label: "Vizualizare anunturi", category: "content", categoryLabel: "Continut", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+
+  { key: "upload_documents", label: "Incarcare documente", category: "documents", categoryLabel: "Documente", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "none" } },
+  { key: "view_documents", label: "Vizualizare documente", category: "documents", categoryLabel: "Documente", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "delete_documents", label: "Stergere documente", category: "documents", categoryLabel: "Documente", roles: { super_admin: "full", admin: "scoped", manager: "none", owner: "none", tenant: "none" } },
+  { key: "manage_reference_lists", label: "Gestionare liste generale", category: "documents", categoryLabel: "Documente", roles: { super_admin: "full", admin: "full", manager: "none", owner: "none", tenant: "none" } },
+
+  { key: "view_dashboard", label: "Vizualizare panou principal", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "view_explorer", label: "Explorator ierarhie", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "view_infographic", label: "Infografie arbore", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "view_financial_reports", label: "Rapoarte financiare complete", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "none", tenant: "none" } },
+  { key: "view_own_financial", label: "Rapoarte financiare proprii", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "own" } },
+  { key: "export_data", label: "Export date (CSV/PDF)", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "scoped", manager: "scoped", owner: "own", tenant: "none" } },
+  { key: "view_permissions_matrix", label: "Vizualizare matrice permisiuni", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "full", manager: "none", owner: "none", tenant: "none" } },
+];
 
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   super_admin: 5,
