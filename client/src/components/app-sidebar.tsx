@@ -14,8 +14,9 @@ import {
 import {
   Building2, LayoutDashboard, Home, Receipt, CreditCard,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
-  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark
+  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale
 } from "lucide-react";
+import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,7 @@ export function AppSidebar() {
   const [financiarOpen, setFinanciarOpen] = useState(() => financiarPaths.some(p => location.startsWith(p)));
   const [adminOpen, setAdminOpen] = useState(() => adminPaths.some(p => location.startsWith(p)));
   const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
+  const [legislatieOpen, setLegistatieOpen] = useState(() => location.startsWith("/legislatie"));
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -190,6 +192,40 @@ export function AppSidebar() {
           () => setAdminOpen(!adminOpen),
           "button-toggle-administrare",
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel
+            className="cursor-pointer select-none flex items-center justify-between gap-2"
+            onClick={() => setLegistatieOpen(!legislatieOpen)}
+            data-testid="button-toggle-legislatie"
+          >
+            <span className="flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5" />
+              Legislatie
+            </span>
+            {legislatieOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </SidebarGroupLabel>
+          {legislatieOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {LEGISLATION_ITEMS.map((law) => {
+                  const url = `/legislatie/${law.id}`;
+                  const isActive = location === url;
+                  return (
+                    <SidebarMenuItem key={law.id}>
+                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
+                        <Link href={url} data-testid={`link-nav-law-${law.id}`}>
+                          <Scale className="w-4 h-4" />
+                          <span className="text-xs">{law.shortTitle}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel

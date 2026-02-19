@@ -23,6 +23,7 @@ import Announcements from "@/pages/announcements";
 import UsersPage from "@/pages/users";
 import ListaGenerala from "@/pages/lista-generala";
 import PermissionsMatrix from "@/pages/permissions-matrix";
+import Legislatie from "@/pages/legislatie";
 
 function Router() {
   return (
@@ -40,6 +41,8 @@ function Router() {
       <Route path="/announcements" component={Announcements} />
       <Route path="/users" component={UsersPage} />
       <Route path="/permissions-matrix" component={PermissionsMatrix} />
+      <Route path="/legislatie/:lawId" component={Legislatie} />
+      <Route path="/legislatie" component={Legislatie} />
       <Route path="/liste-generale/:listKey" component={ListaGenerala} />
       <Route component={NotFound} />
     </Switch>
