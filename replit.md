@@ -1,7 +1,7 @@
 # AdminBloc - Management Asociatie de Proprietari
 
 ## Overview
-A Romanian Homeowners Association (HOA) management application with multi-level role-based access control. Full 5-level hierarchy: Federations -> Associations -> Buildings -> Staircases -> Apartments. Manages expenses, payments, and announcements for property owners' associations. Authentication bypassed for default super_admin access.
+A Romanian Homeowners Association (HOA) management application with multi-level role-based access control. Full 6-level hierarchy: Federations -> Associations -> Buildings -> Staircases -> Floors -> Units (Apartments/Boxes/Parking). Manages expenses, payments, and announcements for property owners' associations. Authentication bypassed for default super_admin access. Includes hierarchical drill-down explorer and tree infographic visualization.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + TanStack Query
@@ -11,7 +11,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - Dashboard, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala
+- `client/src/pages/` - Dashboard, Explorer, HierarchyTree, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala
 - `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
@@ -26,6 +26,12 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 3. **Buildings** (Blocuri): Physical buildings. Each belongs to one association (associationId required).
 4. **Staircases** (Scari): Building entries/sections. Each belongs to one building. Has floors count and apartments-per-floor configuration.
 5. **Apartments** (Apartamente): Individual units. Each belongs to one staircase (staircaseId required). Has owner info, surface, rooms, residents.
+
+## Key Features
+- **Explorer (Explorator)**: Hierarchical drill-down navigation - click federation to see associations, click association to see buildings, etc. through all 6 levels including floors (implicit from unit floor numbers). Supports negative floors (basements).
+- **Infographic (Infografie)**: Tree view showing complete hierarchy structure as expandable/collapsible tree with summary stats.
+- **Unit Types**: Apartments support unitType field: apartment (default), box (storage), parking. Shown throughout explorer, tree view, and units list page.
+- **Negative Floors**: Floors can be negative (e.g., -1 = Subsol 1, -2 = Subsol 2) for basements/garages.
 
 ## Authentication & Roles
 - **Authentication**: Bypassed - all requests get default-admin super_admin access

@@ -11,7 +11,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight, Network, ArrowUpDown } from "lucide-react";
+import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight, Network, ArrowUpDown, FolderTree, GitBranch } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -53,11 +53,13 @@ export function AppSidebar() {
 
   const menuItems = [
     { title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true },
+    { title: "Explorator", url: "/explorer", icon: FolderTree, visible: true },
+    { title: "Infografie", url: "/hierarchy-tree", icon: GitBranch, visible: true },
     { title: "Federatii", url: "/federations", icon: Network, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
     { title: "Asociatii", url: "/associations", icon: Users, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
     { title: "Blocuri", url: "/buildings", icon: Building2, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
     { title: "Scari", url: "/staircases", icon: ArrowUpDown, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
-    { title: "Apartamente", url: "/apartments", icon: Home, visible: !!perms.viewAllApartments || !!perms.viewOwnApartment },
+    { title: "Unitati", url: "/apartments", icon: Home, visible: !!perms.viewAllApartments || !!perms.viewOwnApartment },
     { title: "Cheltuieli", url: "/expenses", icon: Receipt, visible: !!perms.viewAllExpenses || !!perms.viewOwnExpenses },
     { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
     { title: "Anunturi", url: "/announcements", icon: Megaphone, visible: !!perms.viewAllAnnouncements || !!perms.viewOwnAnnouncements },

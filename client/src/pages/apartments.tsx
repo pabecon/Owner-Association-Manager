@@ -11,19 +11,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertApartmentSchema } from "@shared/schema";
+import { insertApartmentSchema, UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import type { Apartment, Building, Staircase } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Home, User, Phone, Mail, Search, Layers, ArrowUpDown, Building2 } from "lucide-react";
+import { Plus, Home, User, Phone, Mail, Search, Layers, ArrowUpDown, Building2, Car, Package } from "lucide-react";
 import { z } from "zod";
 
+const UNIT_TYPE_ICONS: Record<string, any> = {
+  apartment: Home,
+  box: Package,
+  parking: Car,
+};
+
 const formSchema = insertApartmentSchema.extend({
-  number: z.string().min(1, "Numarul apartamentului este obligatoriu"),
+  number: z.string().min(1, "Numarul unitatii este obligatoriu"),
   staircaseId: z.string().min(1, "Scara este obligatorie"),
-  floor: z.coerce.number().min(0, "Etajul trebuie sa fie pozitiv"),
+  unitType: z.string().default("apartment"),
+  floor: z.coerce.number(),
   surface: z.string().optional(),
   rooms: z.coerce.number().optional(),
-  residents: z.coerce.number().min(1).optional(),
+  residents: z.coerce.number().min(0).optional(),
 });
 
 export default function Apartments() {
@@ -44,6 +51,7 @@ export default function Apartments() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       staircaseId: "",
+      unitType: "apartment",
       number: "",
       floor: 0,
       surface: "",
@@ -89,20 +97,20 @@ export default function Apartments() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-apartments-title">Apartamente</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gestioneaza apartamentele din scari</p>
+          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-apartments-title">Unitati</h1>
+          <p className="text-muted-foreground text-sm mt-1">Apartamente, boxe si locuri de parcare</p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSelectedBuilding(""); }}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-apartment">
               <Plus className="w-4 h-4 mr-2" />
-              Adauga Apartament
+              Adauga Unitate
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Apartament Nou</DialogTitle>
-              <DialogDescription>Adauga un apartament la o scara</DialogDescription>
+              <DialogTitle>Unitate Noua</DialogTitle>
+              <DialogDescription>Adauga o unitate (apartament, box sau loc parcare)</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
@@ -141,17 +149,35 @@ export default function Apartments() {
                     <FormMessage />
                   </FormItem>
                 )} />
+                <FormField control={form.control} name="unitType" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tip Unitate</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "apartment"}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-unit-type">
+                          <SelectValue placeholder="Selecteaza tipul" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="apartment">Apartament</SelectItem>
+                        <SelectItem value="box">Box / Trastera</SelectItem>
+                        <SelectItem value="parking">Loc Parcare</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="number" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Numar Apartament</FormLabel>
-                      <FormControl><Input {...field} placeholder="ex: 12" data-testid="input-apt-number" /></FormControl>
+                      <FormLabel>Numar</FormLabel>
+                      <FormControl><Input {...field} placeholder="ex: 12, B1, P3" data-testid="input-apt-number" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="floor" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Etaj</FormLabel>
+                      <FormLabel>Etaj (negativ = subsol)</FormLabel>
                       <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} data-testid="input-apt-floor" /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -204,7 +230,7 @@ export default function Apartments() {
                   </FormItem>
                 )} />
                 <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-apartment">
-                  {createMutation.isPending ? "Se salveaza..." : "Salveaza Apartament"}
+                  {createMutation.isPending ? "Se salveaza..." : "Salveaza Unitate"}
                 </Button>
               </form>
             </Form>
@@ -255,14 +281,23 @@ export default function Apartments() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
-                        <Home className="w-4 h-4 text-primary" />
-                      </div>
-                      <span className="text-lg font-bold">Ap. {apt.number}</span>
+                      {(() => {
+                        const uType = (apt.unitType || "apartment") as UnitType;
+                        const UIcon = UNIT_TYPE_ICONS[uType] || Home;
+                        const typeLabel = UNIT_TYPE_LABELS[uType] || "Apartament";
+                        return (
+                          <>
+                            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
+                              <UIcon className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="text-lg font-bold">{typeLabel} {apt.number}</span>
+                          </>
+                        );
+                      })()}
                     </div>
                     <Badge variant="secondary" className="text-xs">
                       <Layers className="w-3 h-3 mr-1" />
-                      Etaj {apt.floor}
+                      {apt.floor < 0 ? `Subsol ${Math.abs(apt.floor)}` : apt.floor === 0 ? "Parter" : `Etaj ${apt.floor}`}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 flex-wrap">

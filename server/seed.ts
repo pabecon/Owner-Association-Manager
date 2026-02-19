@@ -118,16 +118,24 @@ export async function seedDatabase() {
   }).returning();
 
   const aptData = [
-    { staircaseId: scaraA1.id, number: "1", floor: 0, surface: "45.50", rooms: 2, ownerName: "Ion Popescu", ownerPhone: "0745 123 456", ownerEmail: "ion.popescu@email.ro", residents: 2 },
-    { staircaseId: scaraA1.id, number: "2", floor: 0, surface: "52.00", rooms: 2, ownerName: "Ana Georgescu", ownerPhone: "0756 234 567", ownerEmail: "ana.g@email.ro", residents: 3 },
-    { staircaseId: scaraA1.id, number: "3", floor: 1, surface: "68.30", rooms: 3, ownerName: "Vasile Dumitrescu", ownerPhone: "0767 345 678", ownerEmail: null, residents: 4 },
-    { staircaseId: scaraA1.id, number: "4", floor: 1, surface: "45.50", rooms: 2, ownerName: "Elena Stanescu", ownerPhone: "0778 456 789", ownerEmail: "elena.s@email.ro", residents: 1 },
-    { staircaseId: scaraB1.id, number: "5", floor: 2, surface: "72.00", rooms: 3, ownerName: "Cristian Marinescu", ownerPhone: "0789 567 890", ownerEmail: null, residents: 5 },
-    { staircaseId: scaraB1.id, number: "6", floor: 2, surface: "45.50", rooms: 2, ownerName: null, ownerPhone: null, ownerEmail: null, residents: 1 },
-    { staircaseId: scaraA2.id, number: "1", floor: 0, surface: "55.00", rooms: 2, ownerName: "Mihai Radu", ownerPhone: "0721 111 222", ownerEmail: "mihai.r@email.ro", residents: 2 },
-    { staircaseId: scaraA2.id, number: "2", floor: 0, surface: "60.00", rooms: 3, ownerName: "Gabriela Popa", ownerPhone: "0732 222 333", ownerEmail: null, residents: 3 },
-    { staircaseId: scaraC1.id, number: "1", floor: 0, surface: "48.00", rooms: 2, ownerName: "Stefan Voicu", ownerPhone: "0743 333 444", ownerEmail: "stefan.v@email.ro", residents: 1 },
-    { staircaseId: scaraC1.id, number: "2", floor: 1, surface: "75.00", rooms: 4, ownerName: "Laura Munteanu", ownerPhone: "0754 444 555", ownerEmail: "laura.m@email.ro", residents: 4 },
+    { staircaseId: scaraA1.id, unitType: "apartment", number: "1", floor: 0, surface: "45.50", rooms: 2, ownerName: "Ion Popescu", ownerPhone: "0745 123 456", ownerEmail: "ion.popescu@email.ro", residents: 2 },
+    { staircaseId: scaraA1.id, unitType: "apartment", number: "2", floor: 0, surface: "52.00", rooms: 2, ownerName: "Ana Georgescu", ownerPhone: "0756 234 567", ownerEmail: "ana.g@email.ro", residents: 3 },
+    { staircaseId: scaraA1.id, unitType: "apartment", number: "3", floor: 1, surface: "68.30", rooms: 3, ownerName: "Vasile Dumitrescu", ownerPhone: "0767 345 678", ownerEmail: null, residents: 4 },
+    { staircaseId: scaraA1.id, unitType: "apartment", number: "4", floor: 1, surface: "45.50", rooms: 2, ownerName: "Elena Stanescu", ownerPhone: "0778 456 789", ownerEmail: "elena.s@email.ro", residents: 1 },
+    { staircaseId: scaraA1.id, unitType: "box", number: "B1", floor: -1, surface: "4.50", rooms: null, ownerName: "Ion Popescu", ownerPhone: "0745 123 456", ownerEmail: null, residents: 0 },
+    { staircaseId: scaraA1.id, unitType: "box", number: "B2", floor: -1, surface: "5.00", rooms: null, ownerName: "Ana Georgescu", ownerPhone: "0756 234 567", ownerEmail: null, residents: 0 },
+    { staircaseId: scaraA1.id, unitType: "parking", number: "P1", floor: -2, surface: "12.50", rooms: null, ownerName: "Ion Popescu", ownerPhone: "0745 123 456", ownerEmail: null, residents: 0 },
+    { staircaseId: scaraA1.id, unitType: "parking", number: "P2", floor: -2, surface: "12.50", rooms: null, ownerName: "Vasile Dumitrescu", ownerPhone: "0767 345 678", ownerEmail: null, residents: 0 },
+    { staircaseId: scaraA1.id, unitType: "parking", number: "P3", floor: -2, surface: "15.00", rooms: null, ownerName: "Elena Stanescu", ownerPhone: null, ownerEmail: null, residents: 0 },
+    { staircaseId: scaraB1.id, unitType: "apartment", number: "5", floor: 2, surface: "72.00", rooms: 3, ownerName: "Cristian Marinescu", ownerPhone: "0789 567 890", ownerEmail: null, residents: 5 },
+    { staircaseId: scaraB1.id, unitType: "apartment", number: "6", floor: 2, surface: "45.50", rooms: 2, ownerName: null, ownerPhone: null, ownerEmail: null, residents: 1 },
+    { staircaseId: scaraB1.id, unitType: "box", number: "B3", floor: -1, surface: "6.00", rooms: null, ownerName: "Cristian Marinescu", ownerPhone: null, ownerEmail: null, residents: 0 },
+    { staircaseId: scaraA2.id, unitType: "apartment", number: "1", floor: 0, surface: "55.00", rooms: 2, ownerName: "Mihai Radu", ownerPhone: "0721 111 222", ownerEmail: "mihai.r@email.ro", residents: 2 },
+    { staircaseId: scaraA2.id, unitType: "apartment", number: "2", floor: 0, surface: "60.00", rooms: 3, ownerName: "Gabriela Popa", ownerPhone: "0732 222 333", ownerEmail: null, residents: 3 },
+    { staircaseId: scaraA2.id, unitType: "parking", number: "P1", floor: -1, surface: "14.00", rooms: null, ownerName: "Mihai Radu", ownerPhone: "0721 111 222", ownerEmail: null, residents: 0 },
+    { staircaseId: scaraC1.id, unitType: "apartment", number: "1", floor: 0, surface: "48.00", rooms: 2, ownerName: "Stefan Voicu", ownerPhone: "0743 333 444", ownerEmail: "stefan.v@email.ro", residents: 1 },
+    { staircaseId: scaraC1.id, unitType: "apartment", number: "2", floor: 1, surface: "75.00", rooms: 4, ownerName: "Laura Munteanu", ownerPhone: "0754 444 555", ownerEmail: "laura.m@email.ro", residents: 4 },
+    { staircaseId: scaraC1.id, unitType: "box", number: "B1", floor: -1, surface: "3.50", rooms: null, ownerName: "Stefan Voicu", ownerPhone: null, ownerEmail: null, residents: 0 },
   ];
 
   const insertedApts = await db.insert(apartments).values(aptData).returning();

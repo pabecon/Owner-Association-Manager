@@ -52,9 +52,19 @@ export const staircases = pgTable("staircases", {
   apartmentsPerFloor: integer("apartments_per_floor"),
 });
 
+export const unitTypeEnum = ["apartment", "box", "parking"] as const;
+export type UnitType = typeof unitTypeEnum[number];
+
+export const UNIT_TYPE_LABELS: Record<UnitType, string> = {
+  apartment: "Apartament",
+  box: "Box",
+  parking: "Loc Parcare",
+};
+
 export const apartments = pgTable("apartments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   staircaseId: varchar("staircase_id").notNull().references(() => staircases.id),
+  unitType: text("unit_type").notNull().default("apartment"),
   number: text("number").notNull(),
   floor: integer("floor").notNull(),
   surface: numeric("surface", { precision: 8, scale: 2 }),

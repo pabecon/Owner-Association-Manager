@@ -10,6 +10,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import Explorer from "@/pages/explorer";
+import HierarchyTree from "@/pages/hierarchy-tree";
 import Federations from "@/pages/federations";
 import Associations from "@/pages/associations";
 import Buildings from "@/pages/buildings";
@@ -25,6 +27,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/explorer" component={Explorer} />
+      <Route path="/hierarchy-tree" component={HierarchyTree} />
       <Route path="/federations" component={Federations} />
       <Route path="/associations" component={Associations} />
       <Route path="/buildings" component={Buildings} />
