@@ -1,4 +1,4 @@
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { useCallback, useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { LAW_114_1996_CONTENT, type LawSection } from "@/lib/law-content-114-1996";
-import { Scale, ExternalLink, FileText, BookOpen, ListOrdered, Search, X } from "lucide-react";
+import { Scale, ExternalLink, FileText, BookOpen, ListOrdered, Search, X, ChevronRight } from "lucide-react";
 
 const LAW_CONTENT_MAP: Record<string, LawSection[]> = {
   "legea-114-1996": LAW_114_1996_CONTENT,
@@ -170,6 +170,172 @@ function countMatches(sections: LawSection[], term: string): number {
   return count;
 }
 
+function getMatchingArticles(sections: LawSection[], term: string, chapterTitle?: string): { article: string; chapter: string; snippet: string }[] {
+  const results: { article: string; chapter: string; snippet: string }[] = [];
+  const norm = normalizeText(term);
+  for (const s of sections) {
+    const chapName = s.type === "chapter" ? (s.title || "") : (chapterTitle || "");
+    if (s.type === "article" && sectionMatchesSearch(s, term)) {
+      let snippet = "";
+      const allText = [s.content || "", ...(s.items || [])].join(" ");
+      const normAll = normalizeText(allText);
+      const pos = normAll.indexOf(norm);
+      if (pos !== -1) {
+        const start = Math.max(0, pos - 40);
+        const end = Math.min(allText.length, pos + term.length + 60);
+        snippet = (start > 0 ? "..." : "") + allText.substring(start, end) + (end < allText.length ? "..." : "");
+      }
+      results.push({ article: s.title || "", chapter: chapName, snippet });
+    }
+    if (s.children) {
+      results.push(...getMatchingArticles(s.children, term, chapName));
+    }
+  }
+  return results;
+}
+
+interface GlobalSearchResult {
+  lawId: string;
+  lawTitle: string;
+  status: "in_vigoare" | "abrogata";
+  matchCount: number;
+  matches: { article: string; chapter: string; snippet: string }[];
+}
+
+function globalSearch(term: string): GlobalSearchResult[] {
+  const results: GlobalSearchResult[] = [];
+  for (const [lawId, content] of Object.entries(LAW_CONTENT_MAP)) {
+    const law = LEGISLATION_ITEMS.find(l => l.id === lawId);
+    if (!law) continue;
+    const articles = getMatchingArticles(content, term);
+    if (articles.length > 0) {
+      results.push({
+        lawId,
+        lawTitle: law.shortTitle,
+        status: law.status,
+        matchCount: articles.length,
+        matches: articles.slice(0, 10),
+      });
+    }
+  }
+  return results;
+}
+
+function GlobalSearchView() {
+  const [globalTerm, setGlobalTerm] = useState("");
+
+  const searchResults = useMemo(() => {
+    if (globalTerm.length < 2) return [];
+    return globalSearch(globalTerm);
+  }, [globalTerm]);
+
+  const totalMatches = searchResults.reduce((sum, r) => sum + r.matchCount, 0);
+
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <Scale className="w-6 h-6 text-muted-foreground shrink-0" />
+          <div>
+            <h1 className="text-xl font-bold" data-testid="text-legislatie-title">Legislatie</h1>
+            <p className="text-sm text-muted-foreground">Cautati in toate actele normative disponibile</p>
+          </div>
+        </div>
+
+        <div className="mb-6 relative" data-testid="global-search-container">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder="Cautati in toate legile (ex: locuinta, proprietar, asociatie)..."
+            value={globalTerm}
+            onChange={(e) => setGlobalTerm(e.target.value)}
+            className="pl-9 pr-24"
+            data-testid="input-global-search"
+          />
+          {globalTerm.length >= 2 && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground" data-testid="text-global-search-count">
+                {totalMatches} {totalMatches === 1 ? "rezultat" : "rezultate"} in {searchResults.length} {searchResults.length === 1 ? "lege" : "legi"}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => setGlobalTerm("")}
+                data-testid="button-clear-global-search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {globalTerm.length >= 2 && searchResults.length === 0 && (
+          <Card className="p-6">
+            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+              <Search className="w-10 h-10 mb-3 opacity-40" />
+              <p className="text-sm font-medium" data-testid="text-global-no-results">Niciun rezultat gasit</p>
+              <p className="text-xs mt-1">Incercati alt termen de cautare.</p>
+            </div>
+          </Card>
+        )}
+
+        {globalTerm.length >= 2 && searchResults.length > 0 && (
+          <div className="space-y-4" data-testid="global-search-results">
+            {searchResults.map((result) => (
+              <Card key={result.lawId} className="p-5" data-testid={`card-global-result-${result.lawId}`}>
+                <div className="flex items-center justify-between gap-3 flex-wrap mb-4 pb-3 border-b">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-bold">{result.lawTitle}</span>
+                    <Badge variant={result.status === "in_vigoare" ? "default" : "secondary"}>
+                      {result.status === "in_vigoare" ? "In vigoare" : "Abrogata"}
+                    </Badge>
+                    <Badge variant="outline">{result.matchCount} {result.matchCount === 1 ? "articol" : "articole"}</Badge>
+                  </div>
+                  <Link href={`/legislatie/${result.lawId}`}>
+                    <Button variant="outline" size="sm" data-testid={`button-open-law-${result.lawId}`}>
+                      Deschide legea
+                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  {result.matches.map((match, idx) => (
+                    <div key={idx} className="pl-3 border-l-2 border-muted" data-testid={`result-match-${result.lawId}-${idx}`}>
+                      <p className="text-xs font-semibold mb-0.5">{match.article}</p>
+                      {match.chapter && (
+                        <p className="text-xs text-muted-foreground mb-1">{match.chapter}</p>
+                      )}
+                      {match.snippet && (
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {highlightText(match.snippet, globalTerm)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                  {result.matchCount > 10 && (
+                    <p className="text-xs text-muted-foreground pl-3 italic">
+                      ...si alte {result.matchCount - 10} articole
+                    </p>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {globalTerm.length < 2 && (
+          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+            <Scale className="w-16 h-16 mb-4 opacity-30" />
+            <p className="text-lg font-medium mb-1" data-testid="text-legislatie-placeholder">Selectati un act normativ</p>
+            <p className="text-sm">Alegeti o lege din meniul Legislatie din bara laterala sau cautati in toate legile.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Legislatie() {
   const [, params] = useRoute("/legislatie/:lawId");
   const selectedId = params?.lawId || null;
@@ -190,13 +356,7 @@ export default function Legislatie() {
   }, []);
 
   if (!selectedLaw) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
-        <Scale className="w-16 h-16 mb-4 opacity-30" />
-        <p className="text-lg font-medium mb-1" data-testid="text-legislatie-placeholder">Selectati un act normativ</p>
-        <p className="text-sm">Alegeti o lege din meniul Legislatie din bara laterala.</p>
-      </div>
-    );
+    return <GlobalSearchView />;
   }
 
   return (

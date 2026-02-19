@@ -12,7 +12,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  Building2, LayoutDashboard, Home, Receipt, CreditCard,
+  Building2, LayoutDashboard, Home, Receipt, CreditCard, Search,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
   Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale
 } from "lucide-react";
@@ -208,6 +208,14 @@ export function AppSidebar() {
           {legislatieOpen && (
             <SidebarGroupContent>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={location === "/legislatie"} className={location === "/legislatie" ? "bg-sidebar-accent" : ""}>
+                    <Link href="/legislatie" data-testid="link-nav-legislatie-search">
+                      <Search className="w-4 h-4 shrink-0" />
+                      <span className="text-xs flex-1 truncate">Cautare in legi</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 {LEGISLATION_ITEMS.map((law) => {
                   const url = `/legislatie/${law.id}`;
                   const isActive = location === url;
