@@ -215,8 +215,15 @@ export function AppSidebar() {
                     <SidebarMenuItem key={law.id}>
                       <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
                         <Link href={url} data-testid={`link-nav-law-${law.id}`}>
-                          <Scale className="w-4 h-4" />
-                          <span className="text-xs">{law.shortTitle}</span>
+                          <Scale className="w-4 h-4 shrink-0" />
+                          <span className="text-xs flex-1 truncate">{law.shortTitle}</span>
+                          <Badge
+                            variant={law.status === "in_vigoare" ? "default" : "secondary"}
+                            className="text-[9px] px-1 py-0 shrink-0 no-default-hover-elevate no-default-active-elevate"
+                            data-testid={`badge-nav-law-${law.id}`}
+                          >
+                            {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
+                          </Badge>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
