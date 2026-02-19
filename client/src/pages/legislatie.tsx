@@ -22,7 +22,7 @@ function parseChapterInfo(title: string) {
 }
 
 function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; onNavigate: (id: string) => void }) {
-  const chapters = sections.filter(s => s.type === "chapter" && s.id);
+  const chapters = sections.filter(s => (s.type === "chapter" || s.type === "annexa") && s.id);
   if (chapters.length === 0) return null;
 
   return (
@@ -66,6 +66,10 @@ function sectionMatchesSearch(section: LawSection, term: string): boolean {
   if (section.title && normalizeText(section.title).includes(norm)) return true;
   if (section.content && normalizeText(section.content).includes(norm)) return true;
   if (section.items?.some(item => normalizeText(item).includes(norm))) return true;
+  if (section.tableData) {
+    if (section.tableData.headers.some(h => normalizeText(h).includes(norm))) return true;
+    if (section.tableData.rows.some(row => row.some(cell => normalizeText(cell).includes(norm)))) return true;
+  }
   if (section.children?.some(child => sectionMatchesSearch(child, term))) return true;
   return false;
 }
@@ -146,6 +150,51 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
     return (
       <div className="mt-2 ml-4 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground italic" data-testid="law-note">
         {searchTerm ? highlightText(section.content || "", searchTerm) : section.content}
+      </div>
+    );
+  }
+
+  if (section.type === "annexa") {
+    const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
+    if (!matches) return null;
+    return (
+      <div className="mb-8 mt-10" id={section.id} data-testid={`section-${section.id}`}>
+        <div className="flex items-center gap-3 mb-4 pb-2 border-b border-primary/30">
+          <FileText className="w-5 h-5 text-primary shrink-0" />
+          <h2 className="text-base font-bold uppercase tracking-wide">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h2>
+        </div>
+        {section.children?.map((child, i) => (
+          <LawSectionRenderer key={i} section={child} depth={depth + 1} searchTerm={searchTerm} />
+        ))}
+      </div>
+    );
+  }
+
+  if (section.type === "table" && section.tableData) {
+    return (
+      <div className="my-3 ml-4 overflow-x-auto" data-testid="law-table">
+        <table className="w-full text-xs border-collapse border border-border">
+          <thead>
+            <tr className="bg-muted">
+              {section.tableData.headers.map((header, i) => (
+                <th key={i} className="border border-border px-2 py-1.5 text-left font-semibold whitespace-nowrap">
+                  {searchTerm ? highlightText(header, searchTerm) : header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {section.tableData.rows.map((row, ri) => (
+              <tr key={ri} className={ri % 2 === 0 ? "" : "bg-muted/50"}>
+                {row.map((cell, ci) => (
+                  <td key={ci} className={`border border-border px-2 py-1 ${ci === 0 ? "font-medium" : "text-center"}`}>
+                    {searchTerm ? highlightText(cell, searchTerm) : cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     );
   }

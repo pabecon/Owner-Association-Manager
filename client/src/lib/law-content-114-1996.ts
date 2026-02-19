@@ -1,10 +1,16 @@
+export interface LawTableData {
+  headers: string[];
+  rows: string[][];
+}
+
 export interface LawSection {
-  type: "chapter" | "article" | "paragraph" | "note";
+  type: "chapter" | "article" | "paragraph" | "note" | "annexa" | "table";
   id?: string;
   title?: string;
   content?: string;
   items?: string[];
   children?: LawSection[];
+  tableData?: LawTableData;
 }
 
 export const LAW_114_1996_CONTENT: LawSection[] = [
@@ -1106,7 +1112,7 @@ export const LAW_114_1996_CONTENT: LawSection[] = [
         type: "article",
         id: "art-73",
         title: "Articolul 73",
-        content: "La data intrării în vigoare a prezentei legi se abroga: Anexa nr. 1 EXIGENTE MINIMALE pentru locuințe A. Cerințe minimale:",
+        content: "La data intrării în vigoare a prezentei legi se abrogă:",
         items: [
           "– Legea nr. 5/1973 privind administrarea fondului locativ și reglementarea raporturilor dintre proprietari și chiriași, cu excepția cap. 4 și a art. 63 cu referire la cap. 4 din aceeași lege, exclusiv dispozițiile referitoare la suprafețele locative proprietate personală;",
           "– H.C.M. nr. 860/1973 pentru stabilirea masurilor de executare a Legii nr. 5/1973, în ceea ce privește închirierea de locuințe;",
@@ -1114,18 +1120,231 @@ export const LAW_114_1996_CONTENT: LawSection[] = [
           "– Decretul Consiliului de Stat nr. 68/1975 privind îmbunătățirea regimului de construire a locuințelor din fondurile statului sau din fondurile populației cu sprijinul statului în credite și execuție;",
           "– art. 12 alin. 1 lit. a) și alin. 2, art. 21-25 și art. 35 alin. 2 din Legea nr. 50/1991 privind autorizarea executării construcțiilor și unele măsuri pentru realizarea locuințelor;",
           "– orice alte dispoziții contrare prevederilor prezentei legi.",
+        ],
+      },
+    ],
+  },
+  {
+    type: "annexa",
+    id: "anexa-1",
+    title: "Anexa nr. 1 - EXIGENȚE MINIMALE pentru locuințe",
+    children: [
+      {
+        type: "article",
+        id: "anexa-1-a",
+        title: "A. Cerințe minimale",
+        items: [
           "– acces liber individual la spațiul locuibil, fără tulburarea posesiei și a folosinței exclusive a spațiului deținut de către o altă persoană sau familie;",
-          "– spațiu pentru odihna;",
+          "– spațiu pentru odihnă;",
           "– spațiu pentru prepararea hranei;",
           "– grup sanitar;",
-          "– acces la energia electrica și apă potabilă, evacuarea controlată a apelor uzate și a reziduurilor menajere;",
+          "– acces la energia electrică și apă potabilă, evacuarea controlată a apelor uzate și a reziduurilor menajere;",
           "– Eliminată.",
         ],
         children: [
           {
             type: "note",
-            content: "Ultima liniuță de la litera A din anexa 1 a fost eliminată prin abrogarea pct. 6 al articolului unic din ORDONANȚA DE URGENȚĂ nr. 210 din 4 decembrie 2008, publicată în MONITORUL OFICIAL nr. 835 din 11 decembrie 2008 de către pct. 4 al articolului unic din LEGEA nr. 310 din 6 octombrie 2009, publicată în MONITORUL OFICIAL nr. 680 din 9 octombrie 2009. B. Suprafețe minimale ------------------------------------------------------------------------------- |Persoa-|Camere/|Camera|Dormi- |Loc de |Bucă- |Încă-  |Spatii|Supra-  |Supra-  | |ne/fa- |locuin-|de zi |toare  |luat   |tărie |peri   |de de-|fața    |fața    | |milie  |ța     |      |       |masa   |      |sanita-|pozi- |utilă   |constru-| |       |       |      |       |       |      |re     |tare  |        |ită     | ------------------------------------------------------------------------------- | nr.   |  nr.  |  mp  |  mp   |  mp   |  mp  |  mp   |  mp  |   mp   |  mp    | ------------------------------------------------------------------------------- |   1   |   1   |18,00 |   -   |  2,50 | 5,00 |  4,50 | 2,00 |  37,00 |  58,00 | ------------------------------------------------------------------------------- |   2   |   2   |18,00 | 12,00 |  3,00 | 5,00 |  4,50 | 2,00 |  52,00 |  81,00 | ------------------------------------------------------------------------------- |   3   |   3   |18,00 | 22,00 |  3,00 | 5,50 |  6,50 | 2,50 |  66,00 | 102,00 | ------------------------------------------------------------------------------- |   4   |   3   |19,00 | 24,00 |  3,50 | 5,50 |  6,50 | 3,50 |  74,00 | 115,00 | ------------------------------------------------------------------------------- |   5   |   4   |20,00 | 34,00 |  3,50 | 6,00 |  7,50 | 4,00 |  87,00 | 135,00 | ------------------------------------------------------------------------------- |   6   |   4   |21,00 | 36,00 |  4,50 | 6,00 |  7,50 | 4,50 |  93,00 | 144,00 | ------------------------------------------------------------------------------- |   7   |   5   |22,00 | 46,00 |  5,00 | 6,50 |  9,00 | 5,00 | 107,00 | 166,00 | ------------------------------------------------------------------------------- |   8   |   5   |22,00 | 48,00 |  6,00 | 6,50 |  9,00 | 5,50 | 110,00 | 171,00 | ------------------------------------------------------------------------------- NOTA: – Suprafață camerei de zi de la locuința cu o camera include spațiul pentru dormit. – Locul de luat masa poate fi înglobat în bucătărie sau în camera de zi. – Înălțimea libera minima a camerelor de locuit va fi de 2,55 m, cu excepția mansardelor, supantelor și nișelor, la care se va asigura un volum minim de 15 mc de persoană. – Suprafață locuibilă este suprafața desfășurată a încăperilor de locuit. Ea cuprinde suprafața dormitoarelor și a camerei de zi. – Suprafață utilă este suprafața desfășurată, mai puțin suprafața aferentă pereților. – Suprafață utilă a locuinței este suma tuturor suprafețelor utile ale încăperilor. Ea cuprinde: camera de zi, dormitoare, băi, WC, dus, bucătărie, spații de depozitare și de circulație din interiorul locuinței. Nu se cuprind: suprafața logiilor și a balcoanelor, pragurile golurilor de uși, ale trecerilor cu deschideri până la 1,00 m, nișele de radiatoare, precum și suprafețele ocupate de sobe și cazane de baie (câte 0,50 mp pentru fiecare sobă și cazan de baie), în cazul în care încălzirea se face cu sobe. În cazul locuințelor duplex, rampa, mai puțin palierele, nu se cuprinde în suprafața utilă a locuinței. – Suprafață construită pe locuință, prevăzută în tabelul B, este suma suprafețelor utile ale încăperilor, logiilor, balcoanelor, precum și a cotei-părți din suprafețele părților comune ale clădirilor (spălătorii, uscătorii, casa scării, inclusiv anexele pentru colectarea, depozitarea și evacuarea deșeurilor menajere, casa liftului etc.), la care se adaugă suprafața aferentă pereților interiori și exteriori ai locuinței; în cazul încălzirii cu combustibil solid, se adaugă suprafața aferentă sobelor și cazanelor de baie. Nu sunt cuprinse suprafețele aferente boxelor de la subsol și ale garajelor care pot fi prevăzute distinct. – Suprafață încăperii sanitare principale din locuința va permite accesul la cada de baie al persoanelor imobilizate în scaun cu rotile. – Încăperea sanitară se include în locuință, în cazul în care pot fi asigurate alimentarea cu apă și canalizarea. – Lățimea minima de circulație a coridoarelor și a vestibulului din interiorul locuinței va fi de 120 cm. – În funcție de amplasamentul construcției, suprafețele construite pot avea abateri în limitele de +-10% . – Numărul de persoane pe locuința se utilizează la repartizarea locuințelor sociale, de intervenție, de serviciu și de necesitate. C. Încăperi sanitare Număr de camere/locuință ------------------------------------------------------------ |     1     |     2     |     3     |     4     |     5    | ------------------------------------------------------------------------------ |     Baie        |     1     |     1     |     1     |     1     |     2    | ------------------------------------------------------------------------------ |     Dus         |     -     |     -     |     -     |     1     |     -    | ------------------------------------------------------------------------------ |     WC          |     -     |     -     |     1     |     -     |     -    | ------------------------------------------------------------------------------ D. Dotarea minimă a încăperilor sanitare ------------------------------------ |   Baie    |    Dus    |    WC    | ------------------------------------------------------------------------------ | Cada de baie           |                 |     1     |     -     |     -   | ------------------------------------------------------------------------------ | Vas WC                 |                 |     1     |     1     |     1   | ----------------------------------------------------------------------------- | Lavoar                 | mare            |     1     |     -     |     -   | |                        ----------------------------------------------------- |                        | mic             |     -     |     1     |     1   | ------------------------------------------------------------------------------ | Cuva pentru dus        |                 |     -     |     1     |     -   | ----------------------------------------------------------------------------- | Etajeră                | mare            |     1     |     -     |     -   | |                        ----------------------------------------------------- |                        | mică            |     -     |     1     |     1   | ------------------------------------------------------------------------------ | Oglindă                | mare            |     1     |     -     |     -   | |                        ----------------------------------------------------- |                        | mică            |     -     |     1     |     1   | ------------------------------------------------------------------------------ | Portprosop             |                 |     1     |     1     |     1   | ----------------------------------------------------------------------------- | Portsăpun              |                 |     1     |     1     |     1   | |----------------------------------------------------------------------------- | Porthârtie             |                 |     1     |     1     |     1   | ------------------------------------------------------------------------------ | Cuier                  |                 |     1     |     1     |     -   | |----------------------------------------------------------------------------- | Sifon pardoseala       |                 |     1     |     1     |     -   | ------------------------------------------------------------------------------ NOTA: - În baie se va prevedea spațiul pentru mașina de spălat rufe. - Încăperile sanitare vor fi ventilate direct sau prin cos de ventilație. E. Dotarea minimă a bucătăriei ------------------------------------------------------------------------------ | Nr. de camere/locuință        |   1-2    |     3     |     4     |     5   | |----------------------------------------------------------------------------- | Spălător cu cuvă și picurător |    1     |     1     |     1     |     1   | ------------------------------------------------------------------------------ NOTA: - În bucătărie se vor prevedea: cos de ventilație, spațiu pentru frigider și pentru masa de lucru. F. Dotarea minimă cu instalații electrice -------------------------------------------------------- | Dormitor | Camera de zi | Bucătărie | Baie | Dus | WC | ------------------------------------------------------------------------------ | Loc de lampă       |     1    |      1       |     -     |  -   |  -  | -  | ------------------------------------------------------------------------------ | Aplică             |     -    |      -       |     1     |  1   |  1  | 1  | ------------------------------------------------------------------------------ | Comutator          |     1    |      1       |     -     |  -   |  -  | -  | ------------------------------------------------------------------------------ | Întrerupător       |     -    |      -       |     1     |  1   |  1  | 1  | ------------------------------------------------------------------------------ | Priză              |     2    |      3       |     1     |  -   |  -  | -  | ------------------------------------------------------------------------------ | Priza cu contact   |          |              |           |      |     |    | | de protecție       |     -    |      -       |     1     |  1   |  -  | -  | ------------------------------------------------------------------------------ NOTA: – Se vor prevedea întrerupătoare și aplice pentru fiecare spațiu de depozitare și spațiu de circulație. – Priza cu contact de protecție, instalată pentru baie, se montează în exteriorul încăperii. – Fiecare locuință va fi prevăzută cu instalație de sonerie. – În clădiri cu mai multe locuințe se vor prevedea instalații și prize pentru antena colectivă și telefon. – Pentru locuințele situate în mediu rural, dotările minime privind încăperile sanitare și bucătăria se vor putea realiza pe parcursul existenței construcției, în corelare cu racordarea locuinței la rețelele de utilitate publică sau la sistemul propriu de alimentare cu apă și evacuare controlată a apelor uzate. G. Spatii și instalații de folosință comună pentru clădiri cu mai multe locuințe – Instalații de prevenire și stingere a incendiilor, precum și ascensor conform normelor în vigoare. – Spații pentru biciclete, cărucioare și pentru uscarea rufelor. – Spații destinate colectării, depozitarii și evacuării deșeurilor menajere. – Spații pentru depozitarea combustibililor solizi sau lichizi, în situațiile în care nu se pot asigura încălzirea centrală și/sau gaze la bucătărie. – Rampa de acces pentru persoanele imobilizate în scaun cu rotile. Anexa nr. 2 Abrogată",
+            content: "Ultima liniuță de la litera A din anexa 1 a fost eliminată prin abrogarea pct. 6 al articolului unic din ORDONANȚA DE URGENȚĂ nr. 210 din 4 decembrie 2008, publicată în MONITORUL OFICIAL nr. 835 din 11 decembrie 2008 de către pct. 4 al articolului unic din LEGEA nr. 310 din 6 octombrie 2009, publicată în MONITORUL OFICIAL nr. 680 din 9 octombrie 2009.",
           },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-b",
+        title: "B. Suprafețe minimale",
+        children: [
+          {
+            type: "table",
+            tableData: {
+              headers: ["Persoane/familie", "Camere/locuință", "Camera de zi (mp)", "Dormitoare (mp)", "Loc de luat masă (mp)", "Bucătărie (mp)", "Încăperi sanitare (mp)", "Spații de depozitare (mp)", "Suprafața utilă (mp)", "Suprafața construită (mp)"],
+              rows: [
+                ["1", "1", "18,00", "-", "2,50", "5,00", "4,50", "2,00", "37,00", "58,00"],
+                ["2", "2", "18,00", "12,00", "3,00", "5,00", "4,50", "2,00", "52,00", "81,00"],
+                ["3", "3", "18,00", "22,00", "3,00", "5,50", "6,50", "2,50", "66,00", "102,00"],
+                ["4", "3", "19,00", "24,00", "3,50", "5,50", "6,50", "3,50", "74,00", "115,00"],
+                ["5", "4", "20,00", "34,00", "3,50", "6,00", "7,50", "4,00", "87,00", "135,00"],
+                ["6", "4", "21,00", "36,00", "4,50", "6,00", "7,50", "4,50", "93,00", "144,00"],
+                ["7", "5", "22,00", "46,00", "5,00", "6,50", "9,00", "5,00", "107,00", "166,00"],
+                ["8", "5", "22,00", "48,00", "6,00", "6,50", "9,00", "5,50", "110,00", "171,00"],
+              ],
+            },
+          },
+          {
+            type: "note",
+            content: "Suprafața camerei de zi de la locuința cu o cameră include spațiul pentru dormit.",
+          },
+          {
+            type: "note",
+            content: "Locul de luat masă poate fi înglobat în bucătărie sau în camera de zi.",
+          },
+          {
+            type: "note",
+            content: "Înălțimea liberă minimă a camerelor de locuit va fi de 2,55 m, cu excepția mansardelor, supantelor și nișelor, la care se va asigura un volum minim de 15 mc de persoană.",
+          },
+          {
+            type: "note",
+            content: "Suprafața locuibilă este suprafața desfășurată a încăperilor de locuit. Ea cuprinde suprafața dormitoarelor și a camerei de zi.",
+          },
+          {
+            type: "note",
+            content: "Suprafața utilă este suprafața desfășurată, mai puțin suprafața aferentă pereților.",
+          },
+          {
+            type: "note",
+            content: "Suprafața utilă a locuinței este suma tuturor suprafețelor utile ale încăperilor. Ea cuprinde: camera de zi, dormitoare, băi, WC, duș, bucătărie, spații de depozitare și de circulație din interiorul locuinței. Nu se cuprind: suprafața logiilor și a balcoanelor, pragurile golurilor de uși, ale trecerilor cu deschideri până la 1,00 m, nișele de radiatoare, precum și suprafețele ocupate de sobe și cazane de baie (câte 0,50 mp pentru fiecare sobă și cazan de baie).",
+          },
+          {
+            type: "note",
+            content: "Suprafața construită pe locuință, prevăzută în tabelul B, este suma suprafețelor utile ale încăperilor, logiilor, balcoanelor, precum și a cotei-părți din suprafețele părților comune ale clădirilor (spălătorii, uscătorii, casa scării, inclusiv anexele pentru colectarea, depozitarea și evacuarea deșeurilor menajere, casa liftului etc.), la care se adaugă suprafața aferentă pereților interiori și exteriori ai locuinței; în cazul încălzirii cu combustibil solid sau lichid se va prevedea și suprafața necesară depozitării combustibilului.",
+          },
+          {
+            type: "note",
+            content: "Suprafața încăperii sanitare principale din locuință va permite accesul la cada de baie al persoanelor imobilizate în scaun cu rotile.",
+          },
+          {
+            type: "note",
+            content: "Încăperea sanitară se include în locuință, în cazul în care pot fi asigurate alimentarea cu apă și canalizarea.",
+          },
+          {
+            type: "note",
+            content: "Lățimea minimă de circulație a coridoarelor și a vestibulului din interiorul locuinței va fi de 120 cm.",
+          },
+          {
+            type: "note",
+            content: "În funcție de amplasamentul construcției, suprafețele construite pot avea abateri în limitele de ±10%.",
+          },
+          {
+            type: "note",
+            content: "Numărul de persoane pe locuință se utilizează la repartizarea locuințelor sociale, de intervenție, de serviciu și de necesitate.",
+          },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-c",
+        title: "C. Încăperi sanitare",
+        children: [
+          {
+            type: "table",
+            tableData: {
+              headers: ["", "1 cameră", "2 camere", "3 camere", "4 camere", "5 camere"],
+              rows: [
+                ["Baie", "1", "1", "1", "1", "2"],
+                ["Duș", "-", "-", "-", "1", "-"],
+                ["WC", "-", "-", "1", "-", "-"],
+              ],
+            },
+          },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-d",
+        title: "D. Dotarea minimă a încăperilor sanitare",
+        children: [
+          {
+            type: "table",
+            tableData: {
+              headers: ["", "Baie", "Duș", "WC"],
+              rows: [
+                ["Cadă de baie", "1", "-", "-"],
+                ["Vas WC", "1", "1", "1"],
+                ["Lavoar mare", "1", "-", "-"],
+                ["Lavoar mic", "-", "1", "1"],
+                ["Cuvă pentru duș", "-", "1", "-"],
+                ["Etajeră mare", "1", "-", "-"],
+                ["Etajeră mică", "-", "1", "1"],
+                ["Oglindă mare", "1", "-", "-"],
+                ["Oglindă mică", "-", "1", "1"],
+                ["Portprosop", "1", "1", "1"],
+                ["Portsăpun", "1", "1", "1"],
+                ["Porthârtie", "1", "1", "1"],
+                ["Cuier", "1", "1", "-"],
+                ["Sifon pardoseală", "1", "1", "-"],
+              ],
+            },
+          },
+          {
+            type: "note",
+            content: "În baie se va prevedea spațiul pentru mașina de spălat rufe.",
+          },
+          {
+            type: "note",
+            content: "Încăperile sanitare vor fi ventilate direct sau prin coș de ventilație.",
+          },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-e",
+        title: "E. Dotarea minimă a bucătăriei",
+        children: [
+          {
+            type: "table",
+            tableData: {
+              headers: ["Nr. de camere/locuință", "1-2", "3", "4", "5"],
+              rows: [
+                ["Spălător cu cuvă și picurător", "1", "1", "1", "1"],
+              ],
+            },
+          },
+          {
+            type: "note",
+            content: "În bucătărie se vor prevedea: coș de ventilație, spațiu pentru frigider și pentru masă de lucru.",
+          },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-f",
+        title: "F. Dotarea minimă cu instalații electrice",
+        children: [
+          {
+            type: "table",
+            tableData: {
+              headers: ["", "Dormitor", "Camera de zi", "Bucătărie", "Baie", "Duș", "WC"],
+              rows: [
+                ["Loc de lampă", "1", "1", "-", "-", "-", "-"],
+                ["Aplică", "-", "-", "1", "1", "1", "1"],
+                ["Comutator", "1", "1", "-", "-", "-", "-"],
+                ["Întrerupător", "-", "-", "1", "1", "1", "1"],
+                ["Priză", "2", "3", "1", "-", "-", "-"],
+                ["Priză cu contact de protecție", "-", "-", "1", "1", "-", "-"],
+              ],
+            },
+          },
+          {
+            type: "note",
+            content: "Se vor prevedea întrerupătoare și aplice pentru fiecare spațiu de depozitare și spațiu de circulație.",
+          },
+          {
+            type: "note",
+            content: "Priza cu contact de protecție, instalată pentru baie, se montează în exteriorul încăperii.",
+          },
+          {
+            type: "note",
+            content: "Fiecare locuință va fi prevăzută cu instalație de sonerie.",
+          },
+          {
+            type: "note",
+            content: "În clădiri cu mai multe locuințe se vor prevedea instalații și prize pentru antenă colectivă și telefon.",
+          },
+          {
+            type: "note",
+            content: "Pentru locuințele situate în mediu rural, dotările minime privind încăperile sanitare și bucătăria se vor putea realiza pe parcursul existenței construcției, în corelare cu racordarea locuinței la rețelele de utilitate publică sau la sistemul propriu de alimentare cu apă și evacuare controlată a apelor uzate.",
+          },
+        ],
+      },
+      {
+        type: "article",
+        id: "anexa-1-g",
+        title: "G. Spații și instalații de folosință comună pentru clădiri cu mai multe locuințe",
+        items: [
+          "– Instalații de prevenire și stingere a incendiilor, precum și ascensor conform normelor în vigoare.",
+          "– Spații pentru biciclete, cărucioare și pentru uscarea rufelor.",
+          "– Spații destinate colectării, depozitării și evacuării deșeurilor menajere.",
+          "– Spații pentru depozitarea combustibililor solizi sau lichizi, în situațiile în care nu se pot asigura încălzirea centrală și/sau gaze la bucătărie.",
+          "– Rampă de acces pentru persoanele imobilizate în scaun cu rotile.",
         ],
       },
     ],
