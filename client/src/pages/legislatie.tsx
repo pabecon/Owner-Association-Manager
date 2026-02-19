@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { useRoute } from "wouter";
+import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { LEGISLATION_ITEMS, type LegislationItem } from "@/lib/legislation-data";
+import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { Scale, ExternalLink, FileText, ChevronRight } from "lucide-react";
 
 export default function Legislatie() {
@@ -27,15 +27,10 @@ export default function Legislatie() {
             {LEGISLATION_ITEMS.map((law) => {
               const isActive = selectedId === law.id;
               return (
-                <a
+                <Link
                   key={law.id}
                   href={`/legislatie/${law.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.history.pushState(null, "", `/legislatie/${law.id}`);
-                    window.dispatchEvent(new PopStateEvent("popstate"));
-                  }}
-                  className={`block rounded-md p-2.5 cursor-pointer transition-colors ${isActive ? "bg-sidebar-accent" : "hover-elevate"}`}
+                  className={`block rounded-md p-2.5 cursor-pointer ${isActive ? "bg-sidebar-accent" : "hover-elevate"}`}
                   data-testid={`link-law-${law.id}`}
                 >
                   <div className="flex items-start gap-2">
@@ -55,7 +50,7 @@ export default function Legislatie() {
                     </div>
                     {isActive && <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />}
                   </div>
-                </a>
+                </Link>
               );
             })}
           </div>
