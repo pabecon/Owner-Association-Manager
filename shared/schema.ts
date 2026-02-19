@@ -68,11 +68,20 @@ export const apartments = pgTable("apartments", {
   number: text("number").notNull(),
   floor: integer("floor").notNull(),
   surface: numeric("surface", { precision: 8, scale: 2 }),
+  builtSurface: numeric("built_surface", { precision: 8, scale: 2 }),
   rooms: integer("rooms"),
   ownerName: text("owner_name"),
   ownerPhone: text("owner_phone"),
   ownerEmail: text("owner_email"),
   residents: integer("residents").default(1),
+});
+
+export const unitRooms = pgTable("unit_rooms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  apartmentId: varchar("apartment_id").notNull().references(() => apartments.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  surface: numeric("surface", { precision: 8, scale: 2 }),
+  sortOrder: integer("sort_order").default(0),
 });
 
 export const expenses = pgTable("expenses", {
@@ -144,6 +153,7 @@ export const insertAssociationSchema = createInsertSchema(associations).omit({ i
 export const insertBuildingSchema = createInsertSchema(buildings).omit({ id: true });
 export const insertStaircaseSchema = createInsertSchema(staircases).omit({ id: true });
 export const insertApartmentSchema = createInsertSchema(apartments).omit({ id: true });
+export const insertUnitRoomSchema = createInsertSchema(unitRooms).omit({ id: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
 export const insertPaymentSchema = createInsertSchema(payments).omit({ id: true });
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({ id: true, createdAt: true });
@@ -159,6 +169,8 @@ export type InsertStaircase = z.infer<typeof insertStaircaseSchema>;
 export type Staircase = typeof staircases.$inferSelect;
 export type InsertApartment = z.infer<typeof insertApartmentSchema>;
 export type Apartment = typeof apartments.$inferSelect;
+export type InsertUnitRoom = z.infer<typeof insertUnitRoomSchema>;
+export type UnitRoom = typeof unitRooms.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;

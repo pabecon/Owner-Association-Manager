@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Federation, Association, Building, Staircase } from "@shared/schema";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
 import {
-  Upload, FileText, Image, File, Loader2, X
+  Upload, FileText, Image, File, Loader2, X, Plus, Trash2
 } from "lucide-react";
 
 type EntityLevel = "federation" | "association" | "building" | "staircase" | "apartment";
@@ -21,6 +21,11 @@ interface PendingFile {
   file: File;
   customName: string;
   description: string;
+}
+
+interface RoomEntry {
+  name: string;
+  surface: string;
 }
 
 interface AddEntityDialogProps {
@@ -93,11 +98,13 @@ export function AddEntityDialog({
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [fileDescription, setFileDescription] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [roomEntries, setRoomEntries] = useState<RoomEntry[]>([]);
 
   const resetForm = useCallback(() => {
     setFormData({});
     setPendingFiles([]);
     setFileDescription("");
+    setRoomEntries([]);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -219,13 +226,15 @@ export function AddEntityDialog({
           setIsSaving(false);
           return;
         }
+        const validRooms = roomEntries.filter(r => r.name.trim());
         body = {
           staircaseId: stId,
           unitType: formData.unitType || "apartment",
           number: formData.number,
           floor: Number(formData.floor || "0"),
           surface: formData.surface || null,
-          rooms: formData.rooms ? Number(formData.rooms) : null,
+          builtSurface: formData.builtSurface || null,
+          rooms: validRooms.length > 0 ? validRooms.length : (formData.rooms ? Number(formData.rooms) : null),
           ownerName: formData.ownerName || null,
           ownerPhone: formData.ownerPhone || null,
           ownerEmail: formData.ownerEmail || null,
@@ -235,6 +244,16 @@ export function AddEntityDialog({
 
       const res = await apiRequest("POST", LEVEL_ENDPOINTS[level], body);
       const created = await res.json();
+
+      if (level === "apartment" && created.id && roomEntries.filter(r => r.name.trim()).length > 0) {
+        await apiRequest("POST", "/api/unit-rooms", {
+          apartmentId: created.id,
+          rooms: roomEntries.filter(r => r.name.trim()).map(r => ({
+            name: r.name.trim(),
+            surface: r.surface || null,
+          })),
+        });
+      }
 
       if (pendingFiles.length > 0 && created.id) {
         const entityType = level === "apartment" ? "apartment" : level;
@@ -266,7 +285,7 @@ export function AddEntityDialog({
     } finally {
       setIsSaving(false);
     }
-  }, [level, formData, parentId, pendingFiles, uploadFile, handleClose, toast]);
+  }, [level, formData, parentId, pendingFiles, roomEntries, uploadFile, handleClose, toast]);
 
   const renderFields = () => {
     switch (level) {
@@ -446,9 +465,61 @@ export function AddEntityDialog({
           </div>
         );
 
-      case "apartment":
+      case "apartment": {
+        const selectedAssocId = formData.associationId || "";
+        const filteredBuildings = (buildings || []).filter(b => !selectedAssocId || b.associationId === selectedAssocId);
+        const selectedBuildingId = formData.buildingId || "";
+        const filteredStaircases = (staircases || []).filter(s => !selectedBuildingId || s.buildingId === selectedBuildingId);
+
         return (
           <div className="space-y-3">
+            {!parentId && (
+              <>
+                <div>
+                  <Label>Asociatie *</Label>
+                  <Select value={selectedAssocId} onValueChange={v => { updateField("associationId", v); updateField("buildingId", ""); updateField("staircaseId", ""); }}>
+                    <SelectTrigger data-testid="select-apt-association">
+                      <SelectValue placeholder="Selecteaza asociatia" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(associations || []).map(a => (
+                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {selectedAssocId && (
+                  <div>
+                    <Label>Bloc *</Label>
+                    <Select value={selectedBuildingId} onValueChange={v => { updateField("buildingId", v); updateField("staircaseId", ""); }}>
+                      <SelectTrigger data-testid="select-apt-building">
+                        <SelectValue placeholder="Selecteaza blocul" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredBuildings.map(b => (
+                          <SelectItem key={b.id} value={b.id}>{b.name} - {b.address}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {selectedBuildingId && (
+                  <div>
+                    <Label>Scara *</Label>
+                    <Select value={formData.staircaseId || ""} onValueChange={v => updateField("staircaseId", v)}>
+                      <SelectTrigger data-testid="select-apt-staircase">
+                        <SelectValue placeholder="Selecteaza scara" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredStaircases.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="apt-num">Numar *</Label>
@@ -468,35 +539,62 @@ export function AddEntityDialog({
                 </Select>
               </div>
             </div>
-            {!parentId && staircases && (
-              <div>
-                <Label>Scara *</Label>
-                <Select value={formData.staircaseId || ""} onValueChange={v => updateField("staircaseId", v)}>
-                  <SelectTrigger data-testid="select-staircase">
-                    <SelectValue placeholder="Selecteaza scara" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {staircases.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="apt-floor">Etaj *</Label>
                 <Input id="apt-floor" type="number" value={formData.floor || "0"} onChange={e => updateField("floor", e.target.value)} placeholder="0" data-testid="input-entity-floor" />
               </div>
               <div>
-                <Label htmlFor="apt-surface">Suprafata (mp)</Label>
+                <Label htmlFor="apt-surface">Suprafata Utila (mp)</Label>
                 <Input id="apt-surface" value={formData.surface || ""} onChange={e => updateField("surface", e.target.value)} placeholder="mp" data-testid="input-entity-surface" />
               </div>
               <div>
-                <Label htmlFor="apt-rooms">Camere</Label>
-                <Input id="apt-rooms" type="number" value={formData.rooms || ""} onChange={e => updateField("rooms", e.target.value)} placeholder="Nr." data-testid="input-entity-rooms" />
+                <Label htmlFor="apt-built">Suprafata Construita (mp)</Label>
+                <Input id="apt-built" value={formData.builtSurface || ""} onChange={e => updateField("builtSurface", e.target.value)} placeholder="mp" data-testid="input-entity-built-surface" />
               </div>
             </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Label className="text-sm font-medium">Camere</Label>
+                <Button size="sm" variant="outline" onClick={() => setRoomEntries(prev => [...prev, { name: "", surface: "" }])} data-testid="button-add-room">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />Camera
+                </Button>
+              </div>
+              {roomEntries.length === 0 && (
+                <p className="text-xs text-muted-foreground">Adauga camere pentru a introduce suprafata utila pe camera</p>
+              )}
+              {roomEntries.map((room, idx) => (
+                <div key={idx} className="flex items-center gap-2" data-testid={`room-entry-${idx}`}>
+                  <Input
+                    className="flex-1 text-sm"
+                    placeholder={`Camera ${idx + 1} (ex: Living, Dormitor)`}
+                    value={room.name}
+                    onChange={e => setRoomEntries(prev => prev.map((r, i) => i === idx ? { ...r, name: e.target.value } : r))}
+                    data-testid={`input-room-name-${idx}`}
+                  />
+                  <Input
+                    className="w-24 text-sm"
+                    placeholder="mp"
+                    value={room.surface}
+                    onChange={e => setRoomEntries(prev => prev.map((r, i) => i === idx ? { ...r, surface: e.target.value } : r))}
+                    data-testid={`input-room-surface-${idx}`}
+                  />
+                  <Button size="icon" variant="ghost" onClick={() => setRoomEntries(prev => prev.filter((_, i) => i !== idx))} data-testid={`button-remove-room-${idx}`}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+              {roomEntries.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {roomEntries.filter(r => r.name.trim()).length} camere definite
+                  {roomEntries.some(r => r.surface) && (
+                    <> - Suprafata totala: {roomEntries.reduce((s, r) => s + (parseFloat(r.surface) || 0), 0).toFixed(2)} mp</>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="apt-owner">Proprietar</Label>
@@ -517,6 +615,7 @@ export function AddEntityDialog({
             </div>
           </div>
         );
+      }
     }
   };
 

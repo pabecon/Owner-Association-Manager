@@ -188,6 +188,52 @@ export async function registerRoutes(
     res.json(apartment);
   });
 
+  // Unit Rooms
+  app.get("/api/unit-rooms/:apartmentId", ...auth, async (req: AuthenticatedRequest, res) => {
+    const apt = await storage.getApartment(req.params.apartmentId as string);
+    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      if (!isInApartmentScope(req, apt.id)) {
+        return res.status(403).json({ message: "Nu aveti acces" });
+      }
+    }
+    const rooms = await storage.getUnitRoomsByApartment(req.params.apartmentId as string);
+    res.json(rooms);
+  });
+
+  app.post("/api/unit-rooms", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const { apartmentId, rooms } = req.body;
+    if (!apartmentId || !Array.isArray(rooms)) {
+      return res.status(400).json({ message: "apartmentId si rooms sunt obligatorii" });
+    }
+    const apt = await storage.getApartment(apartmentId);
+    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    await storage.deleteUnitRoomsByApartment(apartmentId);
+    const created = [];
+    for (let i = 0; i < rooms.length; i++) {
+      const room = rooms[i];
+      if (typeof room.name !== "string" || !room.name.trim()) continue;
+      const r = await storage.createUnitRoom({
+        apartmentId,
+        name: room.name.trim(),
+        surface: room.surface ? String(room.surface) : null,
+        sortOrder: i,
+      });
+      created.push(r);
+    }
+    res.json(created);
+  });
+
+  app.delete("/api/unit-rooms/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteUnitRoom(req.params.id as string);
+    res.json({ success: true });
+  });
+
   // Expenses
   app.get("/api/expenses", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllExpenses) {

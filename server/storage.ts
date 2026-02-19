@@ -9,8 +9,9 @@ import {
   type Staircase, type InsertStaircase,
   type UserRoleRecord, type InsertUserRole,
   type Document, type InsertDocument,
+  type UnitRoom, type InsertUnitRoom,
   buildings, apartments, expenses, payments, announcements,
-  federations, associations, staircases, userRoles, documents,
+  federations, associations, staircases, userRoles, documents, unitRooms,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -71,6 +72,11 @@ export interface IStorage {
   getUserRolesByScope(scope: { federationId?: string; buildingId?: string }): Promise<UserRoleRecord[]>;
   createUserRole(data: InsertUserRole): Promise<UserRoleRecord>;
   deleteUserRole(id: string): Promise<void>;
+
+  getUnitRoomsByApartment(apartmentId: string): Promise<UnitRoom[]>;
+  createUnitRoom(data: InsertUnitRoom): Promise<UnitRoom>;
+  deleteUnitRoom(id: string): Promise<void>;
+  deleteUnitRoomsByApartment(apartmentId: string): Promise<void>;
 
   getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]>;
   getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]>;
@@ -296,6 +302,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUserRole(id: string): Promise<void> {
     await db.delete(userRoles).where(eq(userRoles.id, id));
+  }
+
+  async getUnitRoomsByApartment(apartmentId: string): Promise<UnitRoom[]> {
+    return db.select().from(unitRooms).where(eq(unitRooms.apartmentId, apartmentId));
+  }
+
+  async createUnitRoom(data: InsertUnitRoom): Promise<UnitRoom> {
+    const [room] = await db.insert(unitRooms).values(data).returning();
+    return room;
+  }
+
+  async deleteUnitRoom(id: string): Promise<void> {
+    await db.delete(unitRooms).where(eq(unitRooms.id, id));
+  }
+
+  async deleteUnitRoomsByApartment(apartmentId: string): Promise<void> {
+    await db.delete(unitRooms).where(eq(unitRooms.apartmentId, apartmentId));
   }
 
   async getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]> {
