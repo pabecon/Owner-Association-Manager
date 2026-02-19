@@ -11,7 +11,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - Dashboard, Explorer, HierarchyTree, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala
+- `client/src/pages/` - Dashboard, Explorer, HierarchyTree, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala, PermissionsMatrix
 - `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
@@ -36,11 +36,12 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 ## Authentication & Roles
 - **Authentication**: Bypassed - all requests get default-admin super_admin access
 - **Role hierarchy** (level 5 to 1):
-  - `super_admin` (5): Platform-wide access to everything
-  - `admin` (4): Federation/association-level management
-  - `manager` / `gestor` (3): Building-level management
-  - `owner` / `proprietar` (2): Apartment-level, can manage tenants
-  - `tenant` / `chirias` (1): Read-only access to own apartment
+  - `super_admin` (5): Super Administrator - Platform-wide absolute access. Only platform owner.
+  - `admin` (4): Gestor Super Admin - Created by super_admin with configurable rights at federation/association level.
+  - `manager` (3): Administrator - Federation/association administrator. Manages buildings, staircases, units.
+  - `owner` (2): Proprietar - Property owner. Can view own data and create tenants.
+  - `tenant` (1): Chirias - Read-only access to own unit data.
+- **Permissions Matrix**: Visual page at /permissions-matrix showing all roles vs all permissions in a table with 4 access levels (Total/Limitat/Propriu/Interzis). Defined in PERMISSION_MATRIX in shared/schema.ts.
 - **Scope**: Roles are scoped to federation, building, or apartment level
 - **Permissions**: Computed from roles in middleware, checked via `requirePermission()` middleware
 
