@@ -19,6 +19,7 @@ type EntityLevel = "federation" | "association" | "building" | "staircase" | "ap
 
 interface PendingFile {
   file: File;
+  customName: string;
   description: string;
 }
 
@@ -112,6 +113,7 @@ export function AddEntityDialog({
     if (!files) return;
     const newFiles: PendingFile[] = Array.from(files).map(f => ({
       file: f,
+      customName: f.name.replace(/\.[^/.]+$/, ""),
       description: fileDescription,
     }));
     setPendingFiles(prev => [...prev, ...newFiles]);
@@ -120,6 +122,10 @@ export function AddEntityDialog({
 
   const removeFile = useCallback((index: number) => {
     setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const updateFileName = useCallback((index: number, name: string) => {
+    setPendingFiles(prev => prev.map((f, i) => i === index ? { ...f, customName: name } : f));
   }, []);
 
   const updateFileDescription = useCallback((index: number, desc: string) => {
@@ -235,12 +241,14 @@ export function AddEntityDialog({
         for (const pf of pendingFiles) {
           const uploadResult = await uploadFile(pf.file);
           if (uploadResult) {
+            const ext = pf.file.name.includes(".") ? pf.file.name.substring(pf.file.name.lastIndexOf(".")) : "";
+            const displayName = pf.customName?.trim() ? pf.customName.trim() + ext : pf.file.name;
             await apiRequest("POST", "/api/documents", {
               entityType,
               entityId: created.id,
               floorNumber: null,
-              fileName: pf.file.name,
-              originalName: pf.file.name,
+              fileName: displayName,
+              originalName: displayName,
               mimeType: pf.file.type || "application/octet-stream",
               size: pf.file.size,
               objectPath: uploadResult.objectPath,
@@ -540,24 +548,30 @@ export function AddEntityDialog({
                 {pendingFiles.map((pf, idx) => {
                   const Icon = getFileIcon(pf.file.type);
                   return (
-                    <div key={idx} className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50" data-testid={`pending-file-${idx}`}>
-                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{pf.file.name}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{formatFileSize(pf.file.size)}</span>
-                          <Input
-                            className="h-6 text-xs border-0 bg-transparent px-1"
-                            placeholder="Descriere document..."
-                            value={pf.description}
-                            onChange={e => updateFileDescription(idx, e.target.value)}
-                            data-testid={`input-file-desc-${idx}`}
-                          />
-                        </div>
+                    <div key={idx} className="px-3 py-2 rounded-md bg-muted/50 space-y-1.5" data-testid={`pending-file-${idx}`}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">{pf.file.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">({formatFileSize(pf.file.size)})</span>
+                        <div className="flex-1" />
+                        <Button size="icon" variant="ghost" onClick={() => removeFile(idx)} data-testid={`button-remove-file-${idx}`}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => removeFile(idx)} data-testid={`button-remove-file-${idx}`}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
+                      <Input
+                        className="text-sm"
+                        placeholder="Nume document..."
+                        value={pf.customName}
+                        onChange={e => updateFileName(idx, e.target.value)}
+                        data-testid={`input-file-name-${idx}`}
+                      />
+                      <Input
+                        className="text-xs"
+                        placeholder="Descriere (optional)..."
+                        value={pf.description}
+                        onChange={e => updateFileDescription(idx, e.target.value)}
+                        data-testid={`input-file-desc-${idx}`}
+                      />
                     </div>
                   );
                 })}

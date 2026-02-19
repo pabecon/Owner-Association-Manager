@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Network, Users, Building2, ArrowUpDown, Layers, Home, ChevronRight,
-  MapPin, Phone, Mail, User, FileText, Car, Package
+  MapPin, Phone, Mail, User, FileText, Car, Package, Plus
 } from "lucide-react";
 import { DocumentManager } from "@/components/document-manager";
+import { AddEntityDialog } from "@/components/add-entity-dialog";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 
@@ -89,6 +90,18 @@ export default function Explorer() {
     }
   };
 
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addLevel, setAddLevel] = useState<"federation" | "association" | "building" | "staircase" | "apartment">("federation");
+  const [addParentId, setAddParentId] = useState<string | undefined>();
+  const [addParentName, setAddParentName] = useState<string | undefined>();
+
+  const openAdd = useCallback((level: "federation" | "association" | "building" | "staircase" | "apartment", parentId?: string, parentName?: string) => {
+    setAddLevel(level);
+    setAddParentId(parentId);
+    setAddParentName(parentName);
+    setAddDialogOpen(true);
+  }, []);
+
   const independentAssociations = associations?.filter(a => !a.federationId) || [];
 
   const currentAssociations = selectedFederation
@@ -152,16 +165,18 @@ export default function Explorer() {
         {breadcrumbs.map((item, i) => (
           <div key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handleBreadcrumbClick(i)}
-              className={`px-2 py-1 rounded-md transition-colors ${i === breadcrumbs.length - 1
+              className={i === breadcrumbs.length - 1
                 ? "font-medium text-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
+                : "text-muted-foreground"
+              }
               data-testid={`breadcrumb-${item.level}`}
             >
               {item.label}
-            </button>
+            </Button>
           </div>
         ))}
       </div>
@@ -175,6 +190,15 @@ export default function Explorer() {
       ) : (
         <>
           {currentLevel === "root" && (
+            <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button size="sm" variant="outline" onClick={() => openAdd("federation")} data-testid="button-explorer-add-federation">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />Federatie
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => openAdd("association")} data-testid="button-explorer-add-association">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />Asociatie
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {federations?.map(fed => (
                 <Card
@@ -228,9 +252,16 @@ export default function Explorer() {
                 </Card>
               )}
             </div>
+            </div>
           )}
 
           {(currentLevel === "federation" || currentLevel === "independent") && (
+            <div className="space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button size="sm" variant="outline" onClick={() => openAdd("association", selectedFederation?.id, selectedFederation?.name)} data-testid="button-explorer-add-association-ctx">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />Asociatie
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {currentAssociations.map(assoc => (
                 <Card
@@ -275,10 +306,16 @@ export default function Explorer() {
                 </CardContent></Card>
               )}
             </div>
+            </div>
           )}
 
           {currentLevel === "association" && (
             <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => openAdd("building", selectedAssociation?.id, selectedAssociation?.name)} data-testid="button-explorer-add-building-ctx">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />Bloc
+                </Button>
+              </div>
               {selectedAssociation && (
                 <Card>
                   <CardContent className="p-4">
@@ -348,6 +385,11 @@ export default function Explorer() {
 
           {currentLevel === "building" && (
             <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => openAdd("staircase", selectedBuilding?.id, selectedBuilding?.name)} data-testid="button-explorer-add-staircase-ctx">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />Scara
+                </Button>
+              </div>
               {selectedBuilding && (
                 <Card>
                   <CardContent className="p-4">
@@ -401,6 +443,11 @@ export default function Explorer() {
 
           {currentLevel === "staircase" && (
             <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => openAdd("apartment", selectedStaircase?.id, selectedStaircase?.name)} data-testid="button-explorer-add-apartment-ctx">
+                  <Plus className="w-3.5 h-3.5 mr-1.5" />Unitate
+                </Button>
+              </div>
               {selectedStaircase && (
                 <Card>
                   <CardContent className="p-4">
@@ -511,6 +558,18 @@ export default function Explorer() {
           )}
         </>
       )}
+
+      <AddEntityDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        level={addLevel}
+        parentId={addParentId}
+        parentName={addParentName}
+        federations={federations}
+        associations={associations}
+        buildings={buildings}
+        staircases={staircases}
+      />
     </div>
   );
 }

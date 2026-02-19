@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,10 +42,15 @@ function getMimeLabel(mimeType: string) {
   return "Fisier";
 }
 
+interface StagedFile {
+  file: File;
+  customName: string;
+  description: string;
+}
+
 export function DocumentManager({ entityType, entityId, floorNumber, title, compact }: DocumentManagerProps) {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [description, setDescription] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   const { toast } = useToast();
 
   const queryKey = floorNumber !== undefined
@@ -104,27 +109,27 @@ export function DocumentManager({ entityType, entityId, floorNumber, title, comp
   });
 
   const handleUpload = useCallback(async () => {
-    if (!selectedFiles || selectedFiles.length === 0) return;
+    if (stagedFiles.length === 0) return;
 
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      const result = await uploadFile(file);
+    for (const sf of stagedFiles) {
+      const result = await uploadFile(sf.file);
       if (result) {
+        const ext = sf.file.name.includes(".") ? sf.file.name.substring(sf.file.name.lastIndexOf(".")) : "";
+        const displayName = sf.customName?.trim() ? sf.customName.trim() + ext : sf.file.name;
         await saveMutation.mutateAsync({
-          fileName: file.name,
-          originalName: file.name,
-          mimeType: file.type || "application/octet-stream",
-          size: file.size,
+          fileName: displayName,
+          originalName: displayName,
+          mimeType: sf.file.type || "application/octet-stream",
+          size: sf.file.size,
           objectPath: result.objectPath,
-          description,
+          description: sf.description,
         });
       }
     }
 
-    setSelectedFiles(null);
-    setDescription("");
+    setStagedFiles([]);
     setShowUploadDialog(false);
-  }, [selectedFiles, description, uploadFile, saveMutation]);
+  }, [stagedFiles, uploadFile, saveMutation]);
 
   const docCount = docs?.length || 0;
 
@@ -185,10 +190,8 @@ export function DocumentManager({ entityType, entityId, floorNumber, title, comp
           open={showUploadDialog}
           onOpenChange={setShowUploadDialog}
           title={title || "Documente"}
-          description={description}
-          onDescriptionChange={setDescription}
-          selectedFiles={selectedFiles}
-          onFilesChange={setSelectedFiles}
+          stagedFiles={stagedFiles}
+          onStagedFilesChange={setStagedFiles}
           onUpload={handleUpload}
           isUploading={isUploading || saveMutation.isPending}
         />
@@ -269,10 +272,8 @@ export function DocumentManager({ entityType, entityId, floorNumber, title, comp
           open={showUploadDialog}
           onOpenChange={setShowUploadDialog}
           title={title || "Documente"}
-          description={description}
-          onDescriptionChange={setDescription}
-          selectedFiles={selectedFiles}
-          onFilesChange={setSelectedFiles}
+          stagedFiles={stagedFiles}
+          onStagedFilesChange={setStagedFiles}
           onUpload={handleUpload}
           isUploading={isUploading || saveMutation.isPending}
         />
@@ -285,65 +286,103 @@ function UploadDialog({
   open,
   onOpenChange,
   title,
-  description,
-  onDescriptionChange,
-  selectedFiles,
-  onFilesChange,
+  stagedFiles,
+  onStagedFilesChange,
   onUpload,
   isUploading,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
-  description: string;
-  onDescriptionChange: (v: string) => void;
-  selectedFiles: FileList | null;
-  onFilesChange: (files: FileList | null) => void;
+  stagedFiles: StagedFile[];
+  onStagedFilesChange: (files: StagedFile[]) => void;
   onUpload: () => void;
   isUploading: boolean;
 }) {
+  const addFiles = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles: StagedFile[] = Array.from(files).map(f => ({
+      file: f,
+      customName: f.name.replace(/\.[^/.]+$/, ""),
+      description: "",
+    }));
+    onStagedFilesChange([...stagedFiles, ...newFiles]);
+  };
+
+  const updateName = (idx: number, name: string) => {
+    onStagedFilesChange(stagedFiles.map((sf, i) => i === idx ? { ...sf, customName: name } : sf));
+  };
+
+  const updateDescription = (idx: number, desc: string) => {
+    onStagedFilesChange(stagedFiles.map((sf, i) => i === idx ? { ...sf, description: desc } : sf));
+  };
+
+  const removeFile = (idx: number) => {
+    onStagedFilesChange(stagedFiles.filter((_, i) => i !== idx));
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onStagedFilesChange([]); onOpenChange(v); }}>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Incarca {title}</DialogTitle>
-          <DialogDescription>Selecteaza fisierele pe care doresti sa le atasezi (JPG, PDF, DOC, etc.)</DialogDescription>
+          <DialogDescription>Selecteaza fisierele pe care doresti sa le atasezi. Poti numi fiecare document.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Fisiere</label>
-            <Input
+          {stagedFiles.length > 0 && (
+            <div className="space-y-3">
+              {stagedFiles.map((sf, idx) => {
+                const Icon = getFileIcon(sf.file.type);
+                return (
+                  <div key={idx} className="px-3 py-2 rounded-md bg-muted/50 space-y-1.5" data-testid={`staged-file-${idx}`}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-xs text-muted-foreground truncate">{sf.file.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">({formatFileSize(sf.file.size)})</span>
+                      <div className="flex-1" />
+                      <Button size="icon" variant="ghost" onClick={() => removeFile(idx)} data-testid={`button-remove-staged-${idx}`}>
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      className="text-sm"
+                      placeholder="Nume document..."
+                      value={sf.customName}
+                      onChange={e => updateName(idx, e.target.value)}
+                      data-testid={`input-staged-name-${idx}`}
+                    />
+                    <Input
+                      className="text-xs"
+                      placeholder="Descriere (optional)..."
+                      value={sf.description}
+                      onChange={e => updateDescription(idx, e.target.value)}
+                      data-testid={`input-staged-desc-${idx}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <label>
+            <input
               type="file"
               multiple
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-              onChange={(e) => onFilesChange(e.target.files)}
+              className="hidden"
+              onChange={(e) => addFiles(e.target.files)}
               data-testid="input-file-upload"
             />
-            {selectedFiles && selectedFiles.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {Array.from(selectedFiles).map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <File className="w-3 h-3" />
-                    <span className="truncate">{f.name}</span>
-                    <span>({formatFileSize(f.size)})</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Descriere (optional)</label>
-            <Input
-              placeholder="ex: Extras carte funciara, fisa cadastrala..."
-              value={description}
-              onChange={(e) => onDescriptionChange(e.target.value)}
-              data-testid="input-doc-description"
-            />
-          </div>
+            <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-dashed border-muted-foreground/30 cursor-pointer hover-elevate text-sm text-muted-foreground">
+              <Upload className="w-4 h-4" />
+              <span>Adauga fisiere (imagini, PDF, documente)</span>
+            </div>
+          </label>
+
           <Button
             className="w-full"
             onClick={onUpload}
-            disabled={!selectedFiles || selectedFiles.length === 0 || isUploading}
+            disabled={stagedFiles.length === 0 || isUploading}
             data-testid="button-confirm-upload"
           >
             {isUploading ? (
@@ -354,7 +393,7 @@ function UploadDialog({
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                Incarca {selectedFiles ? `${selectedFiles.length} fisier(e)` : ""}
+                Incarca {stagedFiles.length > 0 ? `${stagedFiles.length} fisier(e)` : ""}
               </>
             )}
           </Button>
