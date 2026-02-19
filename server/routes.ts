@@ -67,6 +67,11 @@ export async function registerRoutes(
     res.json(federation);
   });
 
+  app.delete("/api/federations/:id", ...auth, requireRole("super_admin"), async (req, res) => {
+    await storage.deleteFederation(req.params.id as string);
+    res.json({ success: true });
+  });
+
   // Buildings
   app.get("/api/buildings", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllBuildings) {
@@ -87,6 +92,17 @@ export async function registerRoutes(
     }
     const building = await storage.createBuilding(parsed.data);
     res.json(building);
+  });
+
+  app.delete("/api/buildings/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const id = req.params.id as string;
+    const building = await storage.getBuilding(id);
+    if (!building) return res.status(404).json({ message: "Blocul nu a fost gasit" });
+    if (!isInBuildingScope(req, building.id)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    await storage.deleteBuilding(id);
+    res.json({ success: true });
   });
 
   // Apartments

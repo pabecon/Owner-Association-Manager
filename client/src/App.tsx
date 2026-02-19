@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import Federations from "@/pages/federations";
+import Buildings from "@/pages/buildings";
 import Apartments from "@/pages/apartments";
 import Expenses from "@/pages/expenses";
 import Payments from "@/pages/payments";
@@ -24,6 +26,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/federations" component={Federations} />
+      <Route path="/buildings" component={Buildings} />
       <Route path="/apartments" component={Apartments} />
       <Route path="/expenses" component={Expenses} />
       <Route path="/payments" component={Payments} />

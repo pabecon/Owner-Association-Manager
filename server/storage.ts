@@ -17,12 +17,14 @@ export interface IStorage {
   getFederations(): Promise<Federation[]>;
   getFederation(id: string): Promise<Federation | undefined>;
   createFederation(data: InsertFederation): Promise<Federation>;
+  deleteFederation(id: string): Promise<void>;
 
   getBuildings(): Promise<Building[]>;
   getBuildingsByIds(ids: string[]): Promise<Building[]>;
   getBuildingsByFederation(federationId: string): Promise<Building[]>;
   getBuilding(id: string): Promise<Building | undefined>;
   createBuilding(data: InsertBuilding): Promise<Building>;
+  deleteBuilding(id: string): Promise<void>;
 
   getApartments(): Promise<Apartment[]>;
   getApartmentsByBuilding(buildingId: string): Promise<Apartment[]>;
@@ -75,6 +77,10 @@ export class DatabaseStorage implements IStorage {
     return federation;
   }
 
+  async deleteFederation(id: string): Promise<void> {
+    await db.delete(federations).where(eq(federations.id, id));
+  }
+
   async getBuildings(): Promise<Building[]> {
     return db.select().from(buildings);
   }
@@ -96,6 +102,10 @@ export class DatabaseStorage implements IStorage {
   async createBuilding(data: InsertBuilding): Promise<Building> {
     const [building] = await db.insert(buildings).values(data).returning();
     return building;
+  }
+
+  async deleteBuilding(id: string): Promise<void> {
+    await db.delete(buildings).where(eq(buildings.id, id));
   }
 
   async getApartments(): Promise<Apartment[]> {

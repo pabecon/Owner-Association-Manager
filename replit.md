@@ -11,7 +11,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - Landing, Dashboard, Apartments, Expenses, Payments, Announcements, Users
+- `client/src/pages/` - Landing, Dashboard, Federations, Buildings, Apartments, Expenses, Payments, Announcements, Users
 - `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
@@ -48,8 +48,8 @@ Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB tab
 
 ## API Routes (all prefixed with /api, all require auth)
 - GET /api/auth/me - Current user info with roles and permissions
-- GET/POST /api/federations
-- GET/POST /api/buildings
+- GET/POST /api/federations, DELETE /api/federations/:id
+- GET/POST /api/buildings, DELETE /api/buildings/:id
 - GET/POST /api/apartments
 - GET/POST /api/expenses, DELETE /api/expenses/:id
 - GET/POST /api/payments, PATCH /api/payments/:id
