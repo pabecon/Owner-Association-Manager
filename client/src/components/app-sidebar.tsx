@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +11,11 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, LayoutDashboard, Home, Receipt, CreditCard, Megaphone, Users, Shield, List, ChevronDown, ChevronRight, Network, ArrowUpDown, FolderTree, GitBranch, Table2 } from "lucide-react";
+import {
+  Building2, LayoutDashboard, Home, Receipt, CreditCard,
+  Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
+  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark
+} from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -31,10 +35,26 @@ interface ListConfig {
   label: string;
 }
 
+interface NavItem {
+  title: string;
+  url: string;
+  icon: ComponentType<{ className?: string }>;
+  visible: boolean;
+}
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+
+  const imobiliarPaths = ["/explorer", "/hierarchy-tree", "/federations", "/associations", "/buildings", "/staircases", "/apartments"];
+  const financiarPaths = ["/expenses", "/payments"];
+  const adminPaths = ["/announcements", "/users", "/permissions-matrix"];
+
+  const [imobiliarOpen, setImobiliarOpen] = useState(() => imobiliarPaths.some(p => location.startsWith(p)));
+  const [financiarOpen, setFinanciarOpen] = useState(() => financiarPaths.some(p => location.startsWith(p)));
+  const [adminOpen, setAdminOpen] = useState(() => adminPaths.some(p => location.startsWith(p)));
   const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
+
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
   });
@@ -45,8 +65,7 @@ export function AppSidebar() {
   const perms = roleInfo?.permissions || {};
   const highestRole = roleInfo?.highestRole;
 
-  const menuItems = [
-    { title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true },
+  const imobiliarItems: NavItem[] = [
     { title: "Explorator", url: "/explorer", icon: FolderTree, visible: true },
     { title: "Infografie", url: "/hierarchy-tree", icon: GitBranch, visible: true },
     { title: "Federatii", url: "/federations", icon: Network, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
@@ -54,14 +73,67 @@ export function AppSidebar() {
     { title: "Blocuri", url: "/buildings", icon: Building2, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
     { title: "Scari", url: "/staircases", icon: ArrowUpDown, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
     { title: "Unitati", url: "/apartments", icon: Home, visible: !!perms.viewAllApartments || !!perms.viewOwnApartment },
+  ];
+
+  const financiarItems: NavItem[] = [
     { title: "Cheltuieli", url: "/expenses", icon: Receipt, visible: !!perms.viewAllExpenses || !!perms.viewOwnExpenses },
     { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
+  ];
+
+  const adminItems: NavItem[] = [
     { title: "Anunturi", url: "/announcements", icon: Megaphone, visible: !!perms.viewAllAnnouncements || !!perms.viewOwnAnnouncements },
     { title: "Utilizatori", url: "/users", icon: Users, visible: !!perms.viewUserManagement },
     { title: "Matrice Permisiuni", url: "/permissions-matrix", icon: Table2, visible: !!perms.viewUserManagement || !!perms.manageUsers },
   ];
 
-  const visibleItems = menuItems.filter((item) => item.visible);
+  const renderMenuItem = (item: NavItem) => {
+    const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
+          <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
+            <item.icon className="w-4 h-4" />
+            <span>{item.title}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
+  const renderCollapsibleGroup = (
+    label: string,
+    icon: ComponentType<{ className?: string }>,
+    items: NavItem[],
+    isOpen: boolean,
+    toggle: () => void,
+    testId: string,
+  ) => {
+    const visibleItems = items.filter(i => i.visible);
+    if (visibleItems.length === 0) return null;
+    const Icon = icon;
+    return (
+      <SidebarGroup>
+        <SidebarGroupLabel
+          className="cursor-pointer select-none flex items-center justify-between gap-2"
+          onClick={toggle}
+          data-testid={testId}
+        >
+          <span className="flex items-center gap-1.5">
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+          </span>
+          {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        </SidebarGroupLabel>
+        {isOpen && (
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {visibleItems.map(renderMenuItem)}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        )}
+      </SidebarGroup>
+    );
+  };
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -85,25 +157,39 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigare</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {visibleItems.map((item) => {
-                const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
-                      <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {renderMenuItem({ title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {renderCollapsibleGroup(
+          "Management Imobiliar",
+          Landmark,
+          imobiliarItems,
+          imobiliarOpen,
+          () => setImobiliarOpen(!imobiliarOpen),
+          "button-toggle-imobiliar",
+        )}
+
+        {renderCollapsibleGroup(
+          "Financiar",
+          Receipt,
+          financiarItems,
+          financiarOpen,
+          () => setFinanciarOpen(!financiarOpen),
+          "button-toggle-financiar",
+        )}
+
+        {renderCollapsibleGroup(
+          "Administrare",
+          Shield,
+          adminItems,
+          adminOpen,
+          () => setAdminOpen(!adminOpen),
+          "button-toggle-administrare",
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel
@@ -111,7 +197,10 @@ export function AppSidebar() {
             onClick={() => setListsOpen(!listsOpen)}
             data-testid="button-toggle-liste-generale"
           >
-            <span>Liste Generale</span>
+            <span className="flex items-center gap-1.5">
+              <List className="w-3.5 h-3.5" />
+              Liste Generale
+            </span>
             {listsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </SidebarGroupLabel>
           {listsOpen && (
