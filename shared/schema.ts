@@ -12,24 +12,49 @@ export const federations = pgTable("federations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  presidentName: text("president_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const associations = pgTable("associations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  federationId: varchar("federation_id").references(() => federations.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  cui: text("cui"),
+  address: text("address"),
+  presidentName: text("president_name"),
+  presidentPhone: text("president_phone"),
+  presidentEmail: text("president_email"),
+  adminName: text("admin_name"),
+  adminPhone: text("admin_phone"),
+  adminEmail: text("admin_email"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const buildings = pgTable("buildings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  federationId: varchar("federation_id").references(() => federations.id),
+  associationId: varchar("association_id").notNull().references(() => associations.id),
   name: text("name").notNull(),
   address: text("address").notNull(),
-  totalApartments: integer("total_apartments").notNull(),
-  floors: integer("floors").notNull(),
-  adminName: text("admin_name").notNull(),
-  adminPhone: text("admin_phone"),
-  adminEmail: text("admin_email"),
+  totalApartments: integer("total_apartments"),
+  floors: integer("floors"),
+});
+
+export const staircases = pgTable("staircases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  buildingId: varchar("building_id").notNull().references(() => buildings.id),
+  name: text("name").notNull(),
+  floors: integer("floors"),
+  apartmentsPerFloor: integer("apartments_per_floor"),
 });
 
 export const apartments = pgTable("apartments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  buildingId: varchar("building_id").notNull().references(() => buildings.id),
+  staircaseId: varchar("staircase_id").notNull().references(() => staircases.id),
   number: text("number").notNull(),
   floor: integer("floor").notNull(),
   surface: numeric("surface", { precision: 8, scale: 2 }),
@@ -84,7 +109,9 @@ export const userRoles = pgTable("user_roles", {
 });
 
 export const insertFederationSchema = createInsertSchema(federations).omit({ id: true, createdAt: true });
+export const insertAssociationSchema = createInsertSchema(associations).omit({ id: true, createdAt: true });
 export const insertBuildingSchema = createInsertSchema(buildings).omit({ id: true });
+export const insertStaircaseSchema = createInsertSchema(staircases).omit({ id: true });
 export const insertApartmentSchema = createInsertSchema(apartments).omit({ id: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
 export const insertPaymentSchema = createInsertSchema(payments).omit({ id: true });
@@ -93,8 +120,12 @@ export const insertUserRoleSchema = createInsertSchema(userRoles).omit({ id: tru
 
 export type InsertFederation = z.infer<typeof insertFederationSchema>;
 export type Federation = typeof federations.$inferSelect;
+export type InsertAssociation = z.infer<typeof insertAssociationSchema>;
+export type Association = typeof associations.$inferSelect;
 export type InsertBuilding = z.infer<typeof insertBuildingSchema>;
 export type Building = typeof buildings.$inferSelect;
+export type InsertStaircase = z.infer<typeof insertStaircaseSchema>;
+export type Staircase = typeof staircases.$inferSelect;
 export type InsertApartment = z.infer<typeof insertApartmentSchema>;
 export type Apartment = typeof apartments.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;

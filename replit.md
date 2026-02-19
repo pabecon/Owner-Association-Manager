@@ -1,26 +1,34 @@
 # AdminBloc - Management Asociatie de Proprietari
 
 ## Overview
-A Romanian Homeowners Association (HOA) management application with multi-level role-based access control. Manages buildings, apartments, expenses, payments, and announcements for property owners' associations. Supports federations of multiple buildings.
+A Romanian Homeowners Association (HOA) management application with multi-level role-based access control. Full 5-level hierarchy: Federations -> Associations -> Buildings -> Staircases -> Apartments. Manages expenses, payments, and announcements for property owners' associations. Authentication bypassed for default super_admin access.
 
 ## Tech Stack
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui + wouter (routing) + TanStack Query
 - **Backend**: Express.js + TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Auth**: Replit Auth (OIDC) via @replit/express-auth
+- **Auth**: Bypassed (default-admin super_admin), originally Replit Auth (OIDC)
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - Landing, Dashboard, Federations, Buildings, Apartments, Expenses, Payments, Announcements, Users
+- `client/src/pages/` - Dashboard, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala
 - `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
 - `server/routes.ts` - Express API routes with scope validation
 - `server/storage.ts` - Database storage layer (IStorage interface + DatabaseStorage)
+- `server/seed.ts` - Database seeding with sample data for full hierarchy
 - `shared/schema.ts` - Drizzle schemas for all tables including user_roles
 
+## Hierarchy (5 levels)
+1. **Federations** (Federatii): Groups of associations. Optional top-level grouping.
+2. **Associations** (Asociatii): Core management unit. Can belong to a federation or be independent (federationId nullable). Has CUI, president, admin contact info.
+3. **Buildings** (Blocuri): Physical buildings. Each belongs to one association (associationId required).
+4. **Staircases** (Scari): Building entries/sections. Each belongs to one building. Has floors count and apartments-per-floor configuration.
+5. **Apartments** (Apartamente): Individual units. Each belongs to one staircase (staircaseId required). Has owner info, surface, rooms, residents.
+
 ## Authentication & Roles
-- **Authentication**: Replit Auth (OIDC) - users log in via Replit account
+- **Authentication**: Bypassed - all requests get default-admin super_admin access
 - **Role hierarchy** (level 5 to 1):
   - `super_admin` (5): Platform-wide access to everything
   - `admin` (4): Federation/association-level management
@@ -31,9 +39,11 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Permissions**: Computed from roles in middleware, checked via `requirePermission()` middleware
 
 ## Data Models
-- **Federations**: name, description (groups multiple buildings)
-- **Buildings**: name, address, floors, admin info, optional federationId
-- **Apartments**: number, floor, surface, rooms, owner info, residents count, buildingId
+- **Federations**: name, description, address, phone, email, presidentName
+- **Associations**: name, description, cui, address, federationId (nullable), president info, admin info
+- **Buildings**: name, address, totalApartments, floors, associationId (required)
+- **Staircases**: name, buildingId, floors, apartmentsPerFloor
+- **Apartments**: number, floor, surface, rooms, owner info, residents count, staircaseId (required)
 - **Expenses**: category, description, amount, month/year, split method, buildingId
 - **Payments**: apartment reference, amount, month/year, status (pending/paid), receipt
 - **Announcements**: title, content, priority (normal/important/urgent), buildingId
@@ -41,15 +51,13 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 
 ### Reference Lists (17 tables under "Liste Generale")
 Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB table, API routes, and a generic UI page.
-- Atribute Fiscale, Banci, Conturi Bancare, Conexiuni Bancare, Conturi Toshl
-- Cote TVA, Curs Valutar BNR, Orase/Judete, Prefixe Telefonice
-- Sectoare Bucuresti, Serii CI, Tari, Tipuri Drumuri
-- Tipuri Factura E-Factura, Tipuri Moneda, TVA Parteneri ANAF, Unitati de Masura
 
-## API Routes (all prefixed with /api, all require auth)
-- GET /api/auth/me - Current user info with roles and permissions
+## API Routes (all prefixed with /api, auth bypassed)
+- GET /api/me/roles - Current user role info with permissions
 - GET/POST /api/federations, DELETE /api/federations/:id
+- GET/POST /api/associations, DELETE /api/associations/:id
 - GET/POST /api/buildings, DELETE /api/buildings/:id
+- GET/POST /api/staircases, DELETE /api/staircases/:id
 - GET/POST /api/apartments
 - GET/POST /api/expenses, DELETE /api/expenses/:id
 - GET/POST /api/payments, PATCH /api/payments/:id
@@ -57,14 +65,15 @@ Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB tab
 - GET /api/users - List users (with role info)
 - POST /api/user-roles - Assign role to user
 - DELETE /api/user-roles/:id - Remove role
-- GET /api/liste-config - Reference list configs (columns, labels)
-- GET/POST /api/liste/:key - Get/create reference list items (admin+ for POST)
-- DELETE /api/liste/:key/:id - Delete reference list item (admin+)
+- GET /api/liste-config - Reference list configs
+- GET/POST /api/liste/:key - Reference list items
+- DELETE /api/liste/:key/:id - Delete reference list item
 
 ## Security
-- All mutating endpoints validate scope ownership (isInBuildingScope, isInApartmentScope, isInFederationScope)
+- Middleware resolves building access through association->federation chain
+- Apartment access resolved through staircase->building chain
+- All mutating endpoints validate scope ownership
 - Permission middleware checks role-based permissions before route handler
-- Route handlers additionally verify the target resource is within user's accessible scope
 
 ## Running
 - `npm run dev` starts both Express backend and Vite frontend on port 5000

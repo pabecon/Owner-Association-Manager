@@ -59,8 +59,11 @@ export const loadUserContext: RequestHandler = async (req: AuthenticatedRequest,
     }
     if (role.federationId) {
       federationIds.add(role.federationId);
-      const fedBuildings = await storage.getBuildingsByFederation(role.federationId);
-      fedBuildings.forEach(b => buildingIds.add(b.id));
+      const fedAssociations = await storage.getAssociationsByFederation(role.federationId);
+      for (const assoc of fedAssociations) {
+        const assocBuildings = await storage.getBuildingsByAssociation(assoc.id);
+        assocBuildings.forEach(b => buildingIds.add(b.id));
+      }
     }
     if (role.buildingId) {
       buildingIds.add(role.buildingId);
@@ -68,7 +71,10 @@ export const loadUserContext: RequestHandler = async (req: AuthenticatedRequest,
     if (role.apartmentId) {
       apartmentIds.add(role.apartmentId);
       const apt = await storage.getApartment(role.apartmentId);
-      if (apt) buildingIds.add(apt.buildingId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (staircase) buildingIds.add(staircase.buildingId);
+      }
     }
   }
 

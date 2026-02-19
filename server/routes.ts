@@ -6,7 +6,8 @@ import type { RequestHandler } from "express";
 import {
   insertBuildingSchema, insertApartmentSchema, insertExpenseSchema,
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
-  insertFederationSchema, ROLE_HIERARCHY, type UserRole,
+  insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
+  ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
 import { users } from "@shared/schema";
 import { db } from "./db";
@@ -40,7 +41,6 @@ export async function registerRoutes(
   };
   const auth = [noAuthBypass, loadUserContext];
 
-  // Current user role info
   app.get("/api/me/roles", ...auth, async (req: AuthenticatedRequest, res) => {
     res.json({
       userId: req.userId,
@@ -59,7 +59,6 @@ export async function registerRoutes(
       const data = await storage.getFederations();
       return res.json(data);
     }
-    // Only show accessible federations
     const fedIds = req.accessibleFederationIds || [];
     if (fedIds.length === 0) return res.json([]);
     const allFeds = await storage.getFederations();
@@ -78,6 +77,30 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // Associations
+  app.get("/api/associations", ...auth, async (req: AuthenticatedRequest, res) => {
+    if (req.permissions?.viewAllBuildings) {
+      const data = await storage.getAssociations();
+      return res.json(data);
+    }
+    return res.json([]);
+  });
+
+  app.post("/api/associations", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertAssociationSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.federationId && !isInFederationScope(req, parsed.data.federationId)) {
+      return res.status(403).json({ message: "Nu aveti acces la aceasta federatie" });
+    }
+    const association = await storage.createAssociation(parsed.data);
+    res.json(association);
+  });
+
+  app.delete("/api/associations/:id", ...auth, requirePermission("manageBuildings"), async (req, res) => {
+    await storage.deleteAssociation(req.params.id as string);
+    res.json({ success: true });
+  });
+
   // Buildings
   app.get("/api/buildings", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllBuildings) {
@@ -93,9 +116,6 @@ export async function registerRoutes(
   app.post("/api/buildings", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
     const parsed = insertBuildingSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
-    if (parsed.data.federationId && !isInFederationScope(req, parsed.data.federationId)) {
-      return res.status(403).json({ message: "Nu aveti acces la aceasta federatie" });
-    }
     const building = await storage.createBuilding(parsed.data);
     res.json(building);
   });
@@ -111,26 +131,44 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // Staircases
+  app.get("/api/staircases", ...auth, async (req: AuthenticatedRequest, res) => {
+    if (req.permissions?.viewAllBuildings) {
+      const data = await storage.getStaircases();
+      return res.json(data);
+    }
+    return res.json([]);
+  });
+
+  app.post("/api/staircases", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertStaircaseSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (!isInBuildingScope(req, parsed.data.buildingId)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    const staircase = await storage.createStaircase(parsed.data);
+    res.json(staircase);
+  });
+
+  app.delete("/api/staircases/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const staircase = await storage.getStaircase(req.params.id as string);
+    if (!staircase) return res.status(404).json({ message: "Scara nu a fost gasita" });
+    if (!isInBuildingScope(req, staircase.buildingId)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    await storage.deleteStaircase(req.params.id as string);
+    res.json({ success: true });
+  });
+
   // Apartments
   app.get("/api/apartments", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllApartments) {
       const data = await storage.getApartments();
       return res.json(data);
     }
-    // Owner/tenant: show only assigned apartments
     const aptIds = req.accessibleApartmentIds || [];
-    const buildingIds = req.accessibleBuildingIds || [];
-
-    if (req.highestRole === "owner" || req.highestRole === "tenant") {
-      if (aptIds.length > 0) {
-        const data = await storage.getApartmentsByIds(aptIds);
-        return res.json(data);
-      }
-      return res.json([]);
-    }
-    // Admin/manager: show by building
-    if (buildingIds.length > 0) {
-      const data = await storage.getApartmentsByBuildingIds(buildingIds);
+    if (aptIds.length > 0) {
+      const data = await storage.getApartmentsByIds(aptIds);
       return res.json(data);
     }
     return res.json([]);
@@ -139,7 +177,9 @@ export async function registerRoutes(
   app.post("/api/apartments", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     const parsed = insertApartmentSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
-    if (!isInBuildingScope(req, parsed.data.buildingId)) {
+    const staircase = await storage.getStaircase(parsed.data.staircaseId);
+    if (!staircase) return res.status(404).json({ message: "Scara nu a fost gasita" });
+    if (!isInBuildingScope(req, staircase.buildingId)) {
       return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
     }
     const apartment = await storage.createApartment(parsed.data);
@@ -184,25 +224,10 @@ export async function registerRoutes(
       const data = await storage.getPayments();
       return res.json(data);
     }
-    // Get payments for accessible apartments
     const aptIds = req.accessibleApartmentIds || [];
-    const buildingIds = req.accessibleBuildingIds || [];
-
-    if (req.highestRole === "owner" || req.highestRole === "tenant") {
-      if (aptIds.length > 0) {
-        const data = await storage.getPaymentsByApartmentIds(aptIds);
-        return res.json(data);
-      }
-      return res.json([]);
-    }
-    // Admin/manager: all payments in their buildings
-    if (buildingIds.length > 0) {
-      const allApts = await storage.getApartmentsByBuildingIds(buildingIds);
-      const allAptIds = allApts.map(a => a.id);
-      if (allAptIds.length > 0) {
-        const data = await storage.getPaymentsByApartmentIds(allAptIds);
-        return res.json(data);
-      }
+    if (aptIds.length > 0) {
+      const data = await storage.getPaymentsByApartmentIds(aptIds);
+      return res.json(data);
     }
     return res.json([]);
   });
@@ -212,7 +237,8 @@ export async function registerRoutes(
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const apt = await storage.getApartment(parsed.data.apartmentId);
     if (!apt) return res.status(404).json({ message: "Apartamentul nu a fost gasit" });
-    if (!isInBuildingScope(req, apt.buildingId)) {
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
       return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
     }
     const payment = await storage.createPayment(parsed.data);
@@ -223,8 +249,11 @@ export async function registerRoutes(
     const existing = await storage.getPaymentById(req.params.id as string);
     if (!existing) return res.status(404).json({ message: "Plata nu a fost gasita" });
     const apt = await storage.getApartment(existing.apartmentId);
-    if (apt && !isInBuildingScope(req, apt.buildingId)) {
-      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    if (apt) {
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+        return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+      }
     }
     const { status, paidDate } = req.body;
     const updateData: Record<string, any> = {};
@@ -304,9 +333,7 @@ export async function registerRoutes(
     const newRole = parsed.data.role as UserRole;
     const currentRole = req.highestRole as UserRole;
 
-    // Check permission hierarchy
     if (currentRole === "super_admin") {
-      // Can assign any role
     } else if (currentRole === "admin") {
       if (!["manager", "owner", "tenant"].includes(newRole)) {
         return res.status(403).json({ message: "Nu puteti asigna acest rol" });
@@ -336,7 +363,6 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
-  // Search users by email (for assigning roles)
   app.get("/api/users/search", ...auth, async (req: AuthenticatedRequest, res) => {
     const email = req.query.email as string;
     if (!email) return res.json([]);
@@ -345,7 +371,7 @@ export async function registerRoutes(
     res.json(filtered.slice(0, 10));
   });
 
-  // Reference Lists - Generic CRUD routes
+  // Reference Lists
   const { referenceListConfigs } = await import("./reference-lists");
   for (const [key, config] of Object.entries(referenceListConfigs)) {
     const basePath = `/api/liste/${key}`;
@@ -368,7 +394,6 @@ export async function registerRoutes(
     });
   }
 
-  // Reference list config endpoint for frontend
   app.get("/api/liste-config", ...auth, async (_req, res) => {
     const { referenceListConfigs } = await import("./reference-lists");
     const configs = Object.entries(referenceListConfigs).map(([key, config]) => ({

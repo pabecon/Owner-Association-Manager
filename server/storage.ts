@@ -5,9 +5,11 @@ import {
   type Payment, type InsertPayment,
   type Announcement, type InsertAnnouncement,
   type Federation, type InsertFederation,
+  type Association, type InsertAssociation,
+  type Staircase, type InsertStaircase,
   type UserRoleRecord, type InsertUserRole,
   buildings, apartments, expenses, payments, announcements,
-  federations, userRoles,
+  federations, associations, staircases, userRoles,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -19,17 +21,29 @@ export interface IStorage {
   createFederation(data: InsertFederation): Promise<Federation>;
   deleteFederation(id: string): Promise<void>;
 
+  getAssociations(): Promise<Association[]>;
+  getAssociationsByFederation(federationId: string): Promise<Association[]>;
+  getAssociation(id: string): Promise<Association | undefined>;
+  createAssociation(data: InsertAssociation): Promise<Association>;
+  deleteAssociation(id: string): Promise<void>;
+
   getBuildings(): Promise<Building[]>;
   getBuildingsByIds(ids: string[]): Promise<Building[]>;
-  getBuildingsByFederation(federationId: string): Promise<Building[]>;
+  getBuildingsByAssociation(associationId: string): Promise<Building[]>;
   getBuilding(id: string): Promise<Building | undefined>;
   createBuilding(data: InsertBuilding): Promise<Building>;
   deleteBuilding(id: string): Promise<void>;
 
+  getStaircases(): Promise<Staircase[]>;
+  getStaircasesByBuilding(buildingId: string): Promise<Staircase[]>;
+  getStaircase(id: string): Promise<Staircase | undefined>;
+  createStaircase(data: InsertStaircase): Promise<Staircase>;
+  deleteStaircase(id: string): Promise<void>;
+
   getApartments(): Promise<Apartment[]>;
-  getApartmentsByBuilding(buildingId: string): Promise<Apartment[]>;
+  getApartmentsByStaircase(staircaseId: string): Promise<Apartment[]>;
   getApartmentsByIds(ids: string[]): Promise<Apartment[]>;
-  getApartmentsByBuildingIds(buildingIds: string[]): Promise<Apartment[]>;
+  getApartmentsByStaircaseIds(staircaseIds: string[]): Promise<Apartment[]>;
   getApartment(id: string): Promise<Apartment | undefined>;
   createApartment(data: InsertApartment): Promise<Apartment>;
 
@@ -81,6 +95,28 @@ export class DatabaseStorage implements IStorage {
     await db.delete(federations).where(eq(federations.id, id));
   }
 
+  async getAssociations(): Promise<Association[]> {
+    return db.select().from(associations);
+  }
+
+  async getAssociationsByFederation(federationId: string): Promise<Association[]> {
+    return db.select().from(associations).where(eq(associations.federationId, federationId));
+  }
+
+  async getAssociation(id: string): Promise<Association | undefined> {
+    const [association] = await db.select().from(associations).where(eq(associations.id, id));
+    return association;
+  }
+
+  async createAssociation(data: InsertAssociation): Promise<Association> {
+    const [association] = await db.insert(associations).values(data).returning();
+    return association;
+  }
+
+  async deleteAssociation(id: string): Promise<void> {
+    await db.delete(associations).where(eq(associations.id, id));
+  }
+
   async getBuildings(): Promise<Building[]> {
     return db.select().from(buildings);
   }
@@ -90,8 +126,8 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(buildings).where(inArray(buildings.id, ids));
   }
 
-  async getBuildingsByFederation(federationId: string): Promise<Building[]> {
-    return db.select().from(buildings).where(eq(buildings.federationId, federationId));
+  async getBuildingsByAssociation(associationId: string): Promise<Building[]> {
+    return db.select().from(buildings).where(eq(buildings.associationId, associationId));
   }
 
   async getBuilding(id: string): Promise<Building | undefined> {
@@ -108,12 +144,34 @@ export class DatabaseStorage implements IStorage {
     await db.delete(buildings).where(eq(buildings.id, id));
   }
 
+  async getStaircases(): Promise<Staircase[]> {
+    return db.select().from(staircases);
+  }
+
+  async getStaircasesByBuilding(buildingId: string): Promise<Staircase[]> {
+    return db.select().from(staircases).where(eq(staircases.buildingId, buildingId));
+  }
+
+  async getStaircase(id: string): Promise<Staircase | undefined> {
+    const [staircase] = await db.select().from(staircases).where(eq(staircases.id, id));
+    return staircase;
+  }
+
+  async createStaircase(data: InsertStaircase): Promise<Staircase> {
+    const [staircase] = await db.insert(staircases).values(data).returning();
+    return staircase;
+  }
+
+  async deleteStaircase(id: string): Promise<void> {
+    await db.delete(staircases).where(eq(staircases.id, id));
+  }
+
   async getApartments(): Promise<Apartment[]> {
     return db.select().from(apartments);
   }
 
-  async getApartmentsByBuilding(buildingId: string): Promise<Apartment[]> {
-    return db.select().from(apartments).where(eq(apartments.buildingId, buildingId));
+  async getApartmentsByStaircase(staircaseId: string): Promise<Apartment[]> {
+    return db.select().from(apartments).where(eq(apartments.staircaseId, staircaseId));
   }
 
   async getApartmentsByIds(ids: string[]): Promise<Apartment[]> {
@@ -121,9 +179,9 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(apartments).where(inArray(apartments.id, ids));
   }
 
-  async getApartmentsByBuildingIds(buildingIds: string[]): Promise<Apartment[]> {
-    if (buildingIds.length === 0) return [];
-    return db.select().from(apartments).where(inArray(apartments.buildingId, buildingIds));
+  async getApartmentsByStaircaseIds(staircaseIds: string[]): Promise<Apartment[]> {
+    if (staircaseIds.length === 0) return [];
+    return db.select().from(apartments).where(inArray(apartments.staircaseId, staircaseIds));
   }
 
   async getApartment(id: string): Promise<Apartment | undefined> {

@@ -11,7 +11,9 @@ import { UserMenu } from "@/components/user-menu";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Federations from "@/pages/federations";
+import Associations from "@/pages/associations";
 import Buildings from "@/pages/buildings";
+import Staircases from "@/pages/staircases";
 import Apartments from "@/pages/apartments";
 import Expenses from "@/pages/expenses";
 import Payments from "@/pages/payments";
@@ -24,7 +26,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/federations" component={Federations} />
+      <Route path="/associations" component={Associations} />
       <Route path="/buildings" component={Buildings} />
+      <Route path="/staircases" component={Staircases} />
       <Route path="/apartments" component={Apartments} />
       <Route path="/expenses" component={Expenses} />
       <Route path="/payments" component={Payments} />

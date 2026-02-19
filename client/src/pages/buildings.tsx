@@ -5,25 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertBuildingSchema } from "@shared/schema";
-import type { Building, Federation } from "@shared/schema";
+import type { Building, Association } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Building2, Search, Trash2, MapPin, Layers, User, Phone, Mail } from "lucide-react";
+import { Plus, Building2, Search, Trash2, MapPin, Layers, Users } from "lucide-react";
 import { z } from "zod";
 
 const formSchema = insertBuildingSchema.extend({
   name: z.string().min(1, "Numele blocului este obligatoriu"),
   address: z.string().min(1, "Adresa este obligatorie"),
+  associationId: z.string().min(1, "Asociatia este obligatorie"),
   totalApartments: z.coerce.number().min(1, "Numarul de apartamente trebuie sa fie minim 1"),
   floors: z.coerce.number().min(1, "Numarul de etaje trebuie sa fie minim 1"),
-  adminName: z.string().min(1, "Numele administratorului este obligatoriu"),
 });
 
 export default function Buildings() {
@@ -32,26 +31,22 @@ export default function Buildings() {
   const { toast } = useToast();
 
   const { data: buildings, isLoading } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
-  const { data: federations } = useQuery<Federation[]>({ queryKey: ["/api/federations"] });
+  const { data: associations } = useQuery<Association[]>({ queryKey: ["/api/associations"] });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      federationId: null,
+      associationId: "",
       name: "",
       address: "",
       totalApartments: 1,
       floors: 1,
-      adminName: "",
-      adminPhone: "",
-      adminEmail: "",
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      const payload = { ...data, federationId: data.federationId || null };
-      const res = await apiRequest("POST", "/api/buildings", payload);
+      const res = await apiRequest("POST", "/api/buildings", data);
       return res.json();
     },
     onSuccess: () => {
@@ -78,16 +73,15 @@ export default function Buildings() {
     },
   });
 
-  const getFederationName = (fedId: string | null) => {
-    if (!fedId) return "-";
-    const fed = federations?.find(f => f.id === fedId);
-    return fed?.name || "-";
+  const getAssociationName = (assocId: string) => {
+    const a = associations?.find(a => a.id === assocId);
+    return a?.name || "-";
   };
 
   const filtered = buildings?.filter(b =>
     b.name.toLowerCase().includes(search.toLowerCase()) ||
     b.address.toLowerCase().includes(search.toLowerCase()) ||
-    b.adminName.toLowerCase().includes(search.toLowerCase())
+    getAssociationName(b.associationId).toLowerCase().includes(search.toLowerCase())
   ) || [];
 
   return (
@@ -95,7 +89,7 @@ export default function Buildings() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" data-testid="text-buildings-title">Blocuri</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gestioneaza blocurile asociatiei</p>
+          <p className="text-muted-foreground text-sm mt-1">Gestioneaza blocurile din asociatii</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -107,22 +101,22 @@ export default function Buildings() {
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Bloc Nou</DialogTitle>
+              <DialogDescription>Adauga un bloc nou la o asociatie</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-                <FormField control={form.control} name="federationId" render={({ field }) => (
+                <FormField control={form.control} name="associationId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Federatie (optional)</FormLabel>
-                    <Select onValueChange={(v) => field.onChange(v === "__none__" ? null : v)} defaultValue={field.value || "__none__"}>
+                    <FormLabel>Asociatie</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-building-federation">
-                          <SelectValue placeholder="Fara federatie" />
+                        <SelectTrigger data-testid="select-building-association">
+                          <SelectValue placeholder="Selecteaza asociatia" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="__none__">Fara federatie</SelectItem>
-                        {federations?.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                        {associations?.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -159,29 +153,6 @@ export default function Buildings() {
                     </FormItem>
                   )} />
                 </div>
-                <FormField control={form.control} name="adminName" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nume Administrator</FormLabel>
-                    <FormControl><Input {...field} placeholder="Ion Popescu" data-testid="input-building-admin-name" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="adminPhone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefon Admin</FormLabel>
-                      <FormControl><Input {...field} value={field.value || ""} placeholder="07xx..." data-testid="input-building-admin-phone" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="adminEmail" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Admin</FormLabel>
-                      <FormControl><Input {...field} value={field.value || ""} placeholder="email@..." data-testid="input-building-admin-email" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
                 <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-building">
                   {createMutation.isPending ? "Se salveaza..." : "Salveaza Bloc"}
                 </Button>
@@ -194,7 +165,7 @@ export default function Buildings() {
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Cauta dupa nume, adresa sau administrator..."
+          placeholder="Cauta dupa nume, adresa sau asociatie..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -207,7 +178,7 @@ export default function Buildings() {
           {[1, 2, 3, 4].map(i => (
             <Card key={i}>
               <CardContent className="p-5 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Skeleton className="h-6 w-32" />
                   <Skeleton className="h-5 w-16" />
                 </div>
@@ -260,29 +231,10 @@ export default function Buildings() {
                   <Badge variant="secondary" className="text-xs">
                     {bld.totalApartments} apartamente
                   </Badge>
-                  {bld.federationId && (
-                    <Badge variant="outline" className="text-xs">
-                      {getFederationName(bld.federationId)}
-                    </Badge>
-                  )}
-                </div>
-                <div className="space-y-1.5 pt-3 border-t">
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span>{bld.adminName}</span>
-                  </div>
-                  {bld.adminPhone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>{bld.adminPhone}</span>
-                    </div>
-                  )}
-                  {bld.adminEmail && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className="truncate">{bld.adminEmail}</span>
-                    </div>
-                  )}
+                  <Badge variant="outline" className="text-xs">
+                    <Users className="w-3 h-3 mr-1" />
+                    {getAssociationName(bld.associationId)}
+                  </Badge>
                 </div>
               </CardContent>
             </Card>

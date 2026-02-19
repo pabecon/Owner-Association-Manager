@@ -1,24 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertApartmentSchema } from "@shared/schema";
-import type { Apartment, Building } from "@shared/schema";
+import type { Apartment, Building, Staircase } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Home, User, Phone, Mail, Search, Layers } from "lucide-react";
+import { Plus, Home, User, Phone, Mail, Search, Layers, ArrowUpDown, Building2 } from "lucide-react";
 import { z } from "zod";
 
 const formSchema = insertApartmentSchema.extend({
   number: z.string().min(1, "Numarul apartamentului este obligatoriu"),
+  staircaseId: z.string().min(1, "Scara este obligatorie"),
   floor: z.coerce.number().min(0, "Etajul trebuie sa fie pozitiv"),
   surface: z.string().optional(),
   rooms: z.coerce.number().optional(),
@@ -28,15 +29,21 @@ const formSchema = insertApartmentSchema.extend({
 export default function Apartments() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedBuilding, setSelectedBuilding] = useState<string>("");
   const { toast } = useToast();
 
   const { data: apartments, isLoading } = useQuery<Apartment[]>({ queryKey: ["/api/apartments"] });
   const { data: buildings } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
+  const { data: staircases } = useQuery<Staircase[]>({ queryKey: ["/api/staircases"] });
+
+  const filteredStaircases = selectedBuilding
+    ? staircases?.filter(s => s.buildingId === selectedBuilding)
+    : staircases;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      buildingId: "",
+      staircaseId: "",
       number: "",
       floor: 0,
       surface: "",
@@ -57,6 +64,7 @@ export default function Apartments() {
       queryClient.invalidateQueries({ queryKey: ["/api/apartments"] });
       setOpen(false);
       form.reset();
+      setSelectedBuilding("");
       toast({ title: "Apartament adaugat cu succes" });
     },
     onError: (error: Error) => {
@@ -64,10 +72,17 @@ export default function Apartments() {
     },
   });
 
+  const getStaircaseInfo = (staircaseId: string) => {
+    const s = staircases?.find(s => s.id === staircaseId);
+    if (!s) return { staircase: null, building: null };
+    const b = buildings?.find(b => b.id === s.buildingId);
+    return { staircase: s, building: b };
+  };
+
   const filtered = apartments?.filter(a =>
     a.number.toLowerCase().includes(search.toLowerCase()) ||
     a.ownerName?.toLowerCase().includes(search.toLowerCase()) ||
-    ""
+    false
   ) || [];
 
   return (
@@ -75,9 +90,9 @@ export default function Apartments() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" data-testid="text-apartments-title">Apartamente</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gestioneaza apartamentele din bloc</p>
+          <p className="text-muted-foreground text-sm mt-1">Gestioneaza apartamentele din scari</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSelectedBuilding(""); }}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-apartment">
               <Plus className="w-4 h-4 mr-2" />
@@ -87,22 +102,40 @@ export default function Apartments() {
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Apartament Nou</DialogTitle>
+              <DialogDescription>Adauga un apartament la o scara</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-                <FormField control={form.control} name="buildingId" render={({ field }) => (
+                <div>
+                  <label className="text-sm font-medium">Bloc (filtru)</label>
+                  <Select onValueChange={(v) => { setSelectedBuilding(v === "__all__" ? "" : v); form.setValue("staircaseId", ""); }} value={selectedBuilding || "__all__"}>
+                    <SelectTrigger data-testid="select-filter-building" className="mt-1.5">
+                      <SelectValue placeholder="Toate blocurile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Toate blocurile</SelectItem>
+                      {buildings?.map(b => (
+                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <FormField control={form.control} name="staircaseId" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bloc</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Scara</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-building">
-                          <SelectValue placeholder="Selecteaza blocul" />
+                        <SelectTrigger data-testid="select-staircase">
+                          <SelectValue placeholder="Selecteaza scara" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {buildings?.map(b => (
-                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                        ))}
+                        {filteredStaircases?.map(s => {
+                          const b = buildings?.find(b => b.id === s.buildingId);
+                          return (
+                            <SelectItem key={s.id} value={s.id}>{b ? `${b.name} - ${s.name}` : s.name}</SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -195,7 +228,7 @@ export default function Apartments() {
           {[1, 2, 3, 4, 5, 6].map(i => (
             <Card key={i}>
               <CardContent className="p-5 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <Skeleton className="h-6 w-20" />
                   <Skeleton className="h-5 w-16" />
                 </div>
@@ -215,49 +248,66 @@ export default function Apartments() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((apt) => (
-            <Card key={apt.id} className="hover-elevate" data-testid={`card-apartment-${apt.id}`}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
-                      <Home className="w-4 h-4 text-primary" />
+          {filtered.map((apt) => {
+            const { staircase, building } = getStaircaseInfo(apt.staircaseId);
+            return (
+              <Card key={apt.id} className="hover-elevate" data-testid={`card-apartment-${apt.id}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
+                        <Home className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-lg font-bold">Ap. {apt.number}</span>
                     </div>
-                    <span className="text-lg font-bold">Ap. {apt.number}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      <Layers className="w-3 h-3 mr-1" />
+                      Etaj {apt.floor}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    <Layers className="w-3 h-3 mr-1" />
-                    Etaj {apt.floor}
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  {apt.ownerName && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span>{apt.ownerName}</span>
-                    </div>
-                  )}
-                  {apt.ownerPhone && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="w-3.5 h-3.5" />
-                      <span>{apt.ownerPhone}</span>
-                    </div>
-                  )}
-                  {apt.ownerEmail && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className="truncate">{apt.ownerEmail}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t text-xs text-muted-foreground">
-                  {apt.surface && <span>{apt.surface} mp</span>}
-                  {apt.rooms && <span>{apt.rooms} camere</span>}
-                  {apt.residents && <span>{apt.residents} {Number(apt.residents) === 1 ? "persoana" : "persoane"}</span>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3 flex-wrap">
+                    {building && (
+                      <Badge variant="outline" className="text-xs">
+                        <Building2 className="w-3 h-3 mr-1" />
+                        {building.name}
+                      </Badge>
+                    )}
+                    {staircase && (
+                      <Badge variant="outline" className="text-xs">
+                        <ArrowUpDown className="w-3 h-3 mr-1" />
+                        {staircase.name}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {apt.ownerName && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span>{apt.ownerName}</span>
+                      </div>
+                    )}
+                    {apt.ownerPhone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>{apt.ownerPhone}</span>
+                      </div>
+                    )}
+                    {apt.ownerEmail && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="truncate">{apt.ownerEmail}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t text-xs text-muted-foreground">
+                    {apt.surface && <span>{apt.surface} mp</span>}
+                    {apt.rooms && <span>{apt.rooms} camere</span>}
+                    {apt.residents && <span>{apt.residents} {Number(apt.residents) === 1 ? "persoana" : "persoane"}</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
