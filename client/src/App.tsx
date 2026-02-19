@@ -79,16 +79,6 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const { isLoading, isAuthenticated } = useAuth();
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
-  if (!isAuthenticated) {
-    return <Landing />;
-  }
-
   return <AuthenticatedApp />;
 }
 

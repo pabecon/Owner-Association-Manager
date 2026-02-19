@@ -1,7 +1,18 @@
 import { db } from "./db";
-import { buildings, apartments, expenses, payments, announcements, federations } from "@shared/schema";
+import { buildings, apartments, expenses, payments, announcements, federations, userRoles } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function seedDatabase() {
+  const existingAdminRole = await db.select().from(userRoles)
+    .where(and(eq(userRoles.userId, "default-admin"), eq(userRoles.role, "super_admin")));
+  if (existingAdminRole.length === 0) {
+    await db.insert(userRoles).values({
+      userId: "default-admin",
+      role: "super_admin",
+    });
+    console.log("Default super_admin role created.");
+  }
+
   const existingBuildings = await db.select().from(buildings);
   if (existingBuildings.length > 0) return;
 

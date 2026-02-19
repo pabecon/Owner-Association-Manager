@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { isAuthenticated } from "./replit_integrations/auth";
 import { loadUserContext, requirePermission, requireRole, type AuthenticatedRequest } from "./middleware";
+import type { RequestHandler } from "express";
 import {
   insertBuildingSchema, insertApartmentSchema, insertExpenseSchema,
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
@@ -32,7 +32,13 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  const auth = [isAuthenticated, loadUserContext];
+  const noAuthBypass: RequestHandler = (req, res, next) => {
+    if (!(req as any).user) {
+      (req as any).user = { claims: { sub: "default-admin" } };
+    }
+    next();
+  };
+  const auth = [noAuthBypass, loadUserContext];
 
   // Current user role info
   app.get("/api/me/roles", ...auth, async (req: AuthenticatedRequest, res) => {
