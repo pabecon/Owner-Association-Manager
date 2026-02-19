@@ -118,7 +118,7 @@ export const userRoles = pgTable("user_roles", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const entityTypeEnum = ["building", "staircase", "floor", "apartment"] as const;
+export const entityTypeEnum = ["federation", "association", "building", "staircase", "floor", "apartment"] as const;
 export type EntityType = typeof entityTypeEnum[number];
 
 export const documents = pgTable("documents", {
