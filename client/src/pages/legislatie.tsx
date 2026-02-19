@@ -1,14 +1,60 @@
 import { useRoute } from "wouter";
+import { useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { LAW_114_1996_CONTENT, type LawSection } from "@/lib/law-content-114-1996";
-import { Scale, ExternalLink, FileText, BookOpen } from "lucide-react";
+import { Scale, ExternalLink, FileText, BookOpen, ListOrdered } from "lucide-react";
 
 const LAW_CONTENT_MAP: Record<string, LawSection[]> = {
   "legea-114-1996": LAW_114_1996_CONTENT,
 };
+
+function parseChapterInfo(title: string) {
+  const dashIndex = title.indexOf(" - ");
+  if (dashIndex === -1) return { number: title, description: "" };
+  return {
+    number: title.substring(0, dashIndex),
+    description: title.substring(dashIndex + 3),
+  };
+}
+
+function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; onNavigate: (id: string) => void }) {
+  const chapters = sections.filter(s => s.type === "chapter" && s.id);
+  if (chapters.length === 0) return null;
+
+  return (
+    <Card className="p-5 mb-6" data-testid="card-law-toc">
+      <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+        <ListOrdered className="w-4 h-4 text-muted-foreground shrink-0" />
+        <h2 className="text-sm font-bold uppercase tracking-wide">Cuprins</h2>
+      </div>
+      <div className="space-y-1">
+        {chapters.map((ch) => {
+          const { number, description } = parseChapterInfo(ch.title || "");
+          const articleCount = ch.children?.filter(c => c.type === "article").length || 0;
+          return (
+            <button
+              key={ch.id}
+              onClick={() => onNavigate(ch.id!)}
+              className="w-full text-left rounded-md px-3 py-2 hover-elevate active-elevate-2 flex items-start gap-3 group"
+              data-testid={`link-toc-${ch.id}`}
+            >
+              <span className="text-xs font-semibold text-muted-foreground shrink-0 mt-0.5 min-w-[90px]">{number}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium">{description}</span>
+                {articleCount > 0 && (
+                  <span className="text-xs text-muted-foreground ml-2">({articleCount} {articleCount === 1 ? "articol" : "articole"})</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
 
 function LawSectionRenderer({ section, depth = 0 }: { section: LawSection; depth?: number }) {
   if (section.type === "chapter") {
@@ -72,6 +118,13 @@ export default function Legislatie() {
   const selectedLaw = selectedId ? LEGISLATION_ITEMS.find(l => l.id === selectedId) : null;
   const lawContent = selectedId ? LAW_CONTENT_MAP[selectedId] : null;
 
+  const scrollToChapter = useCallback((chapterId: string) => {
+    const el = document.getElementById(chapterId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
   if (!selectedLaw) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-6">
@@ -106,6 +159,10 @@ export default function Legislatie() {
             </a>
           </Button>
         </div>
+
+        {lawContent && (
+          <LawTableOfContents sections={lawContent} onNavigate={scrollToChapter} />
+        )}
 
         {lawContent ? (
           <Card className="p-6" data-testid="card-law-content">
