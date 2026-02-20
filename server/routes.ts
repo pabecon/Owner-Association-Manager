@@ -419,26 +419,76 @@ export async function registerRoutes(
     res.json(filtered.slice(0, 10));
   });
 
-  // Reference Lists
-  const { referenceListConfigs } = await import("./reference-lists");
+  // Reference Lists (Supabase)
+  const { referenceListConfigs, mapRowFromSupabase, mapRowToSupabase } = await import("./reference-lists");
+  const { supabase } = await import("./supabase");
+  const { SUPABASE_TABLE_SQL } = await import("./supabase-init");
+
+  app.get("/api/supabase/setup-sql", ...auth, requireRole("super_admin"), async (_req, res) => {
+    res.json({ sql: SUPABASE_TABLE_SQL });
+  });
+
+  app.get("/api/supabase/status", ...auth, async (_req, res) => {
+    const results: Record<string, { ok: boolean; error?: string; count?: number }> = {};
+    for (const [key, config] of Object.entries(referenceListConfigs)) {
+      const { data, error } = await supabase.from(config.supabaseTable).select("id", { count: "exact", head: true });
+      if (error) {
+        results[key] = { ok: false, error: error.message };
+      } else {
+        results[key] = { ok: true };
+      }
+    }
+    const allOk = Object.values(results).every(r => r.ok);
+    res.json({ connected: allOk, tables: results });
+  });
+
   for (const [key, config] of Object.entries(referenceListConfigs)) {
     const basePath = `/api/liste/${key}`;
 
     app.get(basePath, ...auth, async (_req, res) => {
-      const data = await storage.getRefListAll(config.table);
-      res.json(data);
+      try {
+        const { data, error } = await supabase.from(config.supabaseTable).select("*");
+        if (error) {
+          console.error(`Supabase GET ${config.supabaseTable}:`, error.message);
+          return res.status(500).json({ message: `Error al obtener datos: ${error.message}` });
+        }
+        const mapped = (data || []).map(mapRowFromSupabase);
+        res.json(mapped);
+      } catch (err: any) {
+        console.error(`Supabase GET ${config.supabaseTable}:`, err.message);
+        res.status(500).json({ message: err.message });
+      }
     });
 
     app.post(basePath, ...auth, requireRole("admin"), async (req, res) => {
       const parsed = config.insertSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ message: (parsed as any).error.message });
-      const item = await storage.createRefListItem(config.table, (parsed as any).data);
-      res.json(item);
+      try {
+        const supabaseData = mapRowToSupabase((parsed as any).data, config.columnMap);
+        const { data, error } = await supabase.from(config.supabaseTable).insert(supabaseData).select().single();
+        if (error) {
+          console.error(`Supabase POST ${config.supabaseTable}:`, error.message);
+          return res.status(500).json({ message: `Error al crear: ${error.message}` });
+        }
+        res.json(mapRowFromSupabase(data));
+      } catch (err: any) {
+        console.error(`Supabase POST ${config.supabaseTable}:`, err.message);
+        res.status(500).json({ message: err.message });
+      }
     });
 
     app.delete(`${basePath}/:id`, ...auth, requireRole("admin"), async (req, res) => {
-      await storage.deleteRefListItem(config.table, req.params.id as string);
-      res.json({ ok: true });
+      try {
+        const { error } = await supabase.from(config.supabaseTable).delete().eq("id", req.params.id);
+        if (error) {
+          console.error(`Supabase DELETE ${config.supabaseTable}:`, error.message);
+          return res.status(500).json({ message: `Error al eliminar: ${error.message}` });
+        }
+        res.json({ ok: true });
+      } catch (err: any) {
+        console.error(`Supabase DELETE ${config.supabaseTable}:`, err.message);
+        res.status(500).json({ message: err.message });
+      }
     });
   }
 
