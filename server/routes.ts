@@ -447,12 +447,27 @@ export async function registerRoutes(
 
     app.get(basePath, ...auth, async (_req, res) => {
       try {
-        const { data, error } = await supabase.from(config.supabaseTable).select("*");
-        if (error) {
-          console.error(`Supabase GET ${config.supabaseTable}:`, error.message);
-          return res.status(500).json({ message: `Error al obtener datos: ${error.message}` });
+        let allData: any[] = [];
+        let from = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data: page, error: pageError } = await supabase
+            .from(config.supabaseTable)
+            .select("*")
+            .range(from, from + pageSize - 1);
+          if (pageError) {
+            console.error(`Supabase GET ${config.supabaseTable}:`, pageError.message);
+            return res.status(500).json({ message: `Error al obtener datos: ${pageError.message}` });
+          }
+          allData = allData.concat(page || []);
+          if (!page || page.length < pageSize) {
+            hasMore = false;
+          } else {
+            from += pageSize;
+          }
         }
-        const mapped = (data || []).map(mapRowFromSupabase);
+        const mapped = allData.map(mapRowFromSupabase);
         res.json(mapped);
       } catch (err: any) {
         console.error(`Supabase GET ${config.supabaseTable}:`, err.message);
