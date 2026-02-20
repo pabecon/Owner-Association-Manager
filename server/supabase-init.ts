@@ -189,16 +189,20 @@ CREATE TABLE IF NOT EXISTS lista_unitate_masura (
 ${TABLES.map(t => `
 ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on ${t}" ON ${t}
+DROP POLICY IF EXISTS "Allow anon select on ${t}" ON ${t};
+CREATE POLICY "Allow anon select on ${t}" ON ${t}
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on ${t}" ON ${t}
+DROP POLICY IF EXISTS "Allow anon insert on ${t}" ON ${t};
+CREATE POLICY "Allow anon insert on ${t}" ON ${t}
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on ${t}" ON ${t}
+DROP POLICY IF EXISTS "Allow anon delete on ${t}" ON ${t};
+CREATE POLICY "Allow anon delete on ${t}" ON ${t}
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on ${t}" ON ${t}
+DROP POLICY IF EXISTS "Allow anon update on ${t}" ON ${t};
+CREATE POLICY "Allow anon update on ${t}" ON ${t}
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 `).join('')}
 `;
