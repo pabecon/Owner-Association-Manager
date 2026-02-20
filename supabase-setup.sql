@@ -180,239 +180,307 @@ CREATE TABLE IF NOT EXISTS lista_unitate_masura (
 
 ALTER TABLE lista_atribute_fiscale ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_atribute_fiscale" ON lista_atribute_fiscale
+DROP POLICY IF EXISTS "Allow anon select on lista_atribute_fiscale" ON lista_atribute_fiscale;
+CREATE POLICY "Allow anon select on lista_atribute_fiscale" ON lista_atribute_fiscale
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_atribute_fiscale" ON lista_atribute_fiscale
+DROP POLICY IF EXISTS "Allow anon insert on lista_atribute_fiscale" ON lista_atribute_fiscale;
+CREATE POLICY "Allow anon insert on lista_atribute_fiscale" ON lista_atribute_fiscale
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_atribute_fiscale" ON lista_atribute_fiscale
+DROP POLICY IF EXISTS "Allow anon delete on lista_atribute_fiscale" ON lista_atribute_fiscale;
+CREATE POLICY "Allow anon delete on lista_atribute_fiscale" ON lista_atribute_fiscale
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_atribute_fiscale" ON lista_atribute_fiscale
+DROP POLICY IF EXISTS "Allow anon update on lista_atribute_fiscale" ON lista_atribute_fiscale;
+CREATE POLICY "Allow anon update on lista_atribute_fiscale" ON lista_atribute_fiscale
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_banca ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_banca" ON lista_banca
+DROP POLICY IF EXISTS "Allow anon select on lista_banca" ON lista_banca;
+CREATE POLICY "Allow anon select on lista_banca" ON lista_banca
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_banca" ON lista_banca
+DROP POLICY IF EXISTS "Allow anon insert on lista_banca" ON lista_banca;
+CREATE POLICY "Allow anon insert on lista_banca" ON lista_banca
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_banca" ON lista_banca
+DROP POLICY IF EXISTS "Allow anon delete on lista_banca" ON lista_banca;
+CREATE POLICY "Allow anon delete on lista_banca" ON lista_banca
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_banca" ON lista_banca
+DROP POLICY IF EXISTS "Allow anon update on lista_banca" ON lista_banca;
+CREATE POLICY "Allow anon update on lista_banca" ON lista_banca
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_banci_conturi ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_banci_conturi" ON lista_banci_conturi
+DROP POLICY IF EXISTS "Allow anon select on lista_banci_conturi" ON lista_banci_conturi;
+CREATE POLICY "Allow anon select on lista_banci_conturi" ON lista_banci_conturi
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_banci_conturi" ON lista_banci_conturi
+DROP POLICY IF EXISTS "Allow anon insert on lista_banci_conturi" ON lista_banci_conturi;
+CREATE POLICY "Allow anon insert on lista_banci_conturi" ON lista_banci_conturi
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_banci_conturi" ON lista_banci_conturi
+DROP POLICY IF EXISTS "Allow anon delete on lista_banci_conturi" ON lista_banci_conturi;
+CREATE POLICY "Allow anon delete on lista_banci_conturi" ON lista_banci_conturi
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_banci_conturi" ON lista_banci_conturi
+DROP POLICY IF EXISTS "Allow anon update on lista_banci_conturi" ON lista_banci_conturi;
+CREATE POLICY "Allow anon update on lista_banci_conturi" ON lista_banci_conturi
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_conexiune_bancare ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_conexiune_bancare" ON lista_conexiune_bancare
+DROP POLICY IF EXISTS "Allow anon select on lista_conexiune_bancare" ON lista_conexiune_bancare;
+CREATE POLICY "Allow anon select on lista_conexiune_bancare" ON lista_conexiune_bancare
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_conexiune_bancare" ON lista_conexiune_bancare
+DROP POLICY IF EXISTS "Allow anon insert on lista_conexiune_bancare" ON lista_conexiune_bancare;
+CREATE POLICY "Allow anon insert on lista_conexiune_bancare" ON lista_conexiune_bancare
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_conexiune_bancare" ON lista_conexiune_bancare
+DROP POLICY IF EXISTS "Allow anon delete on lista_conexiune_bancare" ON lista_conexiune_bancare;
+CREATE POLICY "Allow anon delete on lista_conexiune_bancare" ON lista_conexiune_bancare
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_conexiune_bancare" ON lista_conexiune_bancare
+DROP POLICY IF EXISTS "Allow anon update on lista_conexiune_bancare" ON lista_conexiune_bancare;
+CREATE POLICY "Allow anon update on lista_conexiune_bancare" ON lista_conexiune_bancare
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_conturi_toshl ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_conturi_toshl" ON lista_conturi_toshl
+DROP POLICY IF EXISTS "Allow anon select on lista_conturi_toshl" ON lista_conturi_toshl;
+CREATE POLICY "Allow anon select on lista_conturi_toshl" ON lista_conturi_toshl
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_conturi_toshl" ON lista_conturi_toshl
+DROP POLICY IF EXISTS "Allow anon insert on lista_conturi_toshl" ON lista_conturi_toshl;
+CREATE POLICY "Allow anon insert on lista_conturi_toshl" ON lista_conturi_toshl
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_conturi_toshl" ON lista_conturi_toshl
+DROP POLICY IF EXISTS "Allow anon delete on lista_conturi_toshl" ON lista_conturi_toshl;
+CREATE POLICY "Allow anon delete on lista_conturi_toshl" ON lista_conturi_toshl
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_conturi_toshl" ON lista_conturi_toshl
+DROP POLICY IF EXISTS "Allow anon update on lista_conturi_toshl" ON lista_conturi_toshl;
+CREATE POLICY "Allow anon update on lista_conturi_toshl" ON lista_conturi_toshl
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_cota_tva ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_cota_tva" ON lista_cota_tva
+DROP POLICY IF EXISTS "Allow anon select on lista_cota_tva" ON lista_cota_tva;
+CREATE POLICY "Allow anon select on lista_cota_tva" ON lista_cota_tva
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_cota_tva" ON lista_cota_tva
+DROP POLICY IF EXISTS "Allow anon insert on lista_cota_tva" ON lista_cota_tva;
+CREATE POLICY "Allow anon insert on lista_cota_tva" ON lista_cota_tva
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_cota_tva" ON lista_cota_tva
+DROP POLICY IF EXISTS "Allow anon delete on lista_cota_tva" ON lista_cota_tva;
+CREATE POLICY "Allow anon delete on lista_cota_tva" ON lista_cota_tva
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_cota_tva" ON lista_cota_tva
+DROP POLICY IF EXISTS "Allow anon update on lista_cota_tva" ON lista_cota_tva;
+CREATE POLICY "Allow anon update on lista_cota_tva" ON lista_cota_tva
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_curs_valutar_bnr ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
+DROP POLICY IF EXISTS "Allow anon select on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr;
+CREATE POLICY "Allow anon select on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
+DROP POLICY IF EXISTS "Allow anon insert on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr;
+CREATE POLICY "Allow anon insert on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
+DROP POLICY IF EXISTS "Allow anon delete on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr;
+CREATE POLICY "Allow anon delete on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
+DROP POLICY IF EXISTS "Allow anon update on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr;
+CREATE POLICY "Allow anon update on lista_curs_valutar_bnr" ON lista_curs_valutar_bnr
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_oras_judet ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_oras_judet" ON lista_oras_judet
+DROP POLICY IF EXISTS "Allow anon select on lista_oras_judet" ON lista_oras_judet;
+CREATE POLICY "Allow anon select on lista_oras_judet" ON lista_oras_judet
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_oras_judet" ON lista_oras_judet
+DROP POLICY IF EXISTS "Allow anon insert on lista_oras_judet" ON lista_oras_judet;
+CREATE POLICY "Allow anon insert on lista_oras_judet" ON lista_oras_judet
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_oras_judet" ON lista_oras_judet
+DROP POLICY IF EXISTS "Allow anon delete on lista_oras_judet" ON lista_oras_judet;
+CREATE POLICY "Allow anon delete on lista_oras_judet" ON lista_oras_judet
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_oras_judet" ON lista_oras_judet
+DROP POLICY IF EXISTS "Allow anon update on lista_oras_judet" ON lista_oras_judet;
+CREATE POLICY "Allow anon update on lista_oras_judet" ON lista_oras_judet
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_prefix_telefon ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_prefix_telefon" ON lista_prefix_telefon
+DROP POLICY IF EXISTS "Allow anon select on lista_prefix_telefon" ON lista_prefix_telefon;
+CREATE POLICY "Allow anon select on lista_prefix_telefon" ON lista_prefix_telefon
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_prefix_telefon" ON lista_prefix_telefon
+DROP POLICY IF EXISTS "Allow anon insert on lista_prefix_telefon" ON lista_prefix_telefon;
+CREATE POLICY "Allow anon insert on lista_prefix_telefon" ON lista_prefix_telefon
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_prefix_telefon" ON lista_prefix_telefon
+DROP POLICY IF EXISTS "Allow anon delete on lista_prefix_telefon" ON lista_prefix_telefon;
+CREATE POLICY "Allow anon delete on lista_prefix_telefon" ON lista_prefix_telefon
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_prefix_telefon" ON lista_prefix_telefon
+DROP POLICY IF EXISTS "Allow anon update on lista_prefix_telefon" ON lista_prefix_telefon;
+CREATE POLICY "Allow anon update on lista_prefix_telefon" ON lista_prefix_telefon
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_sector_bucuresti ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_sector_bucuresti" ON lista_sector_bucuresti
+DROP POLICY IF EXISTS "Allow anon select on lista_sector_bucuresti" ON lista_sector_bucuresti;
+CREATE POLICY "Allow anon select on lista_sector_bucuresti" ON lista_sector_bucuresti
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_sector_bucuresti" ON lista_sector_bucuresti
+DROP POLICY IF EXISTS "Allow anon insert on lista_sector_bucuresti" ON lista_sector_bucuresti;
+CREATE POLICY "Allow anon insert on lista_sector_bucuresti" ON lista_sector_bucuresti
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_sector_bucuresti" ON lista_sector_bucuresti
+DROP POLICY IF EXISTS "Allow anon delete on lista_sector_bucuresti" ON lista_sector_bucuresti;
+CREATE POLICY "Allow anon delete on lista_sector_bucuresti" ON lista_sector_bucuresti
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_sector_bucuresti" ON lista_sector_bucuresti
+DROP POLICY IF EXISTS "Allow anon update on lista_sector_bucuresti" ON lista_sector_bucuresti;
+CREATE POLICY "Allow anon update on lista_sector_bucuresti" ON lista_sector_bucuresti
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_serie_ci ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_serie_ci" ON lista_serie_ci
+DROP POLICY IF EXISTS "Allow anon select on lista_serie_ci" ON lista_serie_ci;
+CREATE POLICY "Allow anon select on lista_serie_ci" ON lista_serie_ci
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_serie_ci" ON lista_serie_ci
+DROP POLICY IF EXISTS "Allow anon insert on lista_serie_ci" ON lista_serie_ci;
+CREATE POLICY "Allow anon insert on lista_serie_ci" ON lista_serie_ci
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_serie_ci" ON lista_serie_ci
+DROP POLICY IF EXISTS "Allow anon delete on lista_serie_ci" ON lista_serie_ci;
+CREATE POLICY "Allow anon delete on lista_serie_ci" ON lista_serie_ci
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_serie_ci" ON lista_serie_ci
+DROP POLICY IF EXISTS "Allow anon update on lista_serie_ci" ON lista_serie_ci;
+CREATE POLICY "Allow anon update on lista_serie_ci" ON lista_serie_ci
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_tari ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_tari" ON lista_tari
+DROP POLICY IF EXISTS "Allow anon select on lista_tari" ON lista_tari;
+CREATE POLICY "Allow anon select on lista_tari" ON lista_tari
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_tari" ON lista_tari
+DROP POLICY IF EXISTS "Allow anon insert on lista_tari" ON lista_tari;
+CREATE POLICY "Allow anon insert on lista_tari" ON lista_tari
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_tari" ON lista_tari
+DROP POLICY IF EXISTS "Allow anon delete on lista_tari" ON lista_tari;
+CREATE POLICY "Allow anon delete on lista_tari" ON lista_tari
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_tari" ON lista_tari
+DROP POLICY IF EXISTS "Allow anon update on lista_tari" ON lista_tari;
+CREATE POLICY "Allow anon update on lista_tari" ON lista_tari
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_tip_drumuri ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_tip_drumuri" ON lista_tip_drumuri
+DROP POLICY IF EXISTS "Allow anon select on lista_tip_drumuri" ON lista_tip_drumuri;
+CREATE POLICY "Allow anon select on lista_tip_drumuri" ON lista_tip_drumuri
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_tip_drumuri" ON lista_tip_drumuri
+DROP POLICY IF EXISTS "Allow anon insert on lista_tip_drumuri" ON lista_tip_drumuri;
+CREATE POLICY "Allow anon insert on lista_tip_drumuri" ON lista_tip_drumuri
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_tip_drumuri" ON lista_tip_drumuri
+DROP POLICY IF EXISTS "Allow anon delete on lista_tip_drumuri" ON lista_tip_drumuri;
+CREATE POLICY "Allow anon delete on lista_tip_drumuri" ON lista_tip_drumuri
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_tip_drumuri" ON lista_tip_drumuri
+DROP POLICY IF EXISTS "Allow anon update on lista_tip_drumuri" ON lista_tip_drumuri;
+CREATE POLICY "Allow anon update on lista_tip_drumuri" ON lista_tip_drumuri
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_tip_factura ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_tip_factura" ON lista_tip_factura
+DROP POLICY IF EXISTS "Allow anon select on lista_tip_factura" ON lista_tip_factura;
+CREATE POLICY "Allow anon select on lista_tip_factura" ON lista_tip_factura
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_tip_factura" ON lista_tip_factura
+DROP POLICY IF EXISTS "Allow anon insert on lista_tip_factura" ON lista_tip_factura;
+CREATE POLICY "Allow anon insert on lista_tip_factura" ON lista_tip_factura
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_tip_factura" ON lista_tip_factura
+DROP POLICY IF EXISTS "Allow anon delete on lista_tip_factura" ON lista_tip_factura;
+CREATE POLICY "Allow anon delete on lista_tip_factura" ON lista_tip_factura
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_tip_factura" ON lista_tip_factura
+DROP POLICY IF EXISTS "Allow anon update on lista_tip_factura" ON lista_tip_factura;
+CREATE POLICY "Allow anon update on lista_tip_factura" ON lista_tip_factura
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_tip_moneda ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_tip_moneda" ON lista_tip_moneda
+DROP POLICY IF EXISTS "Allow anon select on lista_tip_moneda" ON lista_tip_moneda;
+CREATE POLICY "Allow anon select on lista_tip_moneda" ON lista_tip_moneda
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_tip_moneda" ON lista_tip_moneda
+DROP POLICY IF EXISTS "Allow anon insert on lista_tip_moneda" ON lista_tip_moneda;
+CREATE POLICY "Allow anon insert on lista_tip_moneda" ON lista_tip_moneda
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_tip_moneda" ON lista_tip_moneda
+DROP POLICY IF EXISTS "Allow anon delete on lista_tip_moneda" ON lista_tip_moneda;
+CREATE POLICY "Allow anon delete on lista_tip_moneda" ON lista_tip_moneda
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_tip_moneda" ON lista_tip_moneda
+DROP POLICY IF EXISTS "Allow anon update on lista_tip_moneda" ON lista_tip_moneda;
+CREATE POLICY "Allow anon update on lista_tip_moneda" ON lista_tip_moneda
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_tva_partener_anaf ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_tva_partener_anaf" ON lista_tva_partener_anaf
+DROP POLICY IF EXISTS "Allow anon select on lista_tva_partener_anaf" ON lista_tva_partener_anaf;
+CREATE POLICY "Allow anon select on lista_tva_partener_anaf" ON lista_tva_partener_anaf
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_tva_partener_anaf" ON lista_tva_partener_anaf
+DROP POLICY IF EXISTS "Allow anon insert on lista_tva_partener_anaf" ON lista_tva_partener_anaf;
+CREATE POLICY "Allow anon insert on lista_tva_partener_anaf" ON lista_tva_partener_anaf
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_tva_partener_anaf" ON lista_tva_partener_anaf
+DROP POLICY IF EXISTS "Allow anon delete on lista_tva_partener_anaf" ON lista_tva_partener_anaf;
+CREATE POLICY "Allow anon delete on lista_tva_partener_anaf" ON lista_tva_partener_anaf
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_tva_partener_anaf" ON lista_tva_partener_anaf
+DROP POLICY IF EXISTS "Allow anon update on lista_tva_partener_anaf" ON lista_tva_partener_anaf;
+CREATE POLICY "Allow anon update on lista_tva_partener_anaf" ON lista_tva_partener_anaf
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
 ALTER TABLE lista_unitate_masura ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Allow anon select on lista_unitate_masura" ON lista_unitate_masura
+DROP POLICY IF EXISTS "Allow anon select on lista_unitate_masura" ON lista_unitate_masura;
+CREATE POLICY "Allow anon select on lista_unitate_masura" ON lista_unitate_masura
   FOR SELECT TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert on lista_unitate_masura" ON lista_unitate_masura
+DROP POLICY IF EXISTS "Allow anon insert on lista_unitate_masura" ON lista_unitate_masura;
+CREATE POLICY "Allow anon insert on lista_unitate_masura" ON lista_unitate_masura
   FOR INSERT TO anon WITH CHECK (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon delete on lista_unitate_masura" ON lista_unitate_masura
+DROP POLICY IF EXISTS "Allow anon delete on lista_unitate_masura" ON lista_unitate_masura;
+CREATE POLICY "Allow anon delete on lista_unitate_masura" ON lista_unitate_masura
   FOR DELETE TO anon USING (true);
 
-CREATE POLICY IF NOT EXISTS "Allow anon update on lista_unitate_masura" ON lista_unitate_masura
+DROP POLICY IF EXISTS "Allow anon update on lista_unitate_masura" ON lista_unitate_masura;
+CREATE POLICY "Allow anon update on lista_unitate_masura" ON lista_unitate_masura
   FOR UPDATE TO anon USING (true) WITH CHECK (true);
 
