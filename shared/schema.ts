@@ -148,6 +148,47 @@ export const announcements = pgTable("announcements", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const fundTypeEnum = ["intretinere", "rulment", "penalizari", "custom"] as const;
+export type FundType = typeof fundTypeEnum[number];
+
+export const FUND_TYPE_LABELS: Record<FundType, string> = {
+  intretinere: "Fond de Intretinere",
+  rulment: "Fond de Rulment",
+  penalizari: "Fond de Penalizari",
+  custom: "Fond Personalizat",
+};
+
+export const FUND_TYPE_DESCRIPTIONS: Record<FundType, string> = {
+  intretinere: "Se alimenteaza din cheltuielile curente ale asociatiei: apa, energie, curatenie, securitate, administrare, ascensor, salarii etc.",
+  rulment: "Contributie unica per proprietar, mentinuta ca rezerva pentru acoperirea dezechilibrelor de cash-flow.",
+  penalizari: "Se alimenteaza din penalizarile aplicate proprietarilor pentru intarzieri la plata, servind la acoperirea penalizarilor catre furnizori.",
+  custom: "Fond personalizat definit de asociatie.",
+};
+
+export const funds = pgTable("funds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  associationId: varchar("association_id").notNull().references(() => associations.id),
+  name: text("name").notNull(),
+  fundType: text("fund_type").notNull().default("custom"),
+  description: text("description"),
+  bankName: text("bank_name"),
+  bankAccount: text("bank_account"),
+  currentBalance: numeric("current_balance", { precision: 12, scale: 2 }).default("0"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const fundCategories = pgTable("fund_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fundId: varchar("fund_id").notNull().references(() => funds.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  budgetAmount: numeric("budget_amount", { precision: 12, scale: 2 }),
+  currentAmount: numeric("current_amount", { precision: 12, scale: 2 }).default("0"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const userRoles = pgTable("user_roles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
@@ -188,6 +229,8 @@ export const insertApartmentSchema = createInsertSchema(apartments).omit({ id: t
 export const insertUnitRoomSchema = createInsertSchema(unitRooms).omit({ id: true });
 export const insertMeterSchema = createInsertSchema(meters).omit({ id: true, createdAt: true });
 export const insertMeterReadingSchema = createInsertSchema(meterReadings).omit({ id: true, createdAt: true });
+export const insertFundSchema = createInsertSchema(funds).omit({ id: true, createdAt: true });
+export const insertFundCategorySchema = createInsertSchema(fundCategories).omit({ id: true, createdAt: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
 export const insertPaymentSchema = createInsertSchema(payments).omit({ id: true });
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({ id: true, createdAt: true });
@@ -209,6 +252,10 @@ export type InsertMeter = z.infer<typeof insertMeterSchema>;
 export type Meter = typeof meters.$inferSelect;
 export type InsertMeterReading = z.infer<typeof insertMeterReadingSchema>;
 export type MeterReading = typeof meterReadings.$inferSelect;
+export type InsertFund = z.infer<typeof insertFundSchema>;
+export type Fund = typeof funds.$inferSelect;
+export type InsertFundCategory = z.infer<typeof insertFundCategorySchema>;
+export type FundCategory = typeof fundCategories.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
