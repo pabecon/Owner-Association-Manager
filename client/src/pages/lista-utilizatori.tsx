@@ -17,7 +17,7 @@ import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { Users, Plus, Search, ExternalLink, Power } from "lucide-react";
+import { Users, Plus, Search, ExternalLink, Power, Eye, EyeOff } from "lucide-react";
 import type { Association, Building, Staircase, Apartment } from "@shared/schema";
 
 interface PlatformUser {
@@ -72,6 +72,7 @@ export default function ListaUtilizatoriPage() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: users, isLoading } = useQuery<PlatformUser[]>({
     queryKey: ["/api/platform-users"],
@@ -255,9 +256,27 @@ export default function ListaUtilizatoriPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Parola</FormLabel>
-                          <FormControl>
-                            <Input type="password" {...field} placeholder="Parola" data-testid="input-password" />
-                          </FormControl>
+                          <div className="relative">
+                            <FormControl>
+                              <Input
+                                type={showPassword ? "text" : "password"}
+                                {...field}
+                                placeholder="Parola"
+                                className="pr-10"
+                                data-testid="input-password"
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="absolute right-0 top-0 h-full px-3"
+                              onClick={() => setShowPassword(!showPassword)}
+                              data-testid="button-toggle-password"
+                            >
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </Button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
