@@ -103,6 +103,63 @@ function highlightText(text: string, term: string) {
   return <>{result}</>;
 }
 
+const LAW_REFERENCE_MAP: Record<string, string> = {
+  "Legea nr. 10/1995": "/legislatie/legea-10-1995",
+  "Legea nr. 114/1996": "/legislatie/legea-114-1996",
+  "Legea nr. 196/2018": "/legislatie/legea-196-2018",
+  "Legea nr. 230/2007": "/legislatie/legea-230-2007",
+  "Legea nr. 307/2006": "/legislatie/legea-307-2006",
+};
+
+function renderWithLawLinks(text: string, searchTerm?: string): JSX.Element {
+  const lawPattern = /(Legea nr\. \d+\/\d{4}|Hotărârea Guvernului nr\. [\d.]+\/\d{4}|Ordonanța de urgență a Guvernului nr\. \d+\/\d{4}|Regulamentul \(UE\) nr\. \d+\/\d{4}|Directivei \d+\/\d+\/CEE|Codul civil)/g;
+
+  const parts: (string | JSX.Element)[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = lawPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      const segment = text.substring(lastIndex, match.index);
+      parts.push(searchTerm ? highlightText(segment, searchTerm) as any : segment);
+    }
+
+    const ref = match[0];
+    const internalUrl = LAW_REFERENCE_MAP[ref];
+
+    if (internalUrl) {
+      parts.push(
+        <Link key={match.index} href={internalUrl}>
+          <span className="underline text-primary cursor-pointer font-medium not-italic">{searchTerm ? highlightText(ref, searchTerm) as any : ref}</span>
+        </Link>
+      );
+    } else {
+      const searchQuery = encodeURIComponent(ref);
+      parts.push(
+        <a
+          key={match.index}
+          href={`https://legislatie.just.ro/Public/RezultateCautare?tipact=0&cautession=${searchQuery}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary cursor-pointer font-medium not-italic"
+          title={`Caută ${ref} pe legislatie.just.ro`}
+        >
+          {searchTerm ? highlightText(ref, searchTerm) as any : ref}
+        </a>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    const segment = text.substring(lastIndex);
+    parts.push(searchTerm ? highlightText(segment, searchTerm) as any : segment);
+  }
+
+  return <>{parts}</>;
+}
+
 function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: LawSection; depth?: number; searchTerm?: string }) {
   if (section.type === "chapter") {
     const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
@@ -127,14 +184,14 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
       <div className="mb-4 pl-4" id={section.id} data-testid={`article-${section.id}`}>
         <h3 className="text-sm font-semibold mb-1">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h3>
         {section.content && (
-          <p className="text-sm leading-relaxed text-foreground mb-1.5">{searchTerm ? highlightText(section.content, searchTerm) : section.content}</p>
+          <p className="text-sm leading-relaxed text-foreground mb-1.5">{renderWithLawLinks(section.content, searchTerm || undefined)}</p>
         )}
         {section.items && section.items.length > 0 && (
           <div className="ml-4 space-y-1">
             {section.items.map((item, i) => (
               <div key={i} className="flex gap-2 text-sm leading-relaxed">
                 <span className="text-muted-foreground shrink-0 mt-0.5">-</span>
-                <span>{searchTerm ? highlightText(item, searchTerm) : item}</span>
+                <span>{renderWithLawLinks(item, searchTerm || undefined)}</span>
               </div>
             ))}
           </div>
@@ -149,9 +206,17 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
   if (section.type === "note") {
     const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
     if (!matches) return null;
+    const hasChildren = section.children && section.children.length > 0;
     return (
-      <div className="mt-2 ml-4 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground italic" data-testid="law-note">
-        {searchTerm ? highlightText(section.content || "", searchTerm) : section.content}
+      <div className={`mt-2 ml-4 px-3 py-2 rounded-md bg-muted text-xs text-muted-foreground italic ${hasChildren ? "space-y-2" : ""}`} data-testid="law-note">
+        <div>{renderWithLawLinks(section.content || "", searchTerm || undefined)}</div>
+        {hasChildren && (
+          <div className="mt-2 space-y-2 border-l-2 border-border pl-3 not-italic">
+            {section.children!.map((child, i) => (
+              <LawSectionRenderer key={i} section={child} depth={depth + 1} searchTerm={searchTerm} />
+            ))}
+          </div>
+        )}
       </div>
     );
   }

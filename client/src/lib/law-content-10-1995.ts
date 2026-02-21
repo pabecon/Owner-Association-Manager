@@ -18,6 +18,56 @@ export const LAW_10_1995_CONTENT: LawSection[] = [
     content: "Legea nr. 10/1995 privind calitatea în construcții a fost republicată în Monitorul Oficial al României, Partea I, nr. 689 din 11 septembrie 2015 și ulterior a fost modificată prin Ordonanța de urgență a Guvernului nr. 46/2015 pentru stabilirea unor măsuri financiare și pentru modificarea și completarea unor acte normative, publicată în Monitorul Oficial al României, Partea I, nr. 801 din 28 octombrie 2015, aprobată prin Legea nr. 40/2016, publicată în Monitorul Oficial al României, Partea I, nr. 220 din 24 martie 2016.",
   },
   {
+    type: "note",
+    content: "1. art. IV din Legea nr. 177/2015 pentru modificarea și completarea Legii nr. 10/1995 privind calitatea în construcții, publicată în Monitorul Oficial al României, Partea I, nr. 484 din 2 iulie 2015:",
+    children: [
+      {
+        type: "article",
+        id: "legea-177-2015-art-iv",
+        title: "Articolul IV",
+        content: "În termen de 12 luni de la data intrării în vigoare a prezentei legi, Ministerul Dezvoltării Regionale și Administrației Publice va revizui și va actualiza, în mod corespunzător modificărilor și completărilor aduse prin prezenta lege, următoarele acte normative:",
+        items: [
+          "a) Hotărârea Guvernului nr. 273/1994 privind aprobarea Regulamentului de recepție a lucrărilor de construcții și instalații aferente acestora, cu modificările și completările ulterioare;",
+          "b) Hotărârea Guvernului nr. 925/1995 pentru aprobarea Regulamentului de verificare și expertizare tehnică de calitate a proiectelor, a execuției lucrărilor și a construcțiilor;",
+          "c) Hotărârea Guvernului nr. 766/1997 pentru aprobarea unor regulamente privind calitatea în construcții, cu modificările și completările ulterioare;",
+          "d) Hotărârea Guvernului nr. 203/2003 pentru aprobarea Regulamentului privind tipurile de reglementări tehnice și de cheltuieli aferente activității de reglementare în construcții, urbanism, amenajarea teritoriului și habitat, precum și a Normelor metodologice privind criteriile și modul de alocare a sumelor necesare unor lucrări de intervenție în primă urgență la construcții vulnerabile și care prezintă pericol public, cu modificările și completările ulterioare;",
+          "e) Hotărârea Guvernului nr. 622/2004 privind stabilirea condițiilor de introducere pe piață a produselor pentru construcții, republicată, cu modificările și completările ulterioare;",
+          "f) Hotărârea Guvernului nr. 28/2008 privind aprobarea conținutului-cadru al documentației tehnico-economice aferente investițiilor publice, precum și a structurii și metodologiei de elaborare a devizului general pentru obiective de investiții și lucrări de intervenții;",
+          "g) Hotărârea Guvernului nr. 1.236/2012 privind stabilirea cadrului instituțional și a unor măsuri pentru aplicarea prevederilor Regulamentului (UE) nr. 305/2011 al Parlamentului European și al Consiliului din 9 martie 2011 de stabilire a unor condiții armonizate pentru comercializarea produselor pentru construcții și de abrogare a Directivei 89/106/CEE a Consiliului;",
+          "h) Hotărârea Guvernului nr. 525/2013 pentru aprobarea atribuțiilor generale și specifice, a structurii organizatorice și a numărului maxim de posturi, precum și a normării parcului auto și a consumului de carburanți ale Inspectoratului de Stat în Construcții - I.S.C., cu modificările ulterioare.",
+        ],
+      },
+    ],
+  },
+  {
+    type: "note",
+    content: "2. art. II, III și V din Legea nr. 163/2016 pentru modificarea și completarea Legii nr. 10/1995 privind calitatea în construcții, publicată în Monitorul Oficial al României, Partea I, nr. 561 din 25 iulie 2016:",
+    children: [
+      {
+        type: "article",
+        id: "legea-163-2016-art-ii",
+        title: "Articolul II",
+        content: "Prezenta lege intră în vigoare la 30 de zile de la data publicării în Monitorul Oficial al României, Partea I, cu excepția măsurilor prevăzute la art. 9 lit. m), n) și o) din Legea nr. 10/1995, republicată, cu modificările ulterioare, astfel cum a fost modificată și completată prin prezenta lege, care intră în vigoare la 18 luni de la data intrării în vigoare a prezentei legi.",
+      },
+      {
+        type: "article",
+        id: "legea-163-2016-art-iii",
+        title: "Articolul III",
+        content: "Termenul prevăzut la art. IV din Legea nr. 177/2015 pentru modificarea și completarea Legii nr. 10/1995 privind calitatea în construcții, publicată în Monitorul Oficial al României, Partea I, nr. 484 din 2 iulie 2015, se prorogă cu 5 luni.",
+      },
+      {
+        type: "paragraph",
+        content: "……………………………………………………………………",
+      },
+      {
+        type: "article",
+        id: "legea-163-2016-art-v",
+        title: "Articolul V",
+        content: "(1) Construcțiile executate cu autorizațiile și avizele prevăzute de dispozițiile legale în vigoare, precum și cele realizate în regim cutumiar, care nu sunt monumente istorice, situate în interiorul zonelor declarate potrivit legii zone cu statut de cetate medievală, sunt exceptate de la prevederile art. 611-615 din Legea nr. 287/2009 privind Codul civil, republicat, cu modificările ulterioare.\n(2) Prin Regulamentul general de urbanism, aprobat în condițiile legii, se vor reglementa detaliile cu privire la situațiile prevăzute la alin. (1), în termen de 30 de zile de la data publicării în Monitorul Oficial al României, Partea I.",
+      },
+    ],
+  },
+  {
     type: "chapter",
     id: "cap-1",
     title: "Capitolul I - Dispoziții generale",
