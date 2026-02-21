@@ -50,7 +50,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 ## Key Features
 - **Infografie (Home page `/`)**: THE main page. Tree view showing complete hierarchy: Federations -> Associations -> Buildings -> Staircases -> Floors -> Units. Expandable/collapsible nodes with summary stats. CRUD buttons to create entities at any level. Each association has a "Deschide" button to open its portal.
 - **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Imobiliar (buildings/staircases/floors/units drill-down), Financiar (expenses, payments, funds), Contact (president/admin info), and Anunturi. Stats summary at top. Back button returns to Infografie.
-- **Sidebar**: Minimal - only shows "Infografie" link. All other navigation removed.
+- **Sidebar**: Shows "Infografie" link, collapsible "Liste Generale" (with all 18 reference list sub-items), and collapsible "Legislatie" (with all law sub-items). Sections auto-expand when child routes are active.
 - **Unit Types**: apartment (default), box (storage), parking. Shown in tree and portal.
 - **Negative Floors**: Floors can be negative (e.g., -1 = Subsol 1, -2 = Subsol 2) for basements/garages.
 

@@ -677,6 +677,12 @@ export const listaUnitateMasura = pgTable("lista_unitate_masura", {
   simbol: text("simbol"),
 });
 
+export const listaTipCamera = pgTable("lista_tip_camera", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nume: text("nume").notNull(),
+  descriere: text("descriere"),
+});
+
 export const insertListaAtributeFiscaleSchema = createInsertSchema(listaAtributeFiscale).omit({ id: true });
 export const insertListaBancaSchema = createInsertSchema(listaBanca).omit({ id: true });
 export const insertListaBanciConturiSchema = createInsertSchema(listaBanciConturi).omit({ id: true });
@@ -694,6 +700,7 @@ export const insertListaTipFacturaSchema = createInsertSchema(listaTipFactura).o
 export const insertListaTipMonedaSchema = createInsertSchema(listaTipMoneda).omit({ id: true });
 export const insertListaTvaPartenerAnafSchema = createInsertSchema(listaTvaPartenerAnaf).omit({ id: true });
 export const insertListaUnitateMasuraSchema = createInsertSchema(listaUnitateMasura).omit({ id: true });
+export const insertListaTipCameraSchema = createInsertSchema(listaTipCamera).omit({ id: true });
 
 export type InsertListaAtributeFiscale = z.infer<typeof insertListaAtributeFiscaleSchema>;
 export type ListaAtributeFiscale = typeof listaAtributeFiscale.$inferSelect;
@@ -729,3 +736,5 @@ export type InsertListaTvaPartenerAnaf = z.infer<typeof insertListaTvaPartenerAn
 export type ListaTvaPartenerAnaf = typeof listaTvaPartenerAnaf.$inferSelect;
 export type InsertListaUnitateMasura = z.infer<typeof insertListaUnitateMasuraSchema>;
 export type ListaUnitateMasura = typeof listaUnitateMasura.$inferSelect;
+export type InsertListaTipCamera = z.infer<typeof insertListaTipCameraSchema>;
+export type ListaTipCamera = typeof listaTipCamera.$inferSelect;

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -6,16 +7,21 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ROLE_LABELS, type UserRole } from "@shared/schema";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 
 interface RoleInfo {
   highestRole: string;
@@ -23,17 +29,30 @@ interface RoleInfo {
   roles: { role: string }[];
 }
 
+interface ListConfig {
+  key: string;
+  label: string;
+}
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const [listsOpen, setListsOpen] = useState(false);
+  const [legislatieOpen, setLegistatieOpen] = useState(false);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
   });
 
+  const { data: listConfigs } = useQuery<ListConfig[]>({
+    queryKey: ["/api/liste-config"],
+  });
+
   const highestRole = roleInfo?.highestRole;
 
-  const isActive = location === "/";
+  const isInfografieActive = location === "/";
+  const isListeActive = location.startsWith("/liste-generale");
+  const isLegistatieActive = location.startsWith("/legislatie");
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -60,13 +79,75 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild data-active={isActive} className={`h-8 text-sm ${isActive ? "bg-sidebar-accent" : ""}`}>
+                <SidebarMenuButton asChild data-active={isInfografieActive} className={`h-8 text-sm ${isInfografieActive ? "bg-sidebar-accent" : ""}`}>
                   <Link href="/" data-testid="link-nav-infografie">
                     <GitBranch className="w-4 h-4" />
                     <span>Infografie</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
+              <Collapsible open={listsOpen || isListeActive} onOpenChange={setListsOpen}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isListeActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-liste-generale">
+                      <List className="w-4 h-4" />
+                      <span className="flex-1">Liste Generale</span>
+                      {(listsOpen || isListeActive) ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {listConfigs?.map((config) => {
+                        const isSubActive = location === `/liste-generale/${config.key}`;
+                        return (
+                          <SidebarMenuSubItem key={config.key}>
+                            <SidebarMenuSubButton asChild data-active={isSubActive} className={isSubActive ? "bg-sidebar-accent" : ""}>
+                              <Link href={`/liste-generale/${config.key}`} data-testid={`link-list-${config.key}`}>
+                                <span className="truncate">{config.label}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              <Collapsible open={legislatieOpen || isLegistatieActive} onOpenChange={setLegistatieOpen}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isLegistatieActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-legislatie">
+                      <Scale className="w-4 h-4" />
+                      <span className="flex-1">Legislatie</span>
+                      {(legislatieOpen || isLegistatieActive) ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {LEGISLATION_ITEMS.map((law) => {
+                        const isSubActive = location === `/legislatie/${law.id}`;
+                        return (
+                          <SidebarMenuSubItem key={law.id}>
+                            <SidebarMenuSubButton asChild data-active={isSubActive} className={isSubActive ? "bg-sidebar-accent" : ""}>
+                              <Link href={`/legislatie/${law.id}`} data-testid={`link-law-sidebar-${law.id}`}>
+                                <span className="truncate">{law.shortTitle}</span>
+                                <Badge
+                                  variant={law.status === "in_vigoare" ? "default" : "secondary"}
+                                  className="text-[9px] px-1 py-0 shrink-0 ml-auto"
+                                >
+                                  {law.status === "in_vigoare" ? "V" : "A"}
+                                </Badge>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

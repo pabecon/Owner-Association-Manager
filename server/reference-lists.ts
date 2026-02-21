@@ -5,13 +5,13 @@ import {
   listaConturiToshl, listaCotaTva, listaCursValutarBnr, listaOrasJudet,
   listaPrefixTelefon, listaSectorBucuresti, listaSerieCi, listaTari,
   listaTipDrumuri, listaTipFactura, listaTipMoneda, listaTvaPartenerAnaf,
-  listaUnitateMasura,
+  listaUnitateMasura, listaTipCamera,
   insertListaAtributeFiscaleSchema, insertListaBancaSchema, insertListaBanciConturiSchema,
   insertListaConexiuneBancareSchema, insertListaConturiToshlSchema, insertListaCotaTvaSchema,
   insertListaCursValutarBnrSchema, insertListaOrasJudetSchema, insertListaPrefixTelefonSchema,
   insertListaSectorBucurestiSchema, insertListaSerieCiSchema, insertListaTariSchema,
   insertListaTipDrumuriSchema, insertListaTipFacturaSchema, insertListaTipMonedaSchema,
-  insertListaTvaPartenerAnafSchema, insertListaUnitateMasuraSchema,
+  insertListaTvaPartenerAnafSchema, insertListaUnitateMasuraSchema, insertListaTipCameraSchema,
 } from "@shared/schema";
 
 export interface ListColumn {
@@ -221,6 +221,11 @@ const unitateMasuraColumns: ListColumn[] = [
   { key: "simbol", label: "Simbol", required: false },
 ];
 
+const tipCameraColumns: ListColumn[] = [
+  { key: "nume", label: "Nume Tip Camera", required: true },
+  { key: "descriere", label: "Descriere", required: false },
+];
+
 export const referenceListConfigs: Record<string, ReferenceListConfig> = {
   "atribute-fiscale": {
     key: "atribute-fiscale",
@@ -374,6 +379,15 @@ export const referenceListConfigs: Record<string, ReferenceListConfig> = {
     insertSchema: insertListaUnitateMasuraSchema,
     columns: unitateMasuraColumns,
     columnMap: buildColumnMap(unitateMasuraColumns),
+  },
+  "tip-camera": {
+    key: "tip-camera",
+    label: "Tipuri Camere",
+    table: listaTipCamera,
+    supabaseTable: "lista_tip_camera",
+    insertSchema: insertListaTipCameraSchema,
+    columns: tipCameraColumns,
+    columnMap: buildColumnMap(tipCameraColumns),
   },
 };
 
