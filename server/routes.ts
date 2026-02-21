@@ -8,6 +8,7 @@ import {
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
   insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
   insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema,
+  insertFundSchema, insertFundCategorySchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
 import { users } from "@shared/schema";
@@ -766,6 +767,58 @@ export async function registerRoutes(
   });
 
   registerObjectStorageRoutes(app);
+
+  // ── Funds ──────────────────────────────────────────────
+  app.get("/api/funds", ...auth, async (req: AuthenticatedRequest, res) => {
+    const associationId = req.query.associationId as string | undefined;
+    if (!associationId) return res.status(400).json({ message: "associationId required" });
+    const result = await storage.getFundsByAssociation(associationId);
+    res.json(result);
+  });
+
+  app.post("/api/funds", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertFundSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const fund = await storage.createFund(parsed.data);
+    res.json(fund);
+  });
+
+  app.patch("/api/funds/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    const fund = await storage.updateFund(req.params.id, req.body);
+    if (!fund) return res.status(404).json({ message: "Fund not found" });
+    res.json(fund);
+  });
+
+  app.delete("/api/funds/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteFund(req.params.id);
+    res.json({ ok: true });
+  });
+
+  // ── Fund Categories ───────────────────────────────────
+  app.get("/api/fund-categories", ...auth, async (req: AuthenticatedRequest, res) => {
+    const fundId = req.query.fundId as string | undefined;
+    if (!fundId) return res.status(400).json({ message: "fundId required" });
+    const result = await storage.getFundCategories(fundId);
+    res.json(result);
+  });
+
+  app.post("/api/fund-categories", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertFundCategorySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const cat = await storage.createFundCategory(parsed.data);
+    res.json(cat);
+  });
+
+  app.patch("/api/fund-categories/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    const cat = await storage.updateFundCategory(req.params.id, req.body);
+    if (!cat) return res.status(404).json({ message: "Category not found" });
+    res.json(cat);
+  });
+
+  app.delete("/api/fund-categories/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteFundCategory(req.params.id);
+    res.json({ ok: true });
+  });
 
   app.get("/api/documents/:entityType/:entityId", ...auth, async (req, res) => {
     const entityType = req.params.entityType as string;
