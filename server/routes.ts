@@ -451,26 +451,34 @@ export async function registerRoutes(
         let from = 0;
         const pageSize = 1000;
         let hasMore = true;
-        while (hasMore) {
-          const { data: page, error: pageError } = await supabase
-            .from(config.supabaseTable)
-            .select("*")
-            .range(from, from + pageSize - 1);
-          if (pageError) {
-            console.error(`Supabase GET ${config.supabaseTable}:`, pageError.message);
-            return res.status(500).json({ message: `Error al obtener datos: ${pageError.message}` });
+        let supabaseOk = false;
+        try {
+          while (hasMore) {
+            const { data: page, error: pageError } = await supabase
+              .from(config.supabaseTable)
+              .select("*")
+              .range(from, from + pageSize - 1);
+            if (pageError) throw new Error(pageError.message);
+            allData = allData.concat(page || []);
+            if (!page || page.length < pageSize) {
+              hasMore = false;
+            } else {
+              from += pageSize;
+            }
           }
-          allData = allData.concat(page || []);
-          if (!page || page.length < pageSize) {
-            hasMore = false;
-          } else {
-            from += pageSize;
-          }
+          supabaseOk = true;
+        } catch (supErr: any) {
+          console.warn(`Supabase fallback for ${config.supabaseTable}: ${supErr.message}`);
         }
-        const mapped = allData.map(mapRowFromSupabase);
-        res.json(mapped);
+        if (supabaseOk && allData.length > 0) {
+          const mapped = allData.map(mapRowFromSupabase);
+          res.json(mapped);
+        } else {
+          const localData = await db.select().from(config.table);
+          res.json(localData);
+        }
       } catch (err: any) {
-        console.error(`Supabase GET ${config.supabaseTable}:`, err.message);
+        console.error(`GET ${config.supabaseTable}:`, err.message);
         res.status(500).json({ message: err.message });
       }
     });
@@ -482,12 +490,13 @@ export async function registerRoutes(
         const supabaseData = mapRowToSupabase((parsed as any).data, config.columnMap);
         const { data, error } = await supabase.from(config.supabaseTable).insert(supabaseData).select().single();
         if (error) {
-          console.error(`Supabase POST ${config.supabaseTable}:`, error.message);
-          return res.status(500).json({ message: `Error al crear: ${error.message}` });
+          console.warn(`Supabase POST fallback for ${config.supabaseTable}: ${error.message}`);
+          const [localRow] = await db.insert(config.table).values((parsed as any).data).returning();
+          return res.json(localRow);
         }
         res.json(mapRowFromSupabase(data));
       } catch (err: any) {
-        console.error(`Supabase POST ${config.supabaseTable}:`, err.message);
+        console.error(`POST ${config.supabaseTable}:`, err.message);
         res.status(500).json({ message: err.message });
       }
     });
@@ -496,12 +505,13 @@ export async function registerRoutes(
       try {
         const { error } = await supabase.from(config.supabaseTable).delete().eq("id", req.params.id);
         if (error) {
-          console.error(`Supabase DELETE ${config.supabaseTable}:`, error.message);
-          return res.status(500).json({ message: `Error al eliminar: ${error.message}` });
+          console.warn(`Supabase DELETE fallback for ${config.supabaseTable}: ${error.message}`);
+          await db.delete(config.table).where(eq((config.table as any).id, req.params.id));
+          return res.json({ ok: true });
         }
         res.json({ ok: true });
       } catch (err: any) {
-        console.error(`Supabase DELETE ${config.supabaseTable}:`, err.message);
+        console.error(`DELETE ${config.supabaseTable}:`, err.message);
         res.status(500).json({ message: err.message });
       }
     });
