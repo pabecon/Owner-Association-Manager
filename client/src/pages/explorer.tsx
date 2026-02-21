@@ -232,7 +232,7 @@ export default function Explorer() {
                             <p className="font-semibold truncate">{fed.name}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">Federatie</p>
                           </div>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("federation", fed); }} data-testid={`edit-federation-${fed.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={e => { e.stopPropagation(); openEdit("federation", fed); }} data-testid={`edit-federation-${fed.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                           <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                         </div>
                         {fed.description && <p className="text-sm text-muted-foreground line-clamp-2">{fed.description}</p>}
@@ -296,7 +296,7 @@ export default function Explorer() {
                             <p className="font-semibold truncate">{assoc.name}</p>
                             {assoc.cui && <p className="text-xs text-muted-foreground mt-0.5">CUI: {assoc.cui}</p>}
                           </div>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("association", assoc); }} data-testid={`edit-association-${assoc.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                          <Button variant="outline" size="icon" className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={e => { e.stopPropagation(); openEdit("association", assoc); }} data-testid={`edit-association-${assoc.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                           <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                         </div>
                         {assoc.address && (
@@ -338,7 +338,7 @@ export default function Explorer() {
                     <Card>
                       <CardContent className="p-3">
                         <div className="flex justify-end mb-1">
-                          <Button variant="ghost" size="sm" className="h-7 gap-1.5" onClick={() => openEdit("association", selectedAssociation)} data-testid="edit-current-association"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
+                          <Button variant="outline" size="sm" className="h-7 gap-1.5 border-primary/30 text-primary hover:bg-primary/10" onClick={() => openEdit("association", selectedAssociation)} data-testid="edit-current-association"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
                           {selectedAssociation.cui && (
@@ -382,7 +382,7 @@ export default function Explorer() {
                                 <MapPin className="w-3 h-3" /><span className="truncate">{bld.address}</span>
                               </div>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("building", bld); }} data-testid={`edit-building-${bld.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                            <Button variant="outline" size="icon" className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={e => { e.stopPropagation(); openEdit("building", bld); }} data-testid={`edit-building-${bld.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                             <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -419,7 +419,7 @@ export default function Explorer() {
                           <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /><span>{selectedBuilding.address}</span></div>
                           <Badge variant="secondary" className="text-xs"><Layers className="w-3 h-3 mr-1" />{selectedBuilding.floors} etaje</Badge>
                           <Badge variant="secondary" className="text-xs">{selectedBuilding.totalApartments} unitati</Badge>
-                          <Button variant="ghost" size="sm" className="h-7 gap-1.5 ml-auto" onClick={() => openEdit("building", selectedBuilding)} data-testid="edit-current-building"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
+                          <Button variant="outline" size="sm" className="h-7 gap-1.5 ml-auto border-primary/30 text-primary hover:bg-primary/10" onClick={() => openEdit("building", selectedBuilding)} data-testid="edit-current-building"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -444,7 +444,7 @@ export default function Explorer() {
                                 <p className="font-semibold">{st.name}</p>
                                 <p className="text-xs text-muted-foreground mt-0.5">{st.floors} etaje, {st.apartmentsPerFloor} unit./etaj</p>
                               </div>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("staircase", st); }} data-testid={`edit-staircase-${st.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                              <Button variant="outline" size="icon" className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={e => { e.stopPropagation(); openEdit("staircase", st); }} data-testid={`edit-staircase-${st.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -479,7 +479,7 @@ export default function Explorer() {
                           <Badge variant="secondary" className="text-xs"><Layers className="w-3 h-3 mr-1" />{selectedStaircase.floors} etaje</Badge>
                           <Badge variant="secondary" className="text-xs">{selectedStaircase.apartmentsPerFloor} unit./etaj</Badge>
                           <Badge variant="outline" className="text-xs">{currentApartments.length} unitati totale</Badge>
-                          <Button variant="ghost" size="sm" className="h-7 gap-1.5 ml-auto" onClick={() => openEdit("staircase", selectedStaircase)} data-testid="edit-current-staircase"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
+                          <Button variant="outline" size="sm" className="h-7 gap-1.5 ml-auto border-primary/30 text-primary hover:bg-primary/10" onClick={() => openEdit("staircase", selectedStaircase)} data-testid="edit-current-staircase"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -539,7 +539,7 @@ export default function Explorer() {
                                 <p className="font-semibold">{typeLabel} {unit.number}</p>
                                 {unit.surface && <p className="text-xs text-muted-foreground mt-0.5">{unit.surface} mp</p>}
                               </div>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEdit("apartment", unit)} data-testid={`edit-unit-${unit.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
+                              <Button variant="outline" size="icon" className="h-7 w-7 shrink-0 border-primary/30 text-primary hover:bg-primary/10" onClick={() => openEdit("apartment", unit)} data-testid={`edit-unit-${unit.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                             </div>
                             {unit.ownerName && (
                               <div className="flex items-center gap-2 text-sm mb-1">
