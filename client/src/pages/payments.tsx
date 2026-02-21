@@ -95,234 +95,240 @@ export default function Payments() {
   const totalPaid = filtered.filter(p => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0);
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-payments-title">Plati</h1>
-          <p className="text-muted-foreground text-sm mt-1">Urmareste platile proprietarilor</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-payment">
-              <Plus className="w-4 h-4 mr-2" />
-              Inregistreaza Plata
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Plata Noua</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
-                <FormField control={form.control} name="apartmentId" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Apartament</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-payment-apartment">
-                          <SelectValue placeholder="Selecteaza apartamentul" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {apartments?.map(a => (
-                          <SelectItem key={a.id} value={a.id}>Ap. {a.number}{a.ownerName ? ` - ${a.ownerName}` : ""}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="amount" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Suma (RON)</FormLabel>
-                    <FormControl><Input {...field} placeholder="ex: 350.00" data-testid="input-payment-amount" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="month" render={({ field }) => (
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight" data-testid="text-payments-title">Plati</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Urmareste platile proprietarilor</p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-add-payment">
+                <Plus className="w-4 h-4 mr-2" />
+                Inregistreaza Plata
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Plata Noua</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((d) => createMutation.mutate(d))} className="space-y-4">
+                  <FormField control={form.control} name="apartmentId" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Luna</FormLabel>
+                      <FormLabel>Apartament</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger data-testid="select-payment-month">
-                            <SelectValue />
+                          <SelectTrigger data-testid="select-payment-apartment">
+                            <SelectValue placeholder="Selecteaza apartamentul" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {months.map(m => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          {apartments?.map(a => (
+                            <SelectItem key={a.id} value={a.id}>Ap. {a.number}{a.ownerName ? ` - ${a.ownerName}` : ""}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={form.control} name="year" render={({ field }) => (
+                  <FormField control={form.control} name="amount" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>An</FormLabel>
-                      <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} data-testid="input-payment-year" /></FormControl>
+                      <FormLabel>Suma (RON)</FormLabel>
+                      <FormControl><Input {...field} placeholder="ex: 350.00" data-testid="input-payment-amount" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={form.control} name="month" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Luna</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-payment-month">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {months.map(m => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="year" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>An</FormLabel>
+                        <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} data-testid="input-payment-year" /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="status" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-payment-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="pending">In asteptare</SelectItem>
+                          <SelectItem value="paid">Achitata</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="receiptNumber" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nr. Chitanta</FormLabel>
+                      <FormControl><Input {...field} value={field.value || ""} placeholder="ex: CH-001" data-testid="input-receipt-number" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-payment">
+                    {createMutation.isPending ? "Se salveaza..." : "Salveaza Plata"}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Cauta dupa apartament..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-payments"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            {["all", "pending", "paid"].map(s => (
+              <Button
+                key={s}
+                size="sm"
+                variant={statusFilter === s ? "default" : "outline"}
+                onClick={() => setStatusFilter(s)}
+                data-testid={`button-filter-${s}`}
+              >
+                {s === "all" ? "Toate" : s === "pending" ? "In asteptare" : "Achitate"}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Card>
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-amber-500/10 dark:bg-amber-400/10">
+                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 </div>
-                <FormField control={form.control} name="status" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-payment-status">
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pending">In asteptare</SelectItem>
-                        <SelectItem value="paid">Achitata</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="receiptNumber" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nr. Chitanta</FormLabel>
-                    <FormControl><Input {...field} value={field.value || ""} placeholder="ex: CH-001" data-testid="input-receipt-number" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-payment">
-                  {createMutation.isPending ? "Se salveaza..." : "Salveaza Plata"}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">In Asteptare</p>
+                  <p className="text-lg font-bold">{totalPending.toLocaleString("ro-RO")} RON</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-3 flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-emerald-500/10 dark:bg-emerald-400/10">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Achitate</p>
+                  <p className="text-lg font-bold">{totalPaid.toLocaleString("ro-RO")} RON</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Cauta dupa apartament..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="input-search-payments"
-          />
+          {isLoading ? (
+            <Card>
+              <CardContent className="p-0">
+                <div className="space-y-2 p-3">
+                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              </CardContent>
+            </Card>
+          ) : filtered.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <CreditCard className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground font-medium">Nicio plata gasita</p>
+                <p className="text-sm text-muted-foreground mt-0.5">Inregistreaza prima plata pentru a incepe</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="py-1">Apartament</TableHead>
+                        <TableHead className="py-1">Perioada</TableHead>
+                        <TableHead className="py-1">Nr. Chitanta</TableHead>
+                        <TableHead className="py-1">Status</TableHead>
+                        <TableHead className="text-right py-1">Suma</TableHead>
+                        <TableHead className="w-28 py-1"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((pay) => (
+                        <TableRow key={pay.id} data-testid={`row-payment-${pay.id}`}>
+                          <TableCell className="font-medium text-sm py-1">{getApartmentLabel(pay.apartmentId)}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm py-1">{pay.month} {pay.year}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm py-1">{pay.receiptNumber || "-"}</TableCell>
+                          <TableCell className="py-1">
+                            {pay.status === "paid" ? (
+                              <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Achitata
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-xs">
+                                <Clock className="w-3 h-3 mr-1" />
+                                In asteptare
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-sm py-1">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
+                          <TableCell className="py-1">
+                            {pay.status === "pending" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => markPaidMutation.mutate(pay.id)}
+                                disabled={markPaidMutation.isPending}
+                                data-testid={`button-mark-paid-${pay.id}`}
+                              >
+                                Confirma
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-          {["all", "pending", "paid"].map(s => (
-            <Button
-              key={s}
-              size="sm"
-              variant={statusFilter === s ? "default" : "outline"}
-              onClick={() => setStatusFilter(s)}
-              data-testid={`button-filter-${s}`}
-            >
-              {s === "all" ? "Toate" : s === "pending" ? "In asteptare" : "Achitate"}
-            </Button>
-          ))}
-        </div>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-md bg-amber-500/10 dark:bg-amber-400/10">
-              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">In Asteptare</p>
-              <p className="text-lg font-bold">{totalPending.toLocaleString("ro-RO")} RON</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-md bg-emerald-500/10 dark:bg-emerald-400/10">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Achitate</p>
-              <p className="text-lg font-bold">{totalPaid.toLocaleString("ro-RO")} RON</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {isLoading ? (
-        <Card>
-          <CardContent className="p-0">
-            <div className="space-y-2 p-4">
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          </CardContent>
-        </Card>
-      ) : filtered.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <CreditCard className="w-12 h-12 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium">Nicio plata gasita</p>
-            <p className="text-sm text-muted-foreground mt-1">Inregistreaza prima plata pentru a incepe</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Apartament</TableHead>
-                    <TableHead>Perioada</TableHead>
-                    <TableHead>Nr. Chitanta</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Suma</TableHead>
-                    <TableHead className="w-28"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((pay) => (
-                    <TableRow key={pay.id} data-testid={`row-payment-${pay.id}`}>
-                      <TableCell className="font-medium">{getApartmentLabel(pay.apartmentId)}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{pay.month} {pay.year}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{pay.receiptNumber || "-"}</TableCell>
-                      <TableCell>
-                        {pay.status === "paid" ? (
-                          <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Achitata
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            In asteptare
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-semibold">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
-                      <TableCell>
-                        {pay.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => markPaidMutation.mutate(pay.id)}
-                            disabled={markPaidMutation.isPending}
-                            data-testid={`button-mark-paid-${pay.id}`}
-                          >
-                            Confirma
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

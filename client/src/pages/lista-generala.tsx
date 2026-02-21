@@ -151,91 +151,95 @@ export default function ListaGenerala() {
 
   if (!listKey) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <List className="w-12 h-12 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium" data-testid="text-no-list-selected">
-              Selectati o lista din meniu
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col h-full">
+        <div className="flex-1 overflow-y-auto p-3">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <List className="w-12 h-12 text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground font-medium" data-testid="text-no-list-selected">
+                Selectati o lista din meniu
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-list-title">
-            {label}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gestioneaza inregistrarile din lista
-          </p>
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight" data-testid="text-list-title">
+              {label}
+            </h1>
+            <p className="text-muted-foreground text-sm mt-0.5">
+              Gestioneaza inregistrarile din lista
+            </p>
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={handleOpenAdd} data-testid="button-add-item">
+                <Plus className="w-4 h-4 mr-2" />
+                Adauga
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adauga inregistrare</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                  {columns.map((col) => (
+                    <FormField
+                      key={col.key}
+                      control={form.control}
+                      name={col.key}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {col.label}
+                            {col.required && <span className="text-destructive ml-1">*</span>}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              value={field.value || ""}
+                              placeholder={col.label}
+                              data-testid={`input-field-${col.key}`}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={createMutation.isPending}
+                    data-testid="button-submit-item"
+                  >
+                    {createMutation.isPending ? "Se salveaza..." : "Salveaza"}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenAdd} data-testid="button-add-item">
-              <Plus className="w-4 h-4 mr-2" />
-              Adauga
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Adauga inregistrare</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                {columns.map((col) => (
-                  <FormField
-                    key={col.key}
-                    control={form.control}
-                    name={col.key}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          {col.label}
-                          {col.required && <span className="text-destructive ml-1">*</span>}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            value={field.value || ""}
-                            placeholder={col.label}
-                            data-testid={`input-field-${col.key}`}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ))}
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={createMutation.isPending}
-                  data-testid="button-submit-item"
-                >
-                  {createMutation.isPending ? "Se salveaza..." : "Salveaza"}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Cauta..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-            data-testid="input-search-list"
-          />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="relative max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Cauta..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-list"
+            />
+          </div>
         </div>
       </div>
 
@@ -267,69 +271,79 @@ export default function ListaGenerala() {
         </DialogContent>
       </Dialog>
 
-      {isLoading ? (
-        <Card>
-          <CardContent className="p-0">
-            <div className="space-y-2 p-4">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : filtered.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <List className="w-12 h-12 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium" data-testid="text-empty-list">
-              Nicio inregistrare gasita
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Adaugati prima inregistrare pentru a incepe
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {columns.map((col) => (
-                      <TableHead key={col.key} data-testid={`header-${col.key}`}>
-                        {col.label}
-                      </TableHead>
-                    ))}
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((item, index) => (
-                    <TableRow key={item.id || index} data-testid={`row-list-item-${item.id || index}`}>
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-0">
+              <div className="space-y-2 p-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <List className="w-12 h-12 text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground font-medium" data-testid="text-empty-list">
+                Nicio inregistrare gasita
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Adaugati prima inregistrare pentru a incepe
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
                       {columns.map((col) => (
-                        <TableCell key={col.key} className="text-sm">
-                          {item[col.key] || ""}
-                        </TableCell>
+                        <TableHead key={col.key} className="py-1" data-testid={`header-${col.key}`}>
+                          {col.label}
+                        </TableHead>
                       ))}
-                      <TableCell>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDeleteClick(item.id || String(index))}
-                          data-testid={`button-delete-item-${item.id || index}`}
-                        >
-                          <Trash2 className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                      </TableCell>
+                      <TableHead className="w-12 py-1"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((item, index) => (
+                      <TableRow key={item.id || index} data-testid={`row-list-item-${item.id || index}`}>
+                        {columns.map((col) => {
+                          const val = item[col.key];
+                          let display = val || "";
+                          if ((col.key === "cotaDeTva" || col.key === "cota_de_tva") && val) {
+                            const num = parseFloat(val);
+                            display = !isNaN(num) ? (num < 1 ? `${(num * 100).toFixed(0)}%` : `${num}%`) : val;
+                          }
+                          return (
+                            <TableCell key={col.key} className="text-sm py-1">
+                              {display}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="py-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDeleteClick(item.id || String(index))}
+                            data-testid={`button-delete-item-${item.id || index}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

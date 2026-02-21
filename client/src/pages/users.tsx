@@ -172,229 +172,235 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-users-title">Gestionare Utilizatori</h1>
-          <p className="text-muted-foreground text-sm mt-1">Administrati rolurile si permisiunile utilizatorilor</p>
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight" data-testid="text-users-title">Gestionare Utilizatori</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Administrati rolurile si permisiunile utilizatorilor</p>
+          </div>
+          {canManage && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-assign-role">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Asigneaza Rol
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Asigneaza Rol Utilizator</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit((data) => assignRole.mutate(data))} className="space-y-4">
+                    <div className="space-y-2">
+                      <FormLabel>Cauta utilizator dupa email</FormLabel>
+                      <Input
+                        placeholder="email@exemplu.ro"
+                        value={searchEmail}
+                        onChange={(e) => setSearchEmail(e.target.value)}
+                        data-testid="input-search-user"
+                      />
+                      {searchResults && searchResults.length > 0 && (
+                        <div className="border rounded-md max-h-40 overflow-y-auto">
+                          {searchResults.map((u) => (
+                            <button
+                              key={u.id}
+                              type="button"
+                              className="flex items-center gap-2 w-full p-2 text-left text-sm hover-elevate"
+                              onClick={() => {
+                                form.setValue("userId", u.id);
+                                setSearchEmail(u.email || "");
+                              }}
+                              data-testid={`button-select-user-${u.id}`}
+                            >
+                              <span className="font-medium">{u.firstName} {u.lastName}</span>
+                              <span className="text-muted-foreground text-xs">{u.email}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {form.watch("userId") && (
+                        <p className="text-xs text-muted-foreground">Utilizator selectat: {searchEmail}</p>
+                      )}
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rol</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-role">
+                                <SelectValue placeholder="Selectati rolul" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableRoles.map((r) => (
+                                <SelectItem key={r} value={r} data-testid={`option-role-${r}`}>
+                                  {ROLE_LABELS[r]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {(selectedRole === "admin" || selectedRole === "manager") && federations && federations.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="federationId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Federatie (optional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-federation">
+                                  <SelectValue placeholder="Selectati federatia" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {federations.map((f) => (
+                                  <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {(selectedRole === "manager" || selectedRole === "owner" || selectedRole === "tenant") && buildings && buildings.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="buildingId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bloc (optional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-building">
+                                  <SelectValue placeholder="Selectati blocul" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {buildings.map((b) => (
+                                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline" type="button">Anuleaza</Button>
+                      </DialogClose>
+                      <Button type="submit" disabled={assignRole.isPending} data-testid="button-submit-role">
+                        {assignRole.isPending ? "Se salveaza..." : "Salveaza"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
-        {canManage && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-assign-role">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Asigneaza Rol
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Asigneaza Rol Utilizator</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => assignRole.mutate(data))} className="space-y-4">
-                  <div className="space-y-2">
-                    <FormLabel>Cauta utilizator dupa email</FormLabel>
-                    <Input
-                      placeholder="email@exemplu.ro"
-                      value={searchEmail}
-                      onChange={(e) => setSearchEmail(e.target.value)}
-                      data-testid="input-search-user"
-                    />
-                    {searchResults && searchResults.length > 0 && (
-                      <div className="border rounded-md max-h-40 overflow-y-auto">
-                        {searchResults.map((u) => (
-                          <button
-                            key={u.id}
-                            type="button"
-                            className="flex items-center gap-2 w-full p-2 text-left text-sm hover-elevate"
-                            onClick={() => {
-                              form.setValue("userId", u.id);
-                              setSearchEmail(u.email || "");
-                            }}
-                            data-testid={`button-select-user-${u.id}`}
-                          >
-                            <span className="font-medium">{u.firstName} {u.lastName}</span>
-                            <span className="text-muted-foreground text-xs">{u.email}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {form.watch("userId") && (
-                      <p className="text-xs text-muted-foreground">Utilizator selectat: {searchEmail}</p>
-                    )}
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rol</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-role">
-                              <SelectValue placeholder="Selectati rolul" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableRoles.map((r) => (
-                              <SelectItem key={r} value={r} data-testid={`option-role-${r}`}>
-                                {ROLE_LABELS[r]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {(selectedRole === "admin" || selectedRole === "manager") && federations && federations.length > 0 && (
-                    <FormField
-                      control={form.control}
-                      name="federationId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Federatie (optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-federation">
-                                <SelectValue placeholder="Selectati federatia" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {federations.map((f) => (
-                                <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  {(selectedRole === "manager" || selectedRole === "owner" || selectedRole === "tenant") && buildings && buildings.length > 0 && (
-                    <FormField
-                      control={form.control}
-                      name="buildingId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bloc (optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-building">
-                                <SelectValue placeholder="Selectati blocul" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {buildings.map((b) => (
-                                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline" type="button">Anuleaza</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={assignRole.isPending} data-testid="button-submit-role">
-                      {assignRole.isPending ? "Se salveaza..." : "Salveaza"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="max-w-5xl mx-auto">
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-10 h-10 rounded-full" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-56" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : !usersData || usersData.length === 0 ? (
+            <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="w-10 h-10 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-3 w-56" />
-                  </div>
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-sm text-muted-foreground" data-testid="text-no-users">Nu exista utilizatori cu roluri asignate</p>
+                  {canManage && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Folositi butonul "Asigneaza Rol" pentru a adauga utilizatori</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : !usersData || usersData.length === 0 ? (
-        <Card>
-          <CardContent className="p-8">
-            <div className="flex flex-col items-center justify-center text-center">
-              <Users className="w-12 h-12 text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground" data-testid="text-no-users">Nu exista utilizatori cu roluri asignate</p>
-              {canManage && (
-                <p className="text-xs text-muted-foreground mt-1">Folositi butonul "Asigneaza Rol" pentru a adauga utilizatori</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {usersData.map((u) => {
-            const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Necunoscut";
-            const initials = [u.firstName, u.lastName]
-              .filter(Boolean)
-              .map((n) => n?.[0]?.toUpperCase())
-              .join("");
+          ) : (
+            <div className="space-y-2">
+              {usersData.map((u) => {
+                const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Necunoscut";
+                const initials = [u.firstName, u.lastName]
+                  .filter(Boolean)
+                  .map((n) => n?.[0]?.toUpperCase())
+                  .join("");
 
-            return (
-              <Card key={u.id} data-testid={`card-user-${u.id}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={u.profileImageUrl || undefined} alt={name} />
-                      <AvatarFallback className="text-xs">{initials || "U"}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold" data-testid={`text-user-name-${u.id}`}>{name}</p>
-                      {u.email && <p className="text-xs text-muted-foreground" data-testid={`text-user-email-${u.id}`}>{u.email}</p>}
-                      <div className="flex items-center gap-2 flex-wrap mt-2">
-                        {u.roles.map((r) => (
-                          <div key={r.id} className="flex items-center gap-1">
-                            <Badge variant={ROLE_VARIANTS[r.role] || "secondary"} data-testid={`badge-role-${r.id}`}>
-                              <Shield className="w-3 h-3 mr-1" />
-                              {ROLE_LABELS[r.role] || r.role}
-                              {(r.buildingId || r.federationId || r.apartmentId) && (
-                                <span className="ml-1 opacity-75">({getScopeLabel(r)})</span>
-                              )}
-                            </Badge>
-                            {canManage && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="w-6 h-6"
-                                onClick={() => deleteRole.mutate(r.id)}
-                                disabled={deleteRole.isPending}
-                                data-testid={`button-delete-role-${r.id}`}
-                              >
-                                <Trash2 className="w-3 h-3 text-destructive" />
-                              </Button>
-                            )}
+                return (
+                  <Card key={u.id} data-testid={`card-user-${u.id}`}>
+                    <CardContent className="p-3">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={u.profileImageUrl || undefined} alt={name} />
+                          <AvatarFallback className="text-xs">{initials || "U"}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold" data-testid={`text-user-name-${u.id}`}>{name}</p>
+                          {u.email && <p className="text-xs text-muted-foreground" data-testid={`text-user-email-${u.id}`}>{u.email}</p>}
+                          <div className="flex items-center gap-2 flex-wrap mt-2">
+                            {u.roles.map((r) => (
+                              <div key={r.id} className="flex items-center gap-1">
+                                <Badge variant={ROLE_VARIANTS[r.role] || "secondary"} data-testid={`badge-role-${r.id}`}>
+                                  <Shield className="w-3 h-3 mr-1" />
+                                  {ROLE_LABELS[r.role] || r.role}
+                                  {(r.buildingId || r.federationId || r.apartmentId) && (
+                                    <span className="ml-1 opacity-75">({getScopeLabel(r)})</span>
+                                  )}
+                                </Badge>
+                                {canManage && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="w-6 h-6"
+                                    onClick={() => deleteRole.mutate(r.id)}
+                                    disabled={deleteRole.isPending}
+                                    data-testid={`button-delete-role-${r.id}`}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

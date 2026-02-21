@@ -26,8 +26,8 @@ function LawTableOfContents({ sections, onNavigate }: { sections: LawSection[]; 
   if (chapters.length === 0) return null;
 
   return (
-    <Card className="p-5 mb-6" data-testid="card-law-toc">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b">
+    <Card className="p-3 mb-3" data-testid="card-law-toc">
+      <div className="flex items-center gap-2 mb-2 pb-2 border-b">
         <ListOrdered className="w-4 h-4 text-muted-foreground shrink-0" />
         <h2 className="text-sm font-bold uppercase tracking-wide">Cuprins</h2>
       </div>
@@ -106,8 +106,8 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
     const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
     if (!matches) return null;
     return (
-      <div className="mb-8" id={section.id} data-testid={`section-${section.id}`}>
-        <div className="flex items-center gap-3 mb-4 pb-2 border-b">
+      <div className="mb-6" id={section.id} data-testid={`section-${section.id}`}>
+        <div className="flex items-center gap-3 mb-3 pb-2 border-b">
           <BookOpen className="w-5 h-5 text-muted-foreground shrink-0" />
           <h2 className="text-base font-bold uppercase tracking-wide">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h2>
         </div>
@@ -122,13 +122,13 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
     const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
     if (!matches) return null;
     return (
-      <div className="mb-5 pl-4" id={section.id} data-testid={`article-${section.id}`}>
-        <h3 className="text-sm font-semibold mb-1.5">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h3>
+      <div className="mb-4 pl-4" id={section.id} data-testid={`article-${section.id}`}>
+        <h3 className="text-sm font-semibold mb-1">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h3>
         {section.content && (
-          <p className="text-sm leading-relaxed text-foreground mb-2">{searchTerm ? highlightText(section.content, searchTerm) : section.content}</p>
+          <p className="text-sm leading-relaxed text-foreground mb-1.5">{searchTerm ? highlightText(section.content, searchTerm) : section.content}</p>
         )}
         {section.items && section.items.length > 0 && (
-          <div className="ml-4 space-y-1.5">
+          <div className="ml-4 space-y-1">
             {section.items.map((item, i) => (
               <div key={i} className="flex gap-2 text-sm leading-relaxed">
                 <span className="text-muted-foreground shrink-0 mt-0.5">-</span>
@@ -158,8 +158,8 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
     const matches = searchTerm ? sectionMatchesSearch(section, searchTerm) : true;
     if (!matches) return null;
     return (
-      <div className="mb-8 mt-10" id={section.id} data-testid={`section-${section.id}`}>
-        <div className="flex items-center gap-3 mb-4 pb-2 border-b border-primary/30">
+      <div className="mb-6 mt-8" id={section.id} data-testid={`section-${section.id}`}>
+        <div className="flex items-center gap-3 mb-3 pb-2 border-b border-primary/30">
           <FileText className="w-5 h-5 text-primary shrink-0" />
           <h2 className="text-base font-bold uppercase tracking-wide">{searchTerm ? highlightText(section.title || "", searchTerm) : section.title}</h2>
         </div>
@@ -172,12 +172,12 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
 
   if (section.type === "table" && section.tableData) {
     return (
-      <div className="my-3 ml-4 overflow-x-auto" data-testid="law-table">
+      <div className="my-2 ml-4 overflow-x-auto" data-testid="law-table">
         <table className="w-full text-xs border-collapse border border-border">
           <thead>
             <tr className="bg-muted">
               {section.tableData.headers.map((header, i) => (
-                <th key={i} className="border border-border px-2 py-1.5 text-left font-semibold whitespace-nowrap">
+                <th key={i} className="border border-border px-2 py-1 text-left font-semibold whitespace-nowrap">
                   {searchTerm ? highlightText(header, searchTerm) : header}
                 </th>
               ))}
@@ -203,7 +203,7 @@ function LawSectionRenderer({ section, depth = 0, searchTerm = "" }: { section: 
     const matches = searchTerm ? (section.content && normalizeText(section.content).includes(normalizeText(searchTerm))) : true;
     if (!matches) return null;
     return (
-      <p className="text-sm leading-relaxed mb-4">{searchTerm ? highlightText(section.content || "", searchTerm) : section.content}</p>
+      <p className="text-sm leading-relaxed mb-3">{searchTerm ? highlightText(section.content || "", searchTerm) : section.content}</p>
     );
   }
 
@@ -281,17 +281,17 @@ function GlobalSearchView() {
   const totalMatches = searchResults.reduce((sum, r) => sum + r.matchCount, 0);
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Scale className="w-6 h-6 text-muted-foreground shrink-0" />
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex items-center gap-3">
+          <Scale className="w-5 h-5 text-muted-foreground shrink-0" />
           <div>
-            <h1 className="text-xl font-bold" data-testid="text-legislatie-title">Legislatie</h1>
-            <p className="text-sm text-muted-foreground">Cautati in toate actele normative disponibile</p>
+            <h1 className="text-lg font-bold" data-testid="text-legislatie-title">Legislatie</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Cautati in toate actele normative disponibile</p>
           </div>
         </div>
 
-        <div className="mb-6 relative" data-testid="global-search-container">
+        <div className="relative" data-testid="global-search-container">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Cautati in toate legile (ex: locuinta, proprietar, asociatie)..."
@@ -317,69 +317,73 @@ function GlobalSearchView() {
             </div>
           )}
         </div>
+      </div>
 
-        {globalTerm.length >= 2 && searchResults.length === 0 && (
-          <Card className="p-6">
-            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-              <Search className="w-10 h-10 mb-3 opacity-40" />
-              <p className="text-sm font-medium" data-testid="text-global-no-results">Niciun rezultat gasit</p>
-              <p className="text-xs mt-1">Incercati alt termen de cautare.</p>
-            </div>
-          </Card>
-        )}
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="max-w-4xl mx-auto">
+          {globalTerm.length >= 2 && searchResults.length === 0 && (
+            <Card className="p-3">
+              <div className="flex flex-col items-center justify-center py-4 text-center text-muted-foreground">
+                <Search className="w-10 h-10 mb-3 opacity-40" />
+                <p className="text-sm font-medium" data-testid="text-global-no-results">Niciun rezultat gasit</p>
+                <p className="text-xs mt-0.5">Incercati alt termen de cautare.</p>
+              </div>
+            </Card>
+          )}
 
-        {globalTerm.length >= 2 && searchResults.length > 0 && (
-          <div className="space-y-4" data-testid="global-search-results">
-            {searchResults.map((result) => (
-              <Card key={result.lawId} className="p-5" data-testid={`card-global-result-${result.lawId}`}>
-                <div className="flex items-center justify-between gap-3 flex-wrap mb-4 pb-3 border-b">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-bold">{result.lawTitle}</span>
-                    <Badge variant={result.status === "in_vigoare" ? "default" : "secondary"}>
-                      {result.status === "in_vigoare" ? "In vigoare" : "Abrogata"}
-                    </Badge>
-                    <Badge variant="outline">{result.matchCount} {result.matchCount === 1 ? "articol" : "articole"}</Badge>
-                  </div>
-                  <Link href={`/legislatie/${result.lawId}`}>
-                    <Button variant="outline" size="sm" data-testid={`button-open-law-${result.lawId}`}>
-                      Deschide legea
-                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
-                <div className="space-y-2">
-                  {result.matches.map((match, idx) => (
-                    <div key={idx} className="pl-3 border-l-2 border-muted" data-testid={`result-match-${result.lawId}-${idx}`}>
-                      <p className="text-xs font-semibold mb-0.5">{match.article}</p>
-                      {match.chapter && (
-                        <p className="text-xs text-muted-foreground mb-1">{match.chapter}</p>
-                      )}
-                      {match.snippet && (
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {highlightText(match.snippet, globalTerm)}
-                        </p>
-                      )}
+          {globalTerm.length >= 2 && searchResults.length > 0 && (
+            <div className="space-y-3" data-testid="global-search-results">
+              {searchResults.map((result) => (
+                <Card key={result.lawId} className="p-3" data-testid={`card-global-result-${result.lawId}`}>
+                  <div className="flex items-center justify-between gap-3 flex-wrap mb-3 pb-2 border-b">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-bold">{result.lawTitle}</span>
+                      <Badge variant={result.status === "in_vigoare" ? "default" : "secondary"}>
+                        {result.status === "in_vigoare" ? "In vigoare" : "Abrogata"}
+                      </Badge>
+                      <Badge variant="outline">{result.matchCount} {result.matchCount === 1 ? "articol" : "articole"}</Badge>
                     </div>
-                  ))}
-                  {result.matchCount > 10 && (
-                    <p className="text-xs text-muted-foreground pl-3 italic">
-                      ...si alte {result.matchCount - 10} articole
-                    </p>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                    <Link href={`/legislatie/${result.lawId}`}>
+                      <Button variant="outline" size="sm" data-testid={`button-open-law-${result.lawId}`}>
+                        Deschide legea
+                        <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="space-y-2">
+                    {result.matches.map((match, idx) => (
+                      <div key={idx} className="pl-3 border-l-2 border-muted" data-testid={`result-match-${result.lawId}-${idx}`}>
+                        <p className="text-xs font-semibold mb-0.5">{match.article}</p>
+                        {match.chapter && (
+                          <p className="text-xs text-muted-foreground mb-1">{match.chapter}</p>
+                        )}
+                        {match.snippet && (
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {highlightText(match.snippet, globalTerm)}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                    {result.matchCount > 10 && (
+                      <p className="text-xs text-muted-foreground pl-3 italic">
+                        ...si alte {result.matchCount - 10} articole
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
 
-        {globalTerm.length < 2 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-            <Scale className="w-16 h-16 mb-4 opacity-30" />
-            <p className="text-lg font-medium mb-1" data-testid="text-legislatie-placeholder">Selectati un act normativ</p>
-            <p className="text-sm">Alegeti o lege din meniul Legislatie din bara laterala sau cautati in toate legile.</p>
-          </div>
-        )}
+          {globalTerm.length < 2 && (
+            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+              <Scale className="w-16 h-16 mb-4 opacity-30" />
+              <p className="text-lg font-medium mb-1" data-testid="text-legislatie-placeholder">Selectati un act normativ</p>
+              <p className="text-sm">Alegeti o lege din meniul Legislatie din bara laterala sau cautati in toate legile.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -409,12 +413,12 @@ export default function Legislatie() {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <h1 className="text-xl font-bold" data-testid="text-selected-law-title">{selectedLaw.shortTitle}</h1>
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h1 className="text-lg font-bold" data-testid="text-selected-law-title">{selectedLaw.shortTitle}</h1>
               <Badge
                 variant={selectedLaw.status === "in_vigoare" ? "default" : "secondary"}
                 data-testid="badge-selected-law-status"
@@ -423,7 +427,7 @@ export default function Legislatie() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground" data-testid="text-selected-law-full-title">{selectedLaw.fullTitle}</p>
-            <p className="text-xs text-muted-foreground mt-1">{selectedLaw.publishedIn}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{selectedLaw.publishedIn}</p>
           </div>
           <Button variant="outline" size="sm" asChild>
             <a href={selectedLaw.url} target="_blank" rel="noopener noreferrer" data-testid="link-law-external">
@@ -434,11 +438,7 @@ export default function Legislatie() {
         </div>
 
         {lawContent && (
-          <LawTableOfContents sections={lawContent} onNavigate={scrollToChapter} />
-        )}
-
-        {lawContent && (
-          <div className="mb-6 relative" data-testid="search-law-container">
+          <div className="relative" data-testid="search-law-container">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Cautati in textul legii..."
@@ -465,46 +465,54 @@ export default function Legislatie() {
             )}
           </div>
         )}
+      </div>
 
-        {lawContent ? (
-          <Card className="p-6" data-testid="card-law-content">
-            {searchTerm.length >= 2 && matchCount === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-                <Search className="w-10 h-10 mb-3 opacity-40" />
-                <p className="text-sm font-medium">Niciun rezultat gasit</p>
-                <p className="text-xs mt-1">Incercati alt termen de cautare.</p>
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="max-w-4xl mx-auto">
+          {lawContent && (
+            <LawTableOfContents sections={lawContent} onNavigate={scrollToChapter} />
+          )}
+
+          {lawContent ? (
+            <Card className="p-3" data-testid="card-law-content">
+              {searchTerm.length >= 2 && matchCount === 0 && (
+                <div className="flex flex-col items-center justify-center py-4 text-center text-muted-foreground">
+                  <Search className="w-10 h-10 mb-3 opacity-40" />
+                  <p className="text-sm font-medium">Niciun rezultat gasit</p>
+                  <p className="text-xs mt-0.5">Incercati alt termen de cautare.</p>
+                </div>
+              )}
+              {lawContent.map((section, i) => (
+                <LawSectionRenderer key={i} section={section} searchTerm={searchTerm.length >= 2 ? searchTerm : ""} />
+              ))}
+              <div className="mt-6 pt-3 border-t flex items-center justify-between gap-3 flex-wrap">
+                <p className="text-xs text-muted-foreground">
+                  Text actualizat conform modificarilor ulterioare. Consultati textul oficial pentru versiunea completa.
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={selectedLaw.url} target="_blank" rel="noopener noreferrer" data-testid="link-law-full-text">
+                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                    Text oficial complet
+                  </a>
+                </Button>
               </div>
-            )}
-            {lawContent.map((section, i) => (
-              <LawSectionRenderer key={i} section={section} searchTerm={searchTerm.length >= 2 ? searchTerm : ""} />
-            ))}
-            <div className="mt-8 pt-4 border-t flex items-center justify-between gap-4 flex-wrap">
-              <p className="text-xs text-muted-foreground">
-                Text actualizat conform modificarilor ulterioare. Consultati textul oficial pentru versiunea completa.
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <a href={selectedLaw.url} target="_blank" rel="noopener noreferrer" data-testid="link-law-full-text">
-                  <ExternalLink className="w-4 h-4 mr-1.5" />
-                  Text oficial complet
-                </a>
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <Card className="p-6">
-            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-              <FileText className="w-12 h-12 mb-4 opacity-50" />
-              <p className="text-sm font-medium mb-1">Textul legii va fi disponibil in curand</p>
-              <p className="text-xs">Continutul va fi adaugat ulterior. Intre timp, puteti consulta textul oficial pe legislatie.just.ro.</p>
-              <Button variant="outline" size="sm" className="mt-4" asChild>
-                <a href={selectedLaw.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="w-4 h-4 mr-1.5" />
-                  Deschide textul oficial
-                </a>
-              </Button>
-            </div>
-          </Card>
-        )}
+            </Card>
+          ) : (
+            <Card className="p-3">
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <FileText className="w-12 h-12 mb-4 opacity-50" />
+                <p className="text-sm font-medium mb-1">Textul legii va fi disponibil in curand</p>
+                <p className="text-xs">Continutul va fi adaugat ulterior. Intre timp, puteti consulta textul oficial pe legislatie.just.ro.</p>
+                <Button variant="outline" size="sm" className="mt-4" asChild>
+                  <a href={selectedLaw.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                    Deschide textul oficial
+                  </a>
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -115,14 +115,18 @@ export default function HierarchyTree() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 max-w-5xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Infografie Ierarhie</h1>
-          <p className="text-muted-foreground text-sm mt-1">Vizualizare arborescenta completa</p>
+      <div className="flex flex-col h-full">
+        <div className="p-3 pb-0 space-y-3">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight">Infografie Ierarhie</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Vizualizare arborescenta completa</p>
+          </div>
         </div>
-        <Card><CardContent className="p-6 space-y-3">
-          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-8 w-full" />)}
-        </CardContent></Card>
+        <div className="flex-1 overflow-y-auto p-3 pt-3">
+          <Card><CardContent className="p-3 space-y-3">
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-8 w-full" />)}
+          </CardContent></Card>
+        </div>
       </div>
     );
   }
@@ -183,117 +187,123 @@ export default function HierarchyTree() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight" data-testid="text-tree-title">Infografie Ierarhie</h1>
-          <p className="text-muted-foreground text-sm mt-1">Vizualizare arborescenta completa a structurii</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" variant="outline" onClick={() => openAdd("federation")} data-testid="button-add-federation">
-            <Plus className="w-4 h-4 mr-1.5" />Federatie
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openAdd("association")} data-testid="button-add-association">
-            <Plus className="w-4 h-4 mr-1.5" />Asociatie
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openAdd("building")} data-testid="button-add-building">
-            <Plus className="w-4 h-4 mr-1.5" />Bloc
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openAdd("staircase")} data-testid="button-add-staircase">
-            <Plus className="w-4 h-4 mr-1.5" />Scara
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
-            <Plus className="w-4 h-4 mr-1.5" />Unitate
-          </Button>
+    <div className="flex flex-col h-full">
+      <div className="p-3 pb-0 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight" data-testid="text-tree-title">Infografie Ierarhie</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Vizualizare arborescenta completa a structurii</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={() => openAdd("federation")} data-testid="button-add-federation">
+              <Plus className="w-4 h-4 mr-1.5" />Federatie
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openAdd("association")} data-testid="button-add-association">
+              <Plus className="w-4 h-4 mr-1.5" />Asociatie
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openAdd("building")} data-testid="button-add-building">
+              <Plus className="w-4 h-4 mr-1.5" />Bloc
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openAdd("staircase")} data-testid="button-add-staircase">
+              <Plus className="w-4 h-4 mr-1.5" />Scara
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
+              <Plus className="w-4 h-4 mr-1.5" />Unitate
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalFed}</p>
-          <p className="text-xs text-muted-foreground">Federatii</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalAssoc}</p>
-          <p className="text-xs text-muted-foreground">Asociatii</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalBld}</p>
-          <p className="text-xs text-muted-foreground">Blocuri</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalSt}</p>
-          <p className="text-xs text-muted-foreground">Scari</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalAptOnly}</p>
-          <p className="text-xs text-muted-foreground">Apartamente</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
-          <p className="text-xl font-bold">{totalBoxes + totalParking}</p>
-          <p className="text-xs text-muted-foreground">Boxe / Parcare</p>
-        </CardContent></Card>
-      </div>
+      <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="max-w-5xl mx-auto space-y-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalFed}</p>
+              <p className="text-xs text-muted-foreground">Federatii</p>
+            </CardContent></Card>
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalAssoc}</p>
+              <p className="text-xs text-muted-foreground">Asociatii</p>
+            </CardContent></Card>
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalBld}</p>
+              <p className="text-xs text-muted-foreground">Blocuri</p>
+            </CardContent></Card>
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalSt}</p>
+              <p className="text-xs text-muted-foreground">Scari</p>
+            </CardContent></Card>
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalAptOnly}</p>
+              <p className="text-xs text-muted-foreground">Apartamente</p>
+            </CardContent></Card>
+            <Card><CardContent className="p-3 text-center">
+              <p className="text-xl font-bold">{totalBoxes + totalParking}</p>
+              <p className="text-xs text-muted-foreground">Boxe / Parcare</p>
+            </CardContent></Card>
+          </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Structura Completa</CardTitle>
-        </CardHeader>
-        <CardContent className="py-2 px-1 sm:px-4">
-          {federations?.map(fed => {
-            const fedAssocs = associations?.filter(a => a.federationId === fed.id) || [];
-            return (
-              <TreeNode
-                key={fed.id}
-                label={fed.name}
-                icon={Network}
-                level={0}
-                badge={`${fedAssocs.length} asociatii`}
-                defaultOpen={true}
-                onAdd={() => openAdd("association", fed.id, fed.name)}
-              >
-                {fedAssocs.map(assoc => {
-                  const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
-                  return (
-                    <TreeNode
-                      key={assoc.id}
-                      label={assoc.name}
-                      icon={Users}
-                      level={1}
-                      badge={`${assocBlds.length} blocuri`}
-                      subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                      onAdd={() => openAdd("building", assoc.id, assoc.name)}
-                    >
-                      {assocBlds.map(bld => renderBuildingSubtree(bld))}
-                    </TreeNode>
-                  );
-                })}
-              </TreeNode>
-            );
-          })}
-
-          {independentAssociations.length > 0 && (
-            <TreeNode label="Asociatii Independente" icon={Users} level={0} badge={`${independentAssociations.length}`} defaultOpen={true}>
-              {independentAssociations.map(assoc => {
-                const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base font-semibold">Structura Completa</CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 px-1 sm:px-4">
+              {federations?.map(fed => {
+                const fedAssocs = associations?.filter(a => a.federationId === fed.id) || [];
                 return (
                   <TreeNode
-                    key={assoc.id}
-                    label={assoc.name}
-                    icon={Users}
-                    level={1}
-                    badge={`${assocBlds.length} blocuri`}
-                    subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                    onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                    key={fed.id}
+                    label={fed.name}
+                    icon={Network}
+                    level={0}
+                    badge={`${fedAssocs.length} asociatii`}
+                    defaultOpen={true}
+                    onAdd={() => openAdd("association", fed.id, fed.name)}
                   >
-                    {assocBlds.map(bld => renderBuildingSubtree(bld))}
+                    {fedAssocs.map(assoc => {
+                      const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
+                      return (
+                        <TreeNode
+                          key={assoc.id}
+                          label={assoc.name}
+                          icon={Users}
+                          level={1}
+                          badge={`${assocBlds.length} blocuri`}
+                          subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
+                          onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                        >
+                          {assocBlds.map(bld => renderBuildingSubtree(bld))}
+                        </TreeNode>
+                      );
+                    })}
                   </TreeNode>
                 );
               })}
-            </TreeNode>
-          )}
-        </CardContent>
-      </Card>
+
+              {independentAssociations.length > 0 && (
+                <TreeNode label="Asociatii Independente" icon={Users} level={0} badge={`${independentAssociations.length}`} defaultOpen={true}>
+                  {independentAssociations.map(assoc => {
+                    const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
+                    return (
+                      <TreeNode
+                        key={assoc.id}
+                        label={assoc.name}
+                        icon={Users}
+                        level={1}
+                        badge={`${assocBlds.length} blocuri`}
+                        subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
+                        onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                      >
+                        {assocBlds.map(bld => renderBuildingSubtree(bld))}
+                      </TreeNode>
+                    );
+                  })}
+                </TreeNode>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       <AddEntityDialog
         open={addDialog.open}

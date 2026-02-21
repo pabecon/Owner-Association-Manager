@@ -92,9 +92,9 @@ export function AppSidebar() {
     const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
+        <SidebarMenuButton asChild data-active={isActive} className={`h-7 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
           <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
-            <item.icon className="w-4 h-4" />
+            <item.icon className="w-3.5 h-3.5" />
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>
@@ -114,14 +114,14 @@ export function AppSidebar() {
     if (visibleItems.length === 0) return null;
     const Icon = icon;
     return (
-      <SidebarGroup>
+      <SidebarGroup className="py-0.5">
         <SidebarGroupLabel
-          className="cursor-pointer select-none flex items-center justify-between gap-2"
+          className="cursor-pointer select-none flex items-center justify-between gap-1.5 h-6 text-xs"
           onClick={toggle}
           data-testid={testId}
         >
-          <span className="flex items-center gap-1.5">
-            <Icon className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-1">
+            <Icon className="w-3 h-3" />
             {label}
           </span>
           {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}

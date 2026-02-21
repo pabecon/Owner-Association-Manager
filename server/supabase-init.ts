@@ -75,7 +75,10 @@ CREATE TABLE IF NOT EXISTS lista_conturi_toshl (
 
 CREATE TABLE IF NOT EXISTS lista_cota_tva (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  cota_de_tva text NOT NULL
+  nume_cota text NOT NULL,
+  cota_de_tva text NOT NULL,
+  data_inceput text,
+  data_sfarsit text
 );
 
 CREATE TABLE IF NOT EXISTS lista_curs_valutar_bnr (
