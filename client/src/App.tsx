@@ -26,11 +26,13 @@ import PermissionsMatrix from "@/pages/permissions-matrix";
 import Legislatie from "@/pages/legislatie";
 import Gdpr from "@/pages/gdpr";
 import Juridic from "@/pages/juridic";
+import Administratie from "@/pages/administratie";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/administratie" component={Administratie} />
       <Route path="/explorer" component={Explorer} />
       <Route path="/hierarchy-tree" component={HierarchyTree} />
       <Route path="/federations" component={Federations} />

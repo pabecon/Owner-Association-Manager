@@ -1556,4 +1556,246 @@ export const JURIDIC_CATEGORIES: JuridicCategory[] = [
       },
     ],
   },
+  {
+    id: "organe-conducere",
+    title: "Organe de Conducere",
+    description: "Organele de conducere ale asociației de proprietari: Adunarea Generală și Comitetul Executiv",
+    documents: [
+      {
+        id: "adunarea-generala",
+        title: "Adunarea Generală a Proprietarilor",
+        description: "Funcționarea, atribuțiile și regulile adunării generale a asociației de proprietari",
+        sections: [
+          {
+            type: "heading",
+            title: "Adunarea Generală a Proprietarilor",
+          },
+          {
+            type: "subheading",
+            title: "1. Rol și funcționare",
+            content: "Asociația de proprietari este condusă de adunarea generală. După prima întrunire organizatorică, adunarea generală se întrunește cel puțin o dată în fiecare an calendaristic.",
+          },
+          {
+            type: "subheading",
+            title: "2. Convocarea",
+            content: "Întrunirea adunării generale va fi anunțată în scris prin afișare la loc vizibil, cu cel puțin 10 zile înainte de data convocării. Convocarea trebuie să conțină ordinea de zi, data, ora și locul desfășurării.",
+          },
+          {
+            type: "subheading",
+            title: "3. Cvorumul",
+          },
+          {
+            type: "paragraph",
+            content: "Pentru ca hotărârile adunării generale să fie valabile, este necesară prezența majorității membrilor asociați, personal sau prin reprezentant.",
+          },
+          {
+            type: "paragraph",
+            content: "În cazul în care cvorumul nu este întrunit, adunarea generală va fi convocată la o dată ulterioară, când proprietarii prezenți pot hotărî, cu majoritate de voturi, asupra problemelor înscrise pe ordinea de zi, indiferent de cvorum.",
+          },
+          {
+            type: "subheading",
+            title: "4. Votul",
+          },
+          {
+            type: "paragraph",
+            content: "Hotărârile adunării generale vor fi luate cu majoritate de voturi (cu cel puțin jumătate plus unu din voturile proprietarilor prezenți la adunarea generală).",
+          },
+          {
+            type: "paragraph",
+            content: "Votul fiecărui proprietar are o pondere egală cu cota-parte din proprietatea comună. Proprietarul poate fi reprezentat de un membru al familiei sau de un alt reprezentant care are o împuternicire semnată. Un membru al asociației poate reprezenta cel mult încă un membru absent, prin împuternicire scrisă. În cazul egalității de voturi, votul președintelui este decisiv.",
+          },
+          {
+            type: "subheading",
+            title: "5. Majorități speciale",
+          },
+          {
+            type: "paragraph",
+            content: "Hotărârile adunării generale privind modificarea statutului sau dizolvarea asociației de proprietari ori perceperea unei sume speciale destinate achitării cheltuielilor comune neprevăzute în buget, dar necesare, se adoptă cu votul a două treimi din numărul membrilor asociației de proprietari.",
+          },
+          {
+            type: "subheading",
+            title: "6. Atribuții principale",
+            content: "Adunarea generală are următoarele atribuții principale:",
+          },
+          {
+            type: "list",
+            items: [
+              "Aprobă darea de seamă anuală asupra activității comitetului executiv, raportul comisiei de cenzori și raportul exercițiului bugetar, acordând anual descărcare de gestiune",
+              "Adoptă sau amendează deciziile, regulile și regulamentele asociației de proprietari",
+              "Hotărăște asupra necesității constituirii fondului de rulment, fondului de reparații și a altor fonduri speciale",
+              "Hotărăște modificările ulterioare ale statutului asociației de proprietari și/sau ale acordului de asociere (cu 2/3 din voturi)",
+              "Hotărăște natura și volumul mijloacelor materiale și bănești necesare desfășurării activității asociației",
+              "Hotărăște modul de asigurare a administrării condominiului de către o persoană fizică sau juridică",
+              "Hotărăște volumul serviciilor necesare pentru buna funcționare a condominiului",
+              "Hotărăște cuantumul salariilor, indemnizațiilor și premiilor pentru personalul angajat",
+              "Alege comitetul executiv al asociației și validează președintele",
+              "Alege comisia de cenzori sau hotărăște delegarea atribuțiilor",
+              "Revocă, atunci când este cazul, membrii comitetului executiv sau ai comisiei de cenzori",
+              "Hotărăște termenul și forma de plată a cotelor de contribuție",
+              "Validează sistemul de penalizări stabilit de comitetul executiv",
+              "Hotărăște asupra participării cu capital și cumpărării de spații",
+              "Adoptă măsuri sau programe sociale și de instruire a proprietarilor",
+              "Hotărăște schimbarea instalațiilor comune (cu 2/3 din voturi)",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "7. Contestarea deciziilor",
+            content: "Dacă o decizie a asociației de proprietari este contrară legii sau acordului de asociere ori este de natură să producă daune considerabile intereselor unei minorități a proprietarilor, orice proprietar poate inițiă acțiune în justiție împotriva respectivei decizii, în termen de 60 de zile de la adoptarea acesteia.",
+          },
+          {
+            type: "subheading",
+            title: "8. Documentarea",
+            content: "Discuțiile și hotărârile adunării generale se consemnează într-un registru de procese-verbale, care se păstrează la președintele asociației de proprietari. Procesul verbal se va semna de toți membrii participanți.",
+          },
+        ],
+      },
+      {
+        id: "comitet-executiv",
+        title: "Comitetul Executiv",
+        description: "Funcționarea, componența și atribuțiile comitetului executiv al asociației de proprietari",
+        sections: [
+          {
+            type: "heading",
+            title: "Comitetul Executiv",
+          },
+          {
+            type: "subheading",
+            title: "1. Rol și delegare",
+            content: "Autoritatea de a stabili direcțiile privind funcționalitatea și administrarea condominiului poate fi delegată de către asociația de proprietari către comitetul executiv al acesteia. Comitetul executiv va acționa în numele proprietarilor în ceea ce privește administrarea și funcționalitatea condominiului, cu excepția atribuțiilor rezervate exclusiv acestora.",
+          },
+          {
+            type: "subheading",
+            title: "2. Componență și întrunire",
+          },
+          {
+            type: "paragraph",
+            content: "Comitetul executiv se va întruni de cel puțin 4 ori pe an. Numărul membrilor ce formează comitetul executiv va fi stabilit de adunarea generală a asociației de proprietari, dar va fi un număr impar și nu mai mic de 3.",
+          },
+          {
+            type: "paragraph",
+            content: "Comitetul executiv va fi condus de un președinte care va fi desemnat în persoana celui care întrunește cel mai mare număr de voturi la alegerea comitetului executiv. Președintele asociației de proprietari va fi și președintele comitetului executiv.",
+          },
+          {
+            type: "paragraph",
+            content: "Comitetul executiv va alege vicepreședintele și secretarul, care sunt membri ai comitetului executiv.",
+          },
+          {
+            type: "subheading",
+            title: "3. Atribuții principale",
+            content: "Comitetul executiv are următoarele atribuții:",
+          },
+          {
+            type: "list",
+            items: [
+              "Aduce la îndeplinire hotărârile adunării generale, execută bugetul de venituri și cheltuieli și întocmește proiectul bugetului pentru anul următor",
+              "Prezintă dări de seamă asupra activității desfășurate și propuneri de îmbunătățire",
+              "Convoacă adunarea generală în ședințe extraordinare ori de câte ori este nevoie",
+              "Răspunde de îngrijirea, păstrarea în bune condiții și supravegherea utilităților condominiului, spațiilor comune și instalațiilor",
+              "Analizează oferte și negociază contracte de administrare cu persoane juridice",
+              "Răspunde de încasarea lunară a cotelor de contribuție; emite somații către restanțieri; rezolvă contestații",
+              "Urmărește recuperarea pagubelor produse asociației de proprietari",
+              "Negociază contracte pentru închirierea elementelor sau suprafețelor din proprietatea comună",
+              "Propune adunării generale preluarea managementului de proprietate și financiar de către persoane juridice",
+              "Hotărăște necesitatea operațiunilor de verificare și control asupra gestionării bunurilor",
+              "Înștiințează proprietarii despre necesitatea reparațiilor; avizează ordinea de priorități a lucrărilor",
+              "Dă dispoziții pentru sistemul de protejare a bunurilor, securitate a clădirii",
+              "Propune crearea fondurilor speciale; urmărește completarea cărții tehnice a construcției",
+              "Împuternicește administratorul pentru verificări: reparații, pierderi de apă, contoare, igienă",
+              "Participă la recepția lucrărilor de reparații asupra proprietății comune",
+              "Stabilește modul de calcul și încasare a fondului de rulment",
+              "Hotărăște managementul financiar, sistemul de penalizări pentru neplata cotelor",
+              "Hotărăște acționarea în justiție a proprietarilor restanțieri (peste 90 de zile)",
+              "Asigură condițiile de securitate și igienă, prevenire și stingere a incendiilor",
+              "Hotărăște societatea bancară pentru conturile asociației",
+              "Propune adunării generale măsuri de dezvoltare și eficientizare",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "4. Suspendare și reziliere",
+            content: "Asociația de proprietari, prin comitetul executiv, poate suspenda din funcție sau poate rezilia contractul individual de muncă ori convenția civilă de prestări de servicii, încheiată cu oricine din rândul personalului angajat ori, după caz, poate rezilia contractele încheiate cu alte persoane fizice sau juridice, în condițiile legii.",
+          },
+          {
+            type: "subheading",
+            title: "5. Cvorum și vot",
+            content: "Comitetul executiv lucrează valabil în prezența a jumătate plus unu din numărul membrilor săi și adoptă hotărâri cu cel puțin două treimi din numărul membrilor prezenți.",
+          },
+          {
+            type: "subheading",
+            title: "6. Documentarea",
+            content: "Discuțiile și hotărârile se consemnează în registrul de procese-verbale, care se păstrează la președinte, procesele-verbale semnându-se de toți membrii comitetului executiv prezenți.",
+          },
+          {
+            type: "subheading",
+            title: "7. Președintele asociației",
+          },
+          {
+            type: "paragraph",
+            content: "Conducătorul executiv al asociației de proprietari este președintele. Președintele este înlocuit de vicepreședinte în cazul absenței sau imposibilității de a-și îndeplini atribuțiile.",
+          },
+          {
+            type: "paragraph",
+            content: "Atribuțiile președintelui:",
+          },
+          {
+            type: "list",
+            items: [
+              "Verifică respectarea și îndeplinirea hotărârilor adoptate de adunarea generală și de comitetul executiv",
+              "Reprezintă asociația de proprietari în încheierea și derularea contractelor, inclusiv în acțiunile judecătorești",
+              "Avizează ordinea de priorități și planul lucrărilor de întreținere și reparații",
+              "Are drept de semnătură asupra conturilor asociației de proprietari",
+              "Primește cererile și reclamațiile de la proprietari și sesizările administratorului",
+              "Convoacă comitetul executiv trimestrial sau ori de câte ori este nevoie",
+              "Întocmește ordinea de zi și conduce lucrările comitetului executiv",
+              "Eliberează adeverințe proprietarilor care își înstrăinează apartamentele",
+              "Semnează deciziile de imputare, contractele de muncă și alte acte emise de comitetul executiv",
+              "Păstrează și folosește ștampila asociației de proprietari",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "La asociațiile de proprietari care cuprind până la 10 proprietari, președintele poate îndeplini și funcția de administrator.",
+          },
+          {
+            type: "subheading",
+            title: "8. Secretarul comitetului executiv",
+          },
+          {
+            type: "paragraph",
+            content: "Secretarul comitetului executiv va păstra și va întocmi procesele-verbale ale ședințelor comitetului executiv și procesele-verbale ale tuturor adunărilor generale ale asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "Secretarul comitetului executiv poate păstra registrele și celelalte acte ale asociației de proprietari, potrivit hotărârii comitetului executiv.",
+          },
+          {
+            type: "subheading",
+            title: "9. Comisia de cenzori",
+          },
+          {
+            type: "paragraph",
+            content: "Adunarea generală alege dintre membrii asociației o comisie de cenzori (număr impar, minim 3 membri) care verifică situația financiară și contabilă. Membrii comisiei de cenzori nu pot face parte din comitetul executiv și trebuie să aibă cunoștințe în domeniile financiar, economic și/sau juridic.",
+          },
+          {
+            type: "paragraph",
+            content: "Atribuțiile comisiei de cenzori:",
+          },
+          {
+            type: "list",
+            items: [
+              "Verifică îndeplinirea condițiilor statutare privind prezența și votul în adunările generale",
+              "Verifică execuția bugetară și propunerile de buget",
+              "Efectuează controlul preventiv pentru plățile cu numerar",
+              "Verifică cel puțin o dată pe semestru gestiunea asociației",
+              "Verifică dacă registrele îndeplinesc condițiile legale",
+              "Întocmește rapoarte asupra activității și gestiunii, propunând descărcarea de gestiune",
+              "Propune programe de management financiar și recuperarea pagubelor",
+              "Participă la negocierea contractelor de management financiar",
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];

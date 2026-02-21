@@ -14,7 +14,7 @@ import {
 import {
   Building2, LayoutDashboard, Home, Receipt, CreditCard, Search,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
-  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText, Gavel, FolderOpen
+  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText, Gavel, FolderOpen, ClipboardList
 } from "lucide-react";
 import { GDPR_DOCUMENTS } from "@/lib/gdpr-data";
 import { JURIDIC_CATEGORIES } from "@/lib/juridic-data";
@@ -173,6 +173,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {renderMenuItem({ title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true })}
+              {renderMenuItem({ title: "Administrație", url: "/administratie", icon: ClipboardList, visible: true })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -203,55 +204,6 @@ export function AppSidebar() {
           () => setAdminOpen(!adminOpen),
           "button-toggle-administrare",
         )}
-
-        <SidebarGroup>
-          <SidebarGroupLabel
-            className="cursor-pointer select-none flex items-center justify-between gap-2"
-            onClick={() => setLegistatieOpen(!legislatieOpen)}
-            data-testid="button-toggle-legislatie"
-          >
-            <span className="flex items-center gap-1.5">
-              <Scale className="w-3.5 h-3.5" />
-              Legislatie
-            </span>
-            {legislatieOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </SidebarGroupLabel>
-          {legislatieOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={location === "/legislatie"} className={location === "/legislatie" ? "bg-sidebar-accent" : ""}>
-                    <Link href="/legislatie" data-testid="link-nav-legislatie-search">
-                      <Search className="w-4 h-4 shrink-0" />
-                      <span className="text-xs flex-1 truncate">Cautare in legi</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {LEGISLATION_ITEMS.map((law) => {
-                  const url = `/legislatie/${law.id}`;
-                  const isActive = location === url;
-                  return (
-                    <SidebarMenuItem key={law.id}>
-                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
-                        <Link href={url} data-testid={`link-nav-law-${law.id}`}>
-                          <Scale className="w-4 h-4 shrink-0" />
-                          <span className="text-xs flex-1 truncate">{law.shortTitle}</span>
-                          <Badge
-                            variant={law.status === "in_vigoare" ? "default" : "secondary"}
-                            className="text-[9px] px-1 py-0 shrink-0 no-default-hover-elevate no-default-active-elevate"
-                            data-testid={`badge-nav-law-${law.id}`}
-                          >
-                            {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
-                          </Badge>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel
@@ -328,6 +280,55 @@ export function AppSidebar() {
                         <Link href={url} data-testid={`link-nav-lista-${config.key}`}>
                           <List className="w-4 h-4" />
                           <span className="text-xs">{config.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel
+            className="cursor-pointer select-none flex items-center justify-between gap-2"
+            onClick={() => setLegistatieOpen(!legislatieOpen)}
+            data-testid="button-toggle-legislatie"
+          >
+            <span className="flex items-center gap-1.5">
+              <Scale className="w-3.5 h-3.5" />
+              Legislatie
+            </span>
+            {legislatieOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </SidebarGroupLabel>
+          {legislatieOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild data-active={location === "/legislatie"} className={location === "/legislatie" ? "bg-sidebar-accent" : ""}>
+                    <Link href="/legislatie" data-testid="link-nav-legislatie-search">
+                      <Search className="w-4 h-4 shrink-0" />
+                      <span className="text-xs flex-1 truncate">Cautare in legi</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {LEGISLATION_ITEMS.map((law) => {
+                  const url = `/legislatie/${law.id}`;
+                  const isActive = location === url;
+                  return (
+                    <SidebarMenuItem key={law.id}>
+                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
+                        <Link href={url} data-testid={`link-nav-law-${law.id}`}>
+                          <Scale className="w-4 h-4 shrink-0" />
+                          <span className="text-xs flex-1 truncate">{law.shortTitle}</span>
+                          <Badge
+                            variant={law.status === "in_vigoare" ? "default" : "secondary"}
+                            className="text-[9px] px-1 py-0 shrink-0 no-default-hover-elevate no-default-active-elevate"
+                            data-testid={`badge-nav-law-${law.id}`}
+                          >
+                            {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
+                          </Badge>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
