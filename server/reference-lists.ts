@@ -121,9 +121,10 @@ const conturiToshlColumns: ListColumn[] = [
 
 const cotaTvaColumns: ListColumn[] = [
   { key: "numeCota", label: "Nume Cota", required: true },
-  { key: "cotaDeTva", label: "Cota de TVA (%)", required: true },
   { key: "dataInceput", label: "Data Inceput", required: false },
   { key: "dataSfarsit", label: "Data Sfarsit", required: false },
+  { key: "cotaDeTva", label: "Cota de TVA (%)", required: true },
+  { key: "categorii", label: "Categorii de Produse si Servicii", required: false },
 ];
 
 const cursValutarBnrColumns: ListColumn[] = [

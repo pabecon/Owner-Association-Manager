@@ -481,9 +481,10 @@ export const listaConturiToshl = pgTable("lista_conturi_toshl", {
 export const listaCotaTva = pgTable("lista_cota_tva", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   numeCota: text("nume_cota").notNull(),
-  cotaDeTva: text("cota_de_tva").notNull(),
   dataInceput: text("data_inceput"),
   dataSfarsit: text("data_sfarsit"),
+  cotaDeTva: text("cota_de_tva").notNull(),
+  categorii: text("categorii"),
 });
 
 export const listaCursValutarBnr = pgTable("lista_curs_valutar_bnr", {
