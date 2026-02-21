@@ -17,7 +17,7 @@ import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { Users, Plus, Search, ExternalLink } from "lucide-react";
+import { Users, Plus, Search, ExternalLink, Power } from "lucide-react";
 import type { Association, Building, Staircase, Apartment } from "@shared/schema";
 
 interface PlatformUser {
@@ -158,6 +158,20 @@ export default function ListaUtilizatoriPage() {
       toast({ title: "Utilizator creat cu succes" });
       form.reset();
       setDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const res = await apiRequest("PATCH", "/api/platform-users/" + id, { isActive });
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/platform-users"] });
+      toast({ title: variables.isActive ? "Utilizator activat" : "Utilizator dezactivat" });
     },
     onError: (error: Error) => {
       toast({ title: "Eroare", description: error.message, variant: "destructive" });
@@ -528,12 +542,25 @@ export default function ListaUtilizatoriPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Link href={`/utilizator/${user.id}`}>
-                            <Button size="sm" variant="outline" data-testid={`button-open-user-${user.id}`}>
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              Deschide
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant={user.isActive ? "outline" : "default"}
+                              onClick={() => toggleActive.mutate({ id: user.id, isActive: !user.isActive })}
+                              disabled={toggleActive.isPending}
+                              data-testid={`button-toggle-active-${user.id}`}
+                              title={user.isActive ? "Dezactiveaza" : "Activeaza"}
+                            >
+                              <Power className="w-3 h-3 mr-1" />
+                              {user.isActive ? "Dezactiveaza" : "Activeaza"}
                             </Button>
-                          </Link>
+                            <Link href={`/utilizator/${user.id}`}>
+                              <Button size="sm" variant="ghost" data-testid={`button-open-user-${user.id}`}>
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Deschide
+                              </Button>
+                            </Link>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
