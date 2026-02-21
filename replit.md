@@ -27,6 +27,16 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 4. **Staircases** (Scari): Building entries/sections. Each belongs to one building. Has floors count and apartments-per-floor configuration.
 5. **Apartments** (Apartamente): Individual units. Each belongs to one staircase (staircaseId required). Has owner info, surface, rooms, residents.
 
+## Fund Management (Fonduri)
+- **Fund Types**: Intretinere (maintenance), Rulment (cash-flow buffer), Penalizari (late penalties), Custom
+- **Each fund**: linked to an association, has bankName, bankAccount (IBAN), currentBalance, isActive
+- **Fund Categories**: budget line items per fund with budgetAmount, currentAmount, sortOrder
+- **Default categories for Intretinere**: Apa, Energie Electrica, Curatenie, Securitate, Administrare, Ascensor, Salarii
+- **Tables**: `funds` and `fund_categories` with cascading deletes from funds
+- **API**: GET/POST/PATCH/DELETE /api/funds (filtered by associationId), GET/POST/PATCH/DELETE /api/fund-categories (filtered by fundId)
+- **UI**: Fonduri page at /fonduri with association filter, collapsible fund cards showing categories, add fund/category dialogs
+- **Sidebar**: Under "Financiar" section alongside Cheltuieli and Plati
+
 ## Meter Management (Contoare)
 - **Meter Types**: Water (Apă), Electricity (Electricitate), Gas (Gaz)
 - **Each meter**: serialNumber, meterNumber, chamberLocation, installDate, initialReading, isActive

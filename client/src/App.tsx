@@ -27,6 +27,7 @@ import Legislatie from "@/pages/legislatie";
 import Gdpr from "@/pages/gdpr";
 import Juridic from "@/pages/juridic";
 import Administratie from "@/pages/administratie";
+import Fonduri from "@/pages/fonduri";
 
 function Router() {
   return (
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/apartments" component={Apartments} />
       <Route path="/expenses" component={Expenses} />
       <Route path="/payments" component={Payments} />
+      <Route path="/fonduri" component={Fonduri} />
       <Route path="/announcements" component={Announcements} />
       <Route path="/users" component={UsersPage} />
       <Route path="/permissions-matrix" component={PermissionsMatrix} />

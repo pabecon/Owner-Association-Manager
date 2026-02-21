@@ -12,7 +12,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
-  Building2, LayoutDashboard, Home, Receipt, CreditCard, Search,
+  Building2, LayoutDashboard, Home, Receipt, CreditCard, Search, Wallet,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
   Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText, Gavel, FolderOpen, ClipboardList
 } from "lucide-react";
@@ -50,7 +50,7 @@ export function AppSidebar() {
   const { user } = useAuth();
 
   const imobiliarPaths = ["/explorer", "/hierarchy-tree", "/federations", "/associations", "/buildings", "/staircases", "/apartments"];
-  const financiarPaths = ["/expenses", "/payments"];
+  const financiarPaths = ["/expenses", "/payments", "/fonduri"];
   const adminPaths = ["/announcements", "/users", "/permissions-matrix"];
 
   const [imobiliarOpen, setImobiliarOpen] = useState(() => imobiliarPaths.some(p => location.startsWith(p)));
@@ -91,6 +91,7 @@ export function AppSidebar() {
   const financiarItems: NavItem[] = [
     { title: "Cheltuieli", url: "/expenses", icon: Receipt, visible: !!perms.viewAllExpenses || !!perms.viewOwnExpenses },
     { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
+    { title: "Fonduri", url: "/fonduri", icon: Wallet, visible: !!perms.viewAllExpenses || !!perms.manageExpenses },
   ];
 
   const adminItems: NavItem[] = [

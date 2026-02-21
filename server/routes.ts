@@ -770,7 +770,7 @@ export async function registerRoutes(
 
   // ── Funds ──────────────────────────────────────────────
   app.get("/api/funds", ...auth, async (req: AuthenticatedRequest, res) => {
-    const associationId = req.query.associationId as string | undefined;
+    const associationId = String(req.query.associationId || "");
     if (!associationId) return res.status(400).json({ message: "associationId required" });
     const result = await storage.getFundsByAssociation(associationId);
     res.json(result);
@@ -784,19 +784,19 @@ export async function registerRoutes(
   });
 
   app.patch("/api/funds/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
-    const fund = await storage.updateFund(req.params.id, req.body);
+    const fund = await storage.updateFund(String(req.params.id), req.body);
     if (!fund) return res.status(404).json({ message: "Fund not found" });
     res.json(fund);
   });
 
   app.delete("/api/funds/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
-    await storage.deleteFund(req.params.id);
+    await storage.deleteFund(String(req.params.id));
     res.json({ ok: true });
   });
 
   // ── Fund Categories ───────────────────────────────────
   app.get("/api/fund-categories", ...auth, async (req: AuthenticatedRequest, res) => {
-    const fundId = req.query.fundId as string | undefined;
+    const fundId = String(req.query.fundId || "");
     if (!fundId) return res.status(400).json({ message: "fundId required" });
     const result = await storage.getFundCategories(fundId);
     res.json(result);
@@ -810,13 +810,13 @@ export async function registerRoutes(
   });
 
   app.patch("/api/fund-categories/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
-    const cat = await storage.updateFundCategory(req.params.id, req.body);
+    const cat = await storage.updateFundCategory(String(req.params.id), req.body);
     if (!cat) return res.status(404).json({ message: "Category not found" });
     res.json(cat);
   });
 
   app.delete("/api/fund-categories/:id", ...auth, requirePermission("manageExpenses"), async (req: AuthenticatedRequest, res) => {
-    await storage.deleteFundCategory(req.params.id);
+    await storage.deleteFundCategory(String(req.params.id));
     res.json({ ok: true });
   });
 
