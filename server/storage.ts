@@ -12,9 +12,11 @@ import {
   type UnitRoom, type InsertUnitRoom,
   type Meter, type InsertMeter,
   type MeterReading, type InsertMeterReading,
+  type Fund, type InsertFund,
+  type FundCategory, type InsertFundCategory,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
-  meters, meterReadings,
+  meters, meterReadings, funds, fundCategories,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -104,6 +106,18 @@ export interface IStorage {
   createDocument(data: InsertDocument): Promise<Document>;
   deleteDocument(id: string): Promise<void>;
   getDocument(id: string): Promise<Document | undefined>;
+
+  getFundsByAssociation(associationId: string): Promise<Fund[]>;
+  getFund(id: string): Promise<Fund | undefined>;
+  createFund(data: InsertFund): Promise<Fund>;
+  updateFund(id: string, data: Partial<InsertFund>): Promise<Fund | undefined>;
+  deleteFund(id: string): Promise<void>;
+
+  getFundCategories(fundId: string): Promise<FundCategory[]>;
+  getFundCategory(id: string): Promise<FundCategory | undefined>;
+  createFundCategory(data: InsertFundCategory): Promise<FundCategory>;
+  updateFundCategory(id: string, data: Partial<InsertFundCategory>): Promise<FundCategory | undefined>;
+  deleteFundCategory(id: string): Promise<void>;
 
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
@@ -438,6 +452,52 @@ export class DatabaseStorage implements IStorage {
   async getDocument(id: string): Promise<Document | undefined> {
     const [doc] = await db.select().from(documents).where(eq(documents.id, id));
     return doc;
+  }
+
+  async getFundsByAssociation(associationId: string): Promise<Fund[]> {
+    return db.select().from(funds).where(eq(funds.associationId, associationId)).orderBy(funds.createdAt);
+  }
+
+  async getFund(id: string): Promise<Fund | undefined> {
+    const [fund] = await db.select().from(funds).where(eq(funds.id, id));
+    return fund;
+  }
+
+  async createFund(data: InsertFund): Promise<Fund> {
+    const [fund] = await db.insert(funds).values(data).returning();
+    return fund;
+  }
+
+  async updateFund(id: string, data: Partial<InsertFund>): Promise<Fund | undefined> {
+    const [fund] = await db.update(funds).set(data).where(eq(funds.id, id)).returning();
+    return fund;
+  }
+
+  async deleteFund(id: string): Promise<void> {
+    await db.delete(funds).where(eq(funds.id, id));
+  }
+
+  async getFundCategories(fundId: string): Promise<FundCategory[]> {
+    return db.select().from(fundCategories).where(eq(fundCategories.fundId, fundId)).orderBy(fundCategories.sortOrder);
+  }
+
+  async getFundCategory(id: string): Promise<FundCategory | undefined> {
+    const [cat] = await db.select().from(fundCategories).where(eq(fundCategories.id, id));
+    return cat;
+  }
+
+  async createFundCategory(data: InsertFundCategory): Promise<FundCategory> {
+    const [cat] = await db.insert(fundCategories).values(data).returning();
+    return cat;
+  }
+
+  async updateFundCategory(id: string, data: Partial<InsertFundCategory>): Promise<FundCategory | undefined> {
+    const [cat] = await db.update(fundCategories).set(data).where(eq(fundCategories.id, id)).returning();
+    return cat;
+  }
+
+  async deleteFundCategory(id: string): Promise<void> {
+    await db.delete(fundCategories).where(eq(fundCategories.id, id));
   }
 
   async getRefListAll(table: PgTableWithColumns<any>): Promise<any[]> {
