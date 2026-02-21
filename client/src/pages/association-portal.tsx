@@ -14,7 +14,7 @@ import { UserMenu } from "@/components/user-menu";
 import {
   Building2, Home, ArrowUpDown, Layers, Car, Package, MapPin, User, Phone, Mail,
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
-  ChevronDown, ChevronRight, Trash2, Plus, Banknote
+  ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink
 } from "lucide-react";
 import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -313,7 +313,7 @@ export default function AssociationPortal() {
                                                     {floorApts.map(apt => {
                                                       const UnitIcon = getUnitTypeIcon(apt.unitType);
                                                       return (
-                                                        <div key={apt.id} className="flex items-center gap-2 p-1.5 rounded-md bg-background border text-xs" data-testid={`unit-card-${apt.id}`}>
+                                                        <div key={apt.id} className="flex items-center gap-2 p-1.5 rounded-md bg-background border text-xs group/unit" data-testid={`unit-card-${apt.id}`}>
                                                           <UnitIcon className="w-3.5 h-3.5 text-primary shrink-0" />
                                                           <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-1.5">
@@ -327,6 +327,12 @@ export default function AssociationPortal() {
                                                             {apt.surface && <span className="block text-[10px]">{apt.surface} m²</span>}
                                                             {apt.rooms && <span className="block text-[10px]">{apt.rooms} cam.</span>}
                                                           </div>
+                                                          <Link href={`/unitate/${apt.id}`}>
+                                                            <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] invisible group-hover/unit:visible shrink-0" data-testid={`button-open-unit-${apt.id}`}>
+                                                              <ExternalLink className="w-3 h-3 mr-0.5" />
+                                                              Deschide
+                                                            </Button>
+                                                          </Link>
                                                         </div>
                                                       );
                                                     })}

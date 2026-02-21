@@ -242,6 +242,7 @@ export default function HierarchyTree() {
                           subtitle={unit.ownerName || undefined}
                           badge={unit.surface ? `${unit.surface} mp` : undefined}
                           badgeVariant="outline"
+                          onPortal={() => navigate(`/unitate/${unit.id}`)}
                         />
                       );
                     })}

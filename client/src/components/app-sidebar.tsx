@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -37,8 +37,8 @@ interface ListConfig {
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
-  const [listsOpen, setListsOpen] = useState(false);
-  const [legislatieOpen, setLegistatieOpen] = useState(false);
+  const [listsOpen, setListsOpen] = useState<boolean | null>(null);
+  const [legislatieOpen, setLegistatieOpen] = useState<boolean | null>(null);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -53,6 +53,10 @@ export function AppSidebar() {
   const isInfografieActive = location === "/";
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
+  const isUsersActive = location === "/utilizatori";
+
+  const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
+  const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -87,13 +91,13 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <Collapsible open={listsOpen || isListeActive} onOpenChange={setListsOpen}>
+              <Collapsible open={isListsExpanded} onOpenChange={(val) => setListsOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className={`h-8 text-sm ${isListeActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-liste-generale">
                       <List className="w-4 h-4" />
                       <span className="flex-1">Liste Generale</span>
-                      {(listsOpen || isListeActive) ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      {isListsExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -115,13 +119,13 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              <Collapsible open={legislatieOpen || isLegistatieActive} onOpenChange={setLegistatieOpen}>
+              <Collapsible open={isLegislatieExpanded} onOpenChange={(val) => setLegistatieOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className={`h-8 text-sm ${isLegistatieActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-legislatie">
                       <Scale className="w-4 h-4" />
                       <span className="flex-1">Legislatie</span>
-                      {(legislatieOpen || isLegistatieActive) ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                      {isLegislatieExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -148,6 +152,15 @@ export function AppSidebar() {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild data-active={isUsersActive} className={`h-8 text-sm ${isUsersActive ? "bg-sidebar-accent" : ""}`}>
+                  <Link href="/utilizatori" data-testid="link-nav-utilizatori">
+                    <Users className="w-4 h-4" />
+                    <span>Utilizatori</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

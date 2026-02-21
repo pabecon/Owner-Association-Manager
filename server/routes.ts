@@ -251,6 +251,18 @@ export async function registerRoutes(
     res.json(apartment);
   });
 
+  app.get("/api/apartments/:id", ...auth, async (req: AuthenticatedRequest, res) => {
+    const apt = await storage.getApartment(req.params.id as string);
+    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      if (!isInApartmentScope(req, apt.id)) {
+        return res.status(403).json({ message: "Nu aveti acces" });
+      }
+    }
+    res.json(apt);
+  });
+
   app.patch("/api/apartments/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     const existing = await storage.getApartment(req.params.id as string);
     if (!existing) return res.status(404).json({ message: "Unitatea nu a fost gasita" });

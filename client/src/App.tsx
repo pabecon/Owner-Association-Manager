@@ -13,6 +13,8 @@ import HierarchyTree from "@/pages/hierarchy-tree";
 import AssociationPortal from "@/pages/association-portal";
 import ListaGenerala from "@/pages/lista-generala";
 import Legislatie from "@/pages/legislatie";
+import UnitDetail from "@/pages/unit-detail";
+import UsersPage from "@/pages/users";
 
 function SuperAdminRouter() {
   return (
@@ -21,6 +23,8 @@ function SuperAdminRouter() {
       <Route path="/liste-generale/:listKey" component={ListaGenerala} />
       <Route path="/legislatie/:lawId" component={Legislatie} />
       <Route path="/legislatie" component={Legislatie} />
+      <Route path="/unitate/:id" component={UnitDetail} />
+      <Route path="/utilizatori" component={UsersPage} />
       <Route component={NotFound} />
     </Switch>
   );
