@@ -9,6 +9,7 @@ import {
   MapPin, Phone, Mail, User, FileText, Car, Package, Plus
 } from "lucide-react";
 import { DocumentManager } from "@/components/document-manager";
+import { MeterManager } from "@/components/meter-manager";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
@@ -537,6 +538,9 @@ export default function Explorer() {
                                 <span className="truncate">{unit.ownerEmail}</span>
                               </div>
                             )}
+                            <div className="pt-2 border-t mt-2">
+                              <MeterManager apartmentId={unit.id} compact />
+                            </div>
                             <div className="pt-2 border-t mt-2">
                               <DocumentManager entityType="apartment" entityId={unit.id} title="Documente" compact />
                             </div>

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, numeric, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, numeric, date, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -84,6 +84,38 @@ export const unitRooms = pgTable("unit_rooms", {
   sortOrder: integer("sort_order").default(0),
 });
 
+export const meterTypeEnum = ["water", "electricity", "gas"] as const;
+export type MeterType = typeof meterTypeEnum[number];
+
+export const METER_TYPE_LABELS: Record<MeterType, string> = {
+  water: "Apă",
+  electricity: "Electricitate",
+  gas: "Gaz",
+};
+
+export const meters = pgTable("meters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  apartmentId: varchar("apartment_id").notNull().references(() => apartments.id, { onDelete: "cascade" }),
+  meterType: text("meter_type").notNull(),
+  serialNumber: text("serial_number").notNull(),
+  meterNumber: text("meter_number").notNull(),
+  chamberLocation: text("chamber_location"),
+  installDate: date("install_date").notNull(),
+  initialReading: numeric("initial_reading", { precision: 12, scale: 3 }).notNull().default("0"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const meterReadings = pgTable("meter_readings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  meterId: varchar("meter_id").notNull().references(() => meters.id, { onDelete: "cascade" }),
+  readingDate: date("reading_date").notNull(),
+  readingValue: numeric("reading_value", { precision: 12, scale: 3 }).notNull(),
+  consumption: numeric("consumption", { precision: 12, scale: 3 }),
+  accumulatedConsumption: numeric("accumulated_consumption", { precision: 12, scale: 3 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const expenses = pgTable("expenses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   buildingId: varchar("building_id").notNull().references(() => buildings.id),
@@ -154,6 +186,8 @@ export const insertBuildingSchema = createInsertSchema(buildings).omit({ id: tru
 export const insertStaircaseSchema = createInsertSchema(staircases).omit({ id: true });
 export const insertApartmentSchema = createInsertSchema(apartments).omit({ id: true });
 export const insertUnitRoomSchema = createInsertSchema(unitRooms).omit({ id: true });
+export const insertMeterSchema = createInsertSchema(meters).omit({ id: true, createdAt: true });
+export const insertMeterReadingSchema = createInsertSchema(meterReadings).omit({ id: true, createdAt: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
 export const insertPaymentSchema = createInsertSchema(payments).omit({ id: true });
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({ id: true, createdAt: true });
@@ -171,6 +205,10 @@ export type InsertApartment = z.infer<typeof insertApartmentSchema>;
 export type Apartment = typeof apartments.$inferSelect;
 export type InsertUnitRoom = z.infer<typeof insertUnitRoomSchema>;
 export type UnitRoom = typeof unitRooms.$inferSelect;
+export type InsertMeter = z.infer<typeof insertMeterSchema>;
+export type Meter = typeof meters.$inferSelect;
+export type InsertMeterReading = z.infer<typeof insertMeterReadingSchema>;
+export type MeterReading = typeof meterReadings.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;

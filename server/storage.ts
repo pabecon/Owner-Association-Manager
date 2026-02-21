@@ -10,8 +10,11 @@ import {
   type UserRoleRecord, type InsertUserRole,
   type Document, type InsertDocument,
   type UnitRoom, type InsertUnitRoom,
+  type Meter, type InsertMeter,
+  type MeterReading, type InsertMeterReading,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
+  meters, meterReadings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -77,6 +80,19 @@ export interface IStorage {
   createUnitRoom(data: InsertUnitRoom): Promise<UnitRoom>;
   deleteUnitRoom(id: string): Promise<void>;
   deleteUnitRoomsByApartment(apartmentId: string): Promise<void>;
+
+  getMetersByApartment(apartmentId: string): Promise<Meter[]>;
+  getMeter(id: string): Promise<Meter | undefined>;
+  createMeter(data: InsertMeter): Promise<Meter>;
+  updateMeter(id: string, data: Partial<InsertMeter>): Promise<Meter | undefined>;
+  deleteMeter(id: string): Promise<void>;
+  deactivateMeter(id: string): Promise<Meter | undefined>;
+
+  getMeterReadings(meterId: string): Promise<MeterReading[]>;
+  getMeterReading(id: string): Promise<MeterReading | undefined>;
+  getLatestMeterReading(meterId: string): Promise<MeterReading | undefined>;
+  createMeterReading(data: InsertMeterReading): Promise<MeterReading>;
+  deleteMeterReading(id: string): Promise<void>;
 
   getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]>;
   getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]>;
@@ -319,6 +335,57 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUnitRoomsByApartment(apartmentId: string): Promise<void> {
     await db.delete(unitRooms).where(eq(unitRooms.apartmentId, apartmentId));
+  }
+
+  async getMetersByApartment(apartmentId: string): Promise<Meter[]> {
+    return db.select().from(meters).where(eq(meters.apartmentId, apartmentId)).orderBy(desc(meters.createdAt));
+  }
+
+  async getMeter(id: string): Promise<Meter | undefined> {
+    const [meter] = await db.select().from(meters).where(eq(meters.id, id));
+    return meter;
+  }
+
+  async createMeter(data: InsertMeter): Promise<Meter> {
+    const [meter] = await db.insert(meters).values(data).returning();
+    return meter;
+  }
+
+  async updateMeter(id: string, data: Partial<InsertMeter>): Promise<Meter | undefined> {
+    const [meter] = await db.update(meters).set(data).where(eq(meters.id, id)).returning();
+    return meter;
+  }
+
+  async deleteMeter(id: string): Promise<void> {
+    await db.delete(meters).where(eq(meters.id, id));
+  }
+
+  async deactivateMeter(id: string): Promise<Meter | undefined> {
+    const [meter] = await db.update(meters).set({ isActive: false }).where(eq(meters.id, id)).returning();
+    return meter;
+  }
+
+  async getMeterReading(id: string): Promise<MeterReading | undefined> {
+    const [reading] = await db.select().from(meterReadings).where(eq(meterReadings.id, id));
+    return reading;
+  }
+
+  async getMeterReadings(meterId: string): Promise<MeterReading[]> {
+    return db.select().from(meterReadings).where(eq(meterReadings.meterId, meterId)).orderBy(desc(meterReadings.readingDate));
+  }
+
+  async getLatestMeterReading(meterId: string): Promise<MeterReading | undefined> {
+    const [reading] = await db.select().from(meterReadings).where(eq(meterReadings.meterId, meterId)).orderBy(desc(meterReadings.readingDate)).limit(1);
+    return reading;
+  }
+
+  async createMeterReading(data: InsertMeterReading): Promise<MeterReading> {
+    const [reading] = await db.insert(meterReadings).values(data).returning();
+    return reading;
+  }
+
+  async deleteMeterReading(id: string): Promise<void> {
+    await db.delete(meterReadings).where(eq(meterReadings.id, id));
   }
 
   async getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]> {

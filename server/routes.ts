@@ -7,7 +7,7 @@ import {
   insertBuildingSchema, insertApartmentSchema, insertExpenseSchema,
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
   insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
-  insertDocumentSchema,
+  insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
 import { users } from "@shared/schema";
@@ -232,6 +232,147 @@ export async function registerRoutes(
   app.delete("/api/unit-rooms/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     await storage.deleteUnitRoom(req.params.id as string);
     res.json({ success: true });
+  });
+
+  // Meters
+  app.get("/api/meters/:apartmentId", ...auth, async (req: AuthenticatedRequest, res) => {
+    const apt = await storage.getApartment(req.params.apartmentId as string);
+    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      if (!isInApartmentScope(req, apt.id)) {
+        return res.status(403).json({ message: "Nu aveti acces" });
+      }
+    }
+    const metersList = await storage.getMetersByApartment(req.params.apartmentId as string);
+    res.json(metersList);
+  });
+
+  app.post("/api/meters", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertMeterSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const apt = await storage.getApartment(parsed.data.apartmentId);
+    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(apt.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    const meter = await storage.createMeter(parsed.data);
+    res.json(meter);
+  });
+
+  app.patch("/api/meters/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const meter = await storage.getMeter(req.params.id as string);
+    if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+    const apt = await storage.getApartment(meter.apartmentId);
+    if (apt) {
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+        if (!isInApartmentScope(req, apt.id)) {
+          return res.status(403).json({ message: "Nu aveti acces" });
+        }
+      }
+    }
+    const { chamberLocation, serialNumber, meterNumber, isActive } = req.body;
+    const updateData: Record<string, any> = {};
+    if (chamberLocation !== undefined) updateData.chamberLocation = chamberLocation;
+    if (serialNumber !== undefined) updateData.serialNumber = serialNumber;
+    if (meterNumber !== undefined) updateData.meterNumber = meterNumber;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    const updated = await storage.updateMeter(req.params.id as string, updateData);
+    if (!updated) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+    res.json(updated);
+  });
+
+  app.delete("/api/meters/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const meter = await storage.getMeter(req.params.id as string);
+    if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+    const apt = await storage.getApartment(meter.apartmentId);
+    if (apt) {
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+        if (!isInApartmentScope(req, apt.id)) {
+          return res.status(403).json({ message: "Nu aveti acces" });
+        }
+      }
+    }
+    await storage.deleteMeter(req.params.id as string);
+    res.json({ ok: true });
+  });
+
+  // Meter Readings
+  app.get("/api/meter-readings/:meterId", ...auth, async (req: AuthenticatedRequest, res) => {
+    const meter = await storage.getMeter(req.params.meterId as string);
+    if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+    const apt = await storage.getApartment(meter.apartmentId);
+    if (apt) {
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+        if (!isInApartmentScope(req, apt.id)) {
+          return res.status(403).json({ message: "Nu aveti acces" });
+        }
+      }
+    }
+    const readings = await storage.getMeterReadings(req.params.meterId as string);
+    res.json(readings);
+  });
+
+  app.post("/api/meter-readings", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertMeterReadingSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const meter = await storage.getMeter(parsed.data.meterId);
+    if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+    const apt = await storage.getApartment(meter.apartmentId);
+    if (apt) {
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+        return res.status(403).json({ message: "Nu aveti acces" });
+      }
+    }
+
+    const latestReading = await storage.getLatestMeterReading(parsed.data.meterId);
+    const newValue = Number(parsed.data.readingValue);
+
+    const prevValue = latestReading ? Number(latestReading.readingValue) : Number(meter.initialReading);
+    if (newValue < prevValue) {
+      return res.status(400).json({ message: `Valoarea citirii (${newValue}) nu poate fi mai mica decat citirea anterioara (${prevValue})` });
+    }
+
+    let consumption: string;
+    let accumulated: string;
+
+    if (latestReading) {
+      consumption = String(newValue - Number(latestReading.readingValue));
+      const prevAccumulated = Number(latestReading.accumulatedConsumption || "0");
+      accumulated = String(prevAccumulated + (newValue - Number(latestReading.readingValue)));
+    } else {
+      consumption = String(newValue - Number(meter.initialReading));
+      accumulated = consumption;
+    }
+
+    const reading = await storage.createMeterReading({
+      ...parsed.data,
+      consumption,
+      accumulatedConsumption: accumulated,
+    });
+    res.json(reading);
+  });
+
+  app.delete("/api/meter-readings/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const reading = await storage.getMeterReading(req.params.id as string);
+    if (!reading) return res.status(404).json({ message: "Citirea nu a fost gasita" });
+    const meter = await storage.getMeter(reading.meterId);
+    if (meter) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+          return res.status(403).json({ message: "Nu aveti acces" });
+        }
+      }
+    }
+    await storage.deleteMeterReading(req.params.id as string);
+    res.json({ ok: true });
   });
 
   // Expenses

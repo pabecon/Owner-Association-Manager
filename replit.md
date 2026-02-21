@@ -27,6 +27,16 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 4. **Staircases** (Scari): Building entries/sections. Each belongs to one building. Has floors count and apartments-per-floor configuration.
 5. **Apartments** (Apartamente): Individual units. Each belongs to one staircase (staircaseId required). Has owner info, surface, rooms, residents.
 
+## Meter Management (Contoare)
+- **Meter Types**: Water (Apă), Electricity (Electricitate), Gas (Gaz)
+- **Each meter**: serialNumber, meterNumber, chamberLocation, installDate, initialReading, isActive
+- **Readings**: readingDate, readingValue, consumption (auto-calculated), accumulatedConsumption (auto-calculated)
+- **Validation**: Reading values must be >= previous reading; consumption computed server-side
+- **Historical**: Meters can be deactivated (replaced), keeping history; inactive meters shown separately
+- **UI**: MeterManager component integrated into Explorer unit cards as collapsible section
+- **Tables**: `meters` and `meter_readings` with cascading deletes from apartments/meters
+- **API**: GET/POST/PATCH/DELETE /api/meters, GET/POST/DELETE /api/meter-readings with scope-based access control
+
 ## Key Features
 - **Explorer (Explorator)**: Hierarchical drill-down navigation - click federation to see associations, click association to see buildings, etc. through all 6 levels including floors (implicit from unit floor numbers). Supports negative floors (basements).
 - **Infographic (Infografie)**: Tree view showing complete hierarchy structure as expandable/collapsible tree with summary stats.
