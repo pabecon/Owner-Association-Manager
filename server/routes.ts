@@ -768,6 +768,12 @@ export async function registerRoutes(
 
   registerObjectStorageRoutes(app);
 
+  // ── Hierarchy Stats ────────────────────────────────────
+  app.get("/api/hierarchy-stats", ...auth, async (_req: AuthenticatedRequest, res) => {
+    const stats = await storage.getHierarchyStats();
+    res.json(stats);
+  });
+
   // ── Funds ──────────────────────────────────────────────
   app.get("/api/funds", ...auth, async (req: AuthenticatedRequest, res) => {
     const associationId = String(req.query.associationId || "");

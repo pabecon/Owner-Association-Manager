@@ -19,7 +19,7 @@ import {
   meters, meterReadings, funds, fundCategories,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, inArray } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { PgTableWithColumns } from "drizzle-orm/pg-core";
 
 export interface IStorage {
@@ -106,6 +106,8 @@ export interface IStorage {
   createDocument(data: InsertDocument): Promise<Document>;
   deleteDocument(id: string): Promise<void>;
   getDocument(id: string): Promise<Document | undefined>;
+
+  getHierarchyStats(): Promise<any[]>;
 
   getFundsByAssociation(associationId: string): Promise<Fund[]>;
   getFund(id: string): Promise<Fund | undefined>;
@@ -452,6 +454,26 @@ export class DatabaseStorage implements IStorage {
   async getDocument(id: string): Promise<Document | undefined> {
     const [doc] = await db.select().from(documents).where(eq(documents.id, id));
     return doc;
+  }
+
+  async getHierarchyStats(): Promise<any[]> {
+    const result = await db.execute(sql`
+      SELECT
+        a.id as association_id,
+        COUNT(DISTINCT b.id) as buildings_count,
+        COUNT(DISTINCT s.id) as staircases_count,
+        COUNT(DISTINCT ap.id) as units_count,
+        COUNT(DISTINCT CASE WHEN ap.unit_type = 'apartment' OR ap.unit_type IS NULL THEN ap.id END) as apartments_count,
+        COUNT(DISTINCT CASE WHEN ap.unit_type = 'box' THEN ap.id END) as boxes_count,
+        COUNT(DISTINCT CASE WHEN ap.unit_type = 'parking' THEN ap.id END) as parking_count,
+        COALESCE(MAX(s.floors), 0) as max_floors
+      FROM associations a
+      LEFT JOIN buildings b ON b.association_id = a.id
+      LEFT JOIN staircases s ON s.building_id = b.id
+      LEFT JOIN apartments ap ON ap.staircase_id = s.id
+      GROUP BY a.id
+    `);
+    return result.rows as any[];
   }
 
   async getFundsByAssociation(associationId: string): Promise<Fund[]> {
