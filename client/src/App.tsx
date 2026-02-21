@@ -17,7 +17,8 @@ import UnitDetail from "@/pages/unit-detail";
 import UsersPage from "@/pages/users";
 import ContractsPage from "@/pages/contracts";
 import PermissionsMatrix from "@/pages/permissions-matrix";
-import RoluriPage from "@/pages/roluri";
+import ListaUtilizatoriPage from "@/pages/lista-utilizatori";
+import UtilizatorDetail from "@/pages/utilizator-detail";
 
 function SuperAdminRouter() {
   return (
@@ -28,8 +29,9 @@ function SuperAdminRouter() {
       <Route path="/legislatie" component={Legislatie} />
       <Route path="/utilizatori" component={UsersPage} />
       <Route path="/matrice-permisiuni" component={PermissionsMatrix} />
-      <Route path="/roluri" component={RoluriPage} />
       <Route path="/contracte" component={ContractsPage} />
+      <Route path="/lista-utilizatori" component={ListaUtilizatoriPage} />
+      <Route path="/utilizator/:id" component={UtilizatorDetail} />
       <Route component={NotFound} />
     </Switch>
   );

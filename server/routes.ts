@@ -10,11 +10,12 @@ import {
   insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema,
   insertFundSchema, insertFundCategorySchema,
   insertContractSchema, insertContractTemplateSchema,
+  insertPlatformUserSchema, insertUserActivityLogSchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
-import { users, appSettings } from "@shared/schema";
+import { users, appSettings, platformUsers, userActivityLog, associations, buildings, staircases, apartments } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, desc } from "drizzle-orm";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 function isInBuildingScope(req: AuthenticatedRequest, buildingId: string): boolean {
@@ -1088,6 +1089,142 @@ export async function registerRoutes(
     await db.insert(appSettings).values({ key: req.params.key, value, updatedAt: new Date() })
       .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: new Date() } });
     res.json({ success: true });
+  });
+
+  // Platform Users
+  app.get("/api/platform-users", ...auth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const allUsers = await db.select().from(platformUsers).orderBy(platformUsers.lastName, platformUsers.firstName);
+      const allAssocs = await db.select().from(associations);
+      const allBuilds = await db.select().from(buildings);
+      const allStairs = await db.select().from(staircases);
+      const allApts = await db.select().from(apartments);
+
+      const enriched = allUsers.map(u => ({
+        ...u,
+        associationName: allAssocs.find(a => a.id === u.associationId)?.name || null,
+        buildingName: allBuilds.find(b => b.id === u.buildingId)?.name || null,
+        staircaseName: allStairs.find(s => s.id === u.staircaseId)?.name || null,
+        apartmentNumber: allApts.find(a => a.id === u.apartmentId)?.number || null,
+        apartmentFloor: allApts.find(a => a.id === u.apartmentId)?.floor ?? null,
+      }));
+      res.json(enriched);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/platform-users/:id", ...auth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const [user] = await db.select().from(platformUsers).where(eq(platformUsers.id, req.params.id));
+      if (!user) return res.status(404).json({ message: "Utilizatorul nu a fost gasit" });
+
+      const activities = await db.select().from(userActivityLog)
+        .where(eq(userActivityLog.platformUserId, req.params.id))
+        .orderBy(desc(userActivityLog.createdAt));
+
+      const assoc = user.associationId ? (await db.select().from(associations).where(eq(associations.id, user.associationId)))[0] : null;
+      const build = user.buildingId ? (await db.select().from(buildings).where(eq(buildings.id, user.buildingId)))[0] : null;
+      const stair = user.staircaseId ? (await db.select().from(staircases).where(eq(staircases.id, user.staircaseId)))[0] : null;
+      const apt = user.apartmentId ? (await db.select().from(apartments).where(eq(apartments.id, user.apartmentId)))[0] : null;
+
+      res.json({
+        ...user,
+        associationName: assoc?.name || null,
+        buildingName: build?.name || null,
+        staircaseName: stair?.name || null,
+        apartmentNumber: apt?.number || null,
+        apartmentFloor: apt?.floor ?? null,
+        activities,
+      });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/platform-users", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const parsed = insertPlatformUserSchema.parse(req.body);
+      const [created] = await db.insert(platformUsers).values(parsed).returning();
+
+      await db.insert(userActivityLog).values({
+        platformUserId: created.id,
+        action: "Creare cont",
+        details: `Cont creat cu rolul ${parsed.userRole}`,
+        performedBy: req.user?.firstName ? `${req.user.firstName} ${req.user.lastName || ""}`.trim() : "Super Admin",
+      });
+
+      res.json(created);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.patch("/api/platform-users/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const [existing] = await db.select().from(platformUsers).where(eq(platformUsers.id, req.params.id));
+      if (!existing) return res.status(404).json({ message: "Utilizatorul nu a fost gasit" });
+
+      const updates = req.body;
+      const performer = req.user?.firstName ? `${req.user.firstName} ${req.user.lastName || ""}`.trim() : "Super Admin";
+      const changes: string[] = [];
+
+      if (updates.isActive !== undefined && updates.isActive !== existing.isActive) {
+        if (!updates.isActive) {
+          updates.deactivatedAt = new Date();
+          changes.push("Dezactivare cont");
+        } else {
+          updates.deactivatedAt = null;
+          changes.push("Reactivare cont");
+        }
+      }
+      if (updates.firstName && updates.firstName !== existing.firstName) changes.push(`Nume schimbat: ${existing.firstName} -> ${updates.firstName}`);
+      if (updates.lastName && updates.lastName !== existing.lastName) changes.push(`Prenume schimbat: ${existing.lastName} -> ${updates.lastName}`);
+      if (updates.username && updates.username !== existing.username) changes.push(`Username schimbat: ${existing.username} -> ${updates.username}`);
+      if (updates.password && updates.password !== existing.password) changes.push("Parola schimbata");
+      if (updates.userRole && updates.userRole !== existing.userRole) changes.push(`Rol schimbat: ${existing.userRole} -> ${updates.userRole}`);
+      if (updates.email !== undefined && updates.email !== existing.email) changes.push(`Email schimbat`);
+      if (updates.phone !== undefined && updates.phone !== existing.phone) changes.push(`Telefon schimbat`);
+      if (updates.associationId !== undefined && updates.associationId !== existing.associationId) changes.push("Asociatie schimbata");
+      if (updates.buildingId !== undefined && updates.buildingId !== existing.buildingId) changes.push("Bloc schimbat");
+      if (updates.staircaseId !== undefined && updates.staircaseId !== existing.staircaseId) changes.push("Scara schimbata");
+      if (updates.apartmentId !== undefined && updates.apartmentId !== existing.apartmentId) changes.push("Unitate schimbata");
+
+      const [updated] = await db.update(platformUsers).set(updates).where(eq(platformUsers.id, req.params.id)).returning();
+
+      if (changes.length > 0) {
+        await db.insert(userActivityLog).values({
+          platformUserId: req.params.id,
+          action: "Editare cont",
+          details: changes.join("; "),
+          performedBy: performer,
+        });
+      }
+
+      res.json(updated);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/platform-users/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      await db.delete(platformUsers).where(eq(platformUsers.id, req.params.id));
+      res.json({ success: true });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/platform-users/:id/activities", ...auth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const activities = await db.select().from(userActivityLog)
+        .where(eq(userActivityLog.platformUserId, req.params.id))
+        .orderBy(desc(userActivityLog.createdAt));
+      res.json(activities);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
   });
 
   // Contracts

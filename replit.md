@@ -50,7 +50,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 ## Key Features
 - **Infografie (Home page `/`)**: THE main page. Tree view showing complete hierarchy: Federations -> Associations -> Buildings -> Staircases -> Floors -> Units. Expandable/collapsible nodes with summary stats. CRUD buttons to create entities at any level. Each association has a "Deschide" button to open its portal.
 - **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Imobiliar (buildings/staircases/floors/units drill-down), Financiar (expenses, payments, funds), Contact (president/admin info), and Anunturi. Stats summary at top. Back button returns to Infografie.
-- **Sidebar**: Shows "Infografie" link, collapsible "Liste Generale" (with all 18 reference list sub-items including Tipuri Camere), collapsible "Legislatie" (with all law sub-items), collapsible "Juridic" (with Contracte sub-item), and collapsible "Matrice Utilizatoare" (with Roluri, Matrice Permisiuni sub-items). Sections auto-expand when child routes are active and can be toggled closed/open.
+- **Sidebar**: Shows "Infografie" link, collapsible "Liste Generale" (with all 18 reference list sub-items including Tipuri Camere), collapsible "Legislatie" (with all law sub-items), collapsible "Juridic" (with Contracte sub-item), and collapsible "Utilizatori" (with Lista Utilizatori, Matrice Permisiuni sub-items). Sections auto-expand when child routes are active and can be toggled closed/open.
 - **Unit Detail Page** (`/unitate/:id`): Dedicated page for each unit (apartment/box/parking). Opens with its OWN layout (no super admin sidebar). Has its own sidebar with tabs: Informatii, Camere, Contoare, Documente, Plati, Anunturi. Shows general info, owner details, location hierarchy, rooms, and meters. Accessible via "Deschide" button on units in both Infografie tree and Association portal.
 - **Unit Types**: apartment (default), box (storage), parking. Shown in tree and portal.
 - **Negative Floors**: Floors can be negative (e.g., -1 = Subsol 1, -2 = Subsol 2) for basements/garages.
@@ -78,8 +78,15 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **UI**: Contracts page at /contracte with list view, add/edit dialog, file upload, delete with confirmation
 - **Sidebar**: Under "Juridic" collapsible section
 
+## Platform User Management
+- **Lista Utilizatori** (`/lista-utilizatori`): Table showing all platform users with: name, username, role (Proprietar/Chirias), association, building, staircase, floor, unit, active status. Search/filter input. "Adauga Utilizator" dialog to create new users with cascading location selects.
+- **Utilizator Detail** (`/utilizator/:id`): Edit page for individual user. Shows/edits: firstName, lastName, username, password (visible), email, phone, userRole, isActive toggle, cascading location selects (association→building→staircase→apartment). Info card with createdBy, createdAt, deactivatedAt. Activity history timeline showing all changes with dates and who made them.
+- **Tables**: `platform_users` (id, firstName, lastName, username, password, email, phone, userRole, associationId, buildingId, staircaseId, apartmentId, isActive, createdBy, createdAt, deactivatedAt) and `user_activity_log` (id, platformUserId, action, details, performedBy, createdAt)
+- **API**: GET/POST /api/platform-users, GET/PATCH/DELETE /api/platform-users/:id, GET /api/platform-users/:id/activities
+- **Activity tracking**: All changes (create, edit, activate/deactivate) are automatically logged with timestamps and performer info
+
 ## Roluri Page
-- **Path**: /roluri - Shows all 5 roles with descriptions, hierarchy levels, scope, and creation rules
+- **Path**: /roluri - Shows all 5 roles with descriptions, hierarchy levels, scope, and creation rules (no longer in sidebar, roles managed in Matrice Permisiuni)
 - **Data**: Uses ROLE_* constants from shared/schema.ts (ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_CREATED_BY, ROLE_SCOPE_LABELS, ROLE_HIERARCHY)
 
 ## Data Models

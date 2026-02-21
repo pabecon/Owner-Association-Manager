@@ -419,6 +419,50 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const platformUserRoleEnum = ["owner", "tenant"] as const;
+export type PlatformUserRole = typeof platformUserRoleEnum[number];
+
+export const PLATFORM_USER_ROLE_LABELS: Record<PlatformUserRole, string> = {
+  owner: "Proprietar",
+  tenant: "Chirias",
+};
+
+export const platformUsers = pgTable("platform_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  userRole: text("user_role").notNull().default("owner"),
+  associationId: varchar("association_id").references(() => associations.id),
+  buildingId: varchar("building_id").references(() => buildings.id),
+  staircaseId: varchar("staircase_id").references(() => staircases.id),
+  apartmentId: varchar("apartment_id").references(() => apartments.id),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  deactivatedAt: timestamp("deactivated_at"),
+});
+
+export const userActivityLog = pgTable("user_activity_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  platformUserId: varchar("platform_user_id").notNull().references(() => platformUsers.id, { onDelete: "cascade" }),
+  action: text("action").notNull(),
+  details: text("details"),
+  performedBy: text("performed_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPlatformUserSchema = createInsertSchema(platformUsers).omit({ id: true, createdAt: true, deactivatedAt: true });
+export type InsertPlatformUser = z.infer<typeof insertPlatformUserSchema>;
+export type PlatformUser = typeof platformUsers.$inferSelect;
+
+export const insertUserActivityLogSchema = createInsertSchema(userActivityLog).omit({ id: true, createdAt: true });
+export type InsertUserActivityLog = z.infer<typeof insertUserActivityLogSchema>;
+export type UserActivityLog = typeof userActivityLog.$inferSelect;
+
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   super_admin: 5,
   admin: 4,

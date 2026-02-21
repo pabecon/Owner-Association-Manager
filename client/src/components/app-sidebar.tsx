@@ -56,7 +56,7 @@ export function AppSidebar() {
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte");
-  const isUsersSection = location === "/matrice-permisiuni" || location === "/roluri";
+  const isUsersSection = location === "/matrice-permisiuni" || location === "/lista-utilizatori" || location.startsWith("/utilizator/");
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
@@ -187,17 +187,17 @@ export function AppSidebar() {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className={`h-8 text-sm ${isUsersSection ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-utilizatori">
                       <Users className="w-4 h-4" />
-                      <span className="flex-1">Matrice Utilizatoare</span>
+                      <span className="flex-1">Utilizatori</span>
                       {isUsersExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild data-active={location === "/roluri"} className={location === "/roluri" ? "bg-sidebar-accent" : ""}>
-                          <Link href="/roluri" data-testid="link-nav-roluri">
-                            <Shield className="w-3.5 h-3.5" />
-                            <span>Roluri</span>
+                        <SidebarMenuSubButton asChild data-active={location === "/lista-utilizatori"} className={location === "/lista-utilizatori" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/lista-utilizatori" data-testid="link-nav-lista-utilizatori">
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Lista Utilizatori</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
