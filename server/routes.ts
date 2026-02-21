@@ -74,6 +74,18 @@ export async function registerRoutes(
     res.json(federation);
   });
 
+  app.patch("/api/federations/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getFederation(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Federatia nu a fost gasita" });
+    const parsed = insertFederationSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.name !== undefined && !parsed.data.name.trim()) {
+      return res.status(400).json({ message: "Numele este obligatoriu" });
+    }
+    const updated = await storage.updateFederation(req.params.id as string, parsed.data);
+    res.json(updated);
+  });
+
   app.delete("/api/federations/:id", ...auth, requireRole("super_admin"), async (req, res) => {
     await storage.deleteFederation(req.params.id as string);
     res.json({ success: true });
@@ -98,6 +110,24 @@ export async function registerRoutes(
     res.json(association);
   });
 
+  app.patch("/api/associations/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getAssociation(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Asociatia nu a fost gasita" });
+    if (existing.federationId && !isInFederationScope(req, existing.federationId)) {
+      return res.status(403).json({ message: "Nu aveti acces la aceasta asociatie" });
+    }
+    const parsed = insertAssociationSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.name !== undefined && !parsed.data.name.trim()) {
+      return res.status(400).json({ message: "Numele este obligatoriu" });
+    }
+    if (parsed.data.federationId && !isInFederationScope(req, parsed.data.federationId)) {
+      return res.status(403).json({ message: "Nu aveti acces la federatia destinatie" });
+    }
+    const updated = await storage.updateAssociation(req.params.id as string, parsed.data);
+    res.json(updated);
+  });
+
   app.delete("/api/associations/:id", ...auth, requirePermission("manageBuildings"), async (req, res) => {
     await storage.deleteAssociation(req.params.id as string);
     res.json({ success: true });
@@ -120,6 +150,22 @@ export async function registerRoutes(
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const building = await storage.createBuilding(parsed.data);
     res.json(building);
+  });
+
+  app.patch("/api/buildings/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getBuilding(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Blocul nu a fost gasit" });
+    if (!isInBuildingScope(req, existing.id)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    const parsed = insertBuildingSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.name !== undefined && !parsed.data.name.trim()) {
+      return res.status(400).json({ message: "Numele este obligatoriu" });
+    }
+    const { associationId, ...updateFields } = parsed.data;
+    const updated = await storage.updateBuilding(req.params.id as string, updateFields);
+    res.json(updated);
   });
 
   app.delete("/api/buildings/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
@@ -150,6 +196,22 @@ export async function registerRoutes(
     }
     const staircase = await storage.createStaircase(parsed.data);
     res.json(staircase);
+  });
+
+  app.patch("/api/staircases/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getStaircase(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Scara nu a fost gasita" });
+    if (!isInBuildingScope(req, existing.buildingId)) {
+      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    }
+    const parsed = insertStaircaseSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.name !== undefined && !parsed.data.name.trim()) {
+      return res.status(400).json({ message: "Numele este obligatoriu" });
+    }
+    const { buildingId, ...updateFields } = parsed.data;
+    const updated = await storage.updateStaircase(req.params.id as string, updateFields);
+    res.json(updated);
   });
 
   app.delete("/api/staircases/:id", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
@@ -186,6 +248,25 @@ export async function registerRoutes(
     }
     const apartment = await storage.createApartment(parsed.data);
     res.json(apartment);
+  });
+
+  app.patch("/api/apartments/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getApartment(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+    const staircase = await storage.getStaircase(existing.staircaseId);
+    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+      if (!isInApartmentScope(req, existing.id)) {
+        return res.status(403).json({ message: "Nu aveti acces" });
+      }
+    }
+    const parsed = insertApartmentSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    if (parsed.data.number !== undefined && !parsed.data.number.trim()) {
+      return res.status(400).json({ message: "Numarul este obligatoriu" });
+    }
+    const { staircaseId, ...updateFields } = parsed.data;
+    const updated = await storage.updateApartment(req.params.id as string, updateFields);
+    res.json(updated);
   });
 
   // Unit Rooms

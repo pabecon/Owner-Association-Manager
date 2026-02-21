@@ -24,12 +24,14 @@ export interface IStorage {
   getFederations(): Promise<Federation[]>;
   getFederation(id: string): Promise<Federation | undefined>;
   createFederation(data: InsertFederation): Promise<Federation>;
+  updateFederation(id: string, data: Partial<InsertFederation>): Promise<Federation | undefined>;
   deleteFederation(id: string): Promise<void>;
 
   getAssociations(): Promise<Association[]>;
   getAssociationsByFederation(federationId: string): Promise<Association[]>;
   getAssociation(id: string): Promise<Association | undefined>;
   createAssociation(data: InsertAssociation): Promise<Association>;
+  updateAssociation(id: string, data: Partial<InsertAssociation>): Promise<Association | undefined>;
   deleteAssociation(id: string): Promise<void>;
 
   getBuildings(): Promise<Building[]>;
@@ -37,12 +39,14 @@ export interface IStorage {
   getBuildingsByAssociation(associationId: string): Promise<Building[]>;
   getBuilding(id: string): Promise<Building | undefined>;
   createBuilding(data: InsertBuilding): Promise<Building>;
+  updateBuilding(id: string, data: Partial<InsertBuilding>): Promise<Building | undefined>;
   deleteBuilding(id: string): Promise<void>;
 
   getStaircases(): Promise<Staircase[]>;
   getStaircasesByBuilding(buildingId: string): Promise<Staircase[]>;
   getStaircase(id: string): Promise<Staircase | undefined>;
   createStaircase(data: InsertStaircase): Promise<Staircase>;
+  updateStaircase(id: string, data: Partial<InsertStaircase>): Promise<Staircase | undefined>;
   deleteStaircase(id: string): Promise<void>;
 
   getApartments(): Promise<Apartment[]>;
@@ -51,6 +55,7 @@ export interface IStorage {
   getApartmentsByStaircaseIds(staircaseIds: string[]): Promise<Apartment[]>;
   getApartment(id: string): Promise<Apartment | undefined>;
   createApartment(data: InsertApartment): Promise<Apartment>;
+  updateApartment(id: string, data: Partial<InsertApartment>): Promise<Apartment | undefined>;
 
   getExpenses(): Promise<Expense[]>;
   getExpensesByBuildingIds(buildingIds: string[]): Promise<Expense[]>;
@@ -120,6 +125,11 @@ export class DatabaseStorage implements IStorage {
     return federation;
   }
 
+  async updateFederation(id: string, data: Partial<InsertFederation>): Promise<Federation | undefined> {
+    const [federation] = await db.update(federations).set(data).where(eq(federations.id, id)).returning();
+    return federation;
+  }
+
   async deleteFederation(id: string): Promise<void> {
     await db.delete(federations).where(eq(federations.id, id));
   }
@@ -139,6 +149,11 @@ export class DatabaseStorage implements IStorage {
 
   async createAssociation(data: InsertAssociation): Promise<Association> {
     const [association] = await db.insert(associations).values(data).returning();
+    return association;
+  }
+
+  async updateAssociation(id: string, data: Partial<InsertAssociation>): Promise<Association | undefined> {
+    const [association] = await db.update(associations).set(data).where(eq(associations.id, id)).returning();
     return association;
   }
 
@@ -169,6 +184,11 @@ export class DatabaseStorage implements IStorage {
     return building;
   }
 
+  async updateBuilding(id: string, data: Partial<InsertBuilding>): Promise<Building | undefined> {
+    const [building] = await db.update(buildings).set(data).where(eq(buildings.id, id)).returning();
+    return building;
+  }
+
   async deleteBuilding(id: string): Promise<void> {
     await db.delete(buildings).where(eq(buildings.id, id));
   }
@@ -188,6 +208,11 @@ export class DatabaseStorage implements IStorage {
 
   async createStaircase(data: InsertStaircase): Promise<Staircase> {
     const [staircase] = await db.insert(staircases).values(data).returning();
+    return staircase;
+  }
+
+  async updateStaircase(id: string, data: Partial<InsertStaircase>): Promise<Staircase | undefined> {
+    const [staircase] = await db.update(staircases).set(data).where(eq(staircases.id, id)).returning();
     return staircase;
   }
 
@@ -220,6 +245,11 @@ export class DatabaseStorage implements IStorage {
 
   async createApartment(data: InsertApartment): Promise<Apartment> {
     const [apartment] = await db.insert(apartments).values(data).returning();
+    return apartment;
+  }
+
+  async updateApartment(id: string, data: Partial<InsertApartment>): Promise<Apartment | undefined> {
+    const [apartment] = await db.update(apartments).set(data).where(eq(apartments.id, id)).returning();
     return apartment;
   }
 

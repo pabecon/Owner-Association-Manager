@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Network, Users, Building2, ArrowUpDown, Layers, Home, ChevronRight,
-  MapPin, Phone, Mail, User, FileText, Car, Package, Plus
+  MapPin, Phone, Mail, User, FileText, Car, Package, Plus, Pencil
 } from "lucide-react";
 import { DocumentManager } from "@/components/document-manager";
 import { MeterManager } from "@/components/meter-manager";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
+import { EditEntityDialog } from "@/components/edit-entity-dialog";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 
@@ -96,11 +97,21 @@ export default function Explorer() {
   const [addParentId, setAddParentId] = useState<string | undefined>();
   const [addParentName, setAddParentName] = useState<string | undefined>();
 
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editLevel, setEditLevel] = useState<"federation" | "association" | "building" | "staircase" | "apartment">("federation");
+  const [editEntity, setEditEntity] = useState<any>(null);
+
   const openAdd = useCallback((level: "federation" | "association" | "building" | "staircase" | "apartment", parentId?: string, parentName?: string) => {
     setAddLevel(level);
     setAddParentId(parentId);
     setAddParentName(parentName);
     setAddDialogOpen(true);
+  }, []);
+
+  const openEdit = useCallback((level: "federation" | "association" | "building" | "staircase" | "apartment", entity: any) => {
+    setEditLevel(level);
+    setEditEntity(entity);
+    setEditDialogOpen(true);
   }, []);
 
   const independentAssociations = associations?.filter(a => !a.federationId) || [];
@@ -221,6 +232,7 @@ export default function Explorer() {
                             <p className="font-semibold truncate">{fed.name}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">Federatie</p>
                           </div>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("federation", fed); }} data-testid={`edit-federation-${fed.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                           <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                         </div>
                         {fed.description && <p className="text-sm text-muted-foreground line-clamp-2">{fed.description}</p>}
@@ -284,6 +296,7 @@ export default function Explorer() {
                             <p className="font-semibold truncate">{assoc.name}</p>
                             {assoc.cui && <p className="text-xs text-muted-foreground mt-0.5">CUI: {assoc.cui}</p>}
                           </div>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("association", assoc); }} data-testid={`edit-association-${assoc.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                           <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                         </div>
                         {assoc.address && (
@@ -324,6 +337,9 @@ export default function Explorer() {
                   {selectedAssociation && (
                     <Card>
                       <CardContent className="p-3">
+                        <div className="flex justify-end mb-1">
+                          <Button variant="ghost" size="sm" className="h-7 gap-1.5" onClick={() => openEdit("association", selectedAssociation)} data-testid="edit-current-association"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
                           {selectedAssociation.cui && (
                             <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-muted-foreground" /><span>CUI: {selectedAssociation.cui}</span></div>
@@ -366,6 +382,7 @@ export default function Explorer() {
                                 <MapPin className="w-3 h-3" /><span className="truncate">{bld.address}</span>
                               </div>
                             </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("building", bld); }} data-testid={`edit-building-${bld.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                             <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -402,6 +419,7 @@ export default function Explorer() {
                           <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /><span>{selectedBuilding.address}</span></div>
                           <Badge variant="secondary" className="text-xs"><Layers className="w-3 h-3 mr-1" />{selectedBuilding.floors} etaje</Badge>
                           <Badge variant="secondary" className="text-xs">{selectedBuilding.totalApartments} unitati</Badge>
+                          <Button variant="ghost" size="sm" className="h-7 gap-1.5 ml-auto" onClick={() => openEdit("building", selectedBuilding)} data-testid="edit-current-building"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -426,6 +444,7 @@ export default function Explorer() {
                                 <p className="font-semibold">{st.name}</p>
                                 <p className="text-xs text-muted-foreground mt-0.5">{st.floors} etaje, {st.apartmentsPerFloor} unit./etaj</p>
                               </div>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={e => { e.stopPropagation(); openEdit("staircase", st); }} data-testid={`edit-staircase-${st.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -460,6 +479,7 @@ export default function Explorer() {
                           <Badge variant="secondary" className="text-xs"><Layers className="w-3 h-3 mr-1" />{selectedStaircase.floors} etaje</Badge>
                           <Badge variant="secondary" className="text-xs">{selectedStaircase.apartmentsPerFloor} unit./etaj</Badge>
                           <Badge variant="outline" className="text-xs">{currentApartments.length} unitati totale</Badge>
+                          <Button variant="ghost" size="sm" className="h-7 gap-1.5 ml-auto" onClick={() => openEdit("staircase", selectedStaircase)} data-testid="edit-current-staircase"><Pencil className="w-3.5 h-3.5" />Editeaza</Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -519,6 +539,7 @@ export default function Explorer() {
                                 <p className="font-semibold">{typeLabel} {unit.number}</p>
                                 {unit.surface && <p className="text-xs text-muted-foreground mt-0.5">{unit.surface} mp</p>}
                               </div>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => openEdit("apartment", unit)} data-testid={`edit-unit-${unit.id}`}><Pencil className="w-3.5 h-3.5" /></Button>
                             </div>
                             {unit.ownerName && (
                               <div className="flex items-center gap-2 text-sm mb-1">
@@ -572,6 +593,14 @@ export default function Explorer() {
         associations={associations}
         buildings={buildings}
         staircases={staircases}
+      />
+
+      <EditEntityDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        level={editLevel}
+        entity={editEntity}
+        federations={federations}
       />
     </div>
   );
