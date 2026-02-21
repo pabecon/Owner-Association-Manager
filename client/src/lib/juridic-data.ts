@@ -729,4 +729,831 @@ export const JURIDIC_CATEGORIES: JuridicCategory[] = [
       },
     ],
   },
+  {
+    id: "statut-asociatie",
+    title: "Statutul Asociației de Proprietari",
+    description: "Model de statut pentru asociația de proprietari, conform legislației în vigoare",
+    documents: [
+      {
+        id: "statut-model",
+        title: "Statutul asociației de proprietari (model)",
+        description: "Model complet de statut pentru asociația de proprietari, cu toate capitolele și articolele necesare",
+        sections: [
+          {
+            type: "heading",
+            title: "STATUTUL asociației de proprietari (model)",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL I - Denumirea, forma juridică, obiectul de activitate, sediul, durata și membrii asociației de proprietari",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 1 - Denumirea asociației de proprietari",
+            content: "Denumirea asociației de proprietari este ... \"",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 2 - Forma juridică a asociației de proprietari",
+          },
+          {
+            type: "numbered-list",
+            items: [
+              "(1) Asociația de proprietari ... (denumirea) este persoana juridică română de drept privat, nonprofit (fără scopuri patrimoniale), constituită în baza prevederilor Legii locuinței nr. 114/1996, republicată, cu modificările și completările ulterioare, și ale O.G. 85/2001 privind organizarea și funcționarea asociațiilor de proprietari, aprobată cu modificări prin Legea 234/2002.",
+              "(2) Asociația de proprietari își desfășoară activitatea în conformitate cu legile române și cu prezentul statut. Asociația de proprietari are ștampilă proprie.",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 3 - Obiectul de activitate",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Asociația de proprietari are ca obiect de activitate asigurarea condițiilor de funcționare normală atât a locuințelor (apartamentelor) și spațiilor cu altă destinație decât cea de locuință, denumite în continuare spații, aflate în proprietate exclusivă, cât și a spațiilor construcțiilor și instalațiilor, aflate în proprietate comună indivizibilă, aferentă condominiului.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) În scopul realizării obiectului său de activitate asociația de proprietari are următoarele atribuții principale:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) încheie contracte cu furnizorii de produse și de servicii și își asumă obligații în nume propriu și în numele proprietarilor;",
+              "b) angajează și, după caz, suspendă din funcție administratorul proprietății comune indivize și personalul necesar bunei gospodăriri a acestei proprietăți;",
+              "c) reglementează folosirea, întreținerea, repararea, înlocuirea și modificarea proprietății comune;",
+              "d) adoptă și amendează bugetul de venituri și cheltuieli, precum și fondul de rulment; asigură calcularea și încasarea cotelor obișnuite și speciale pentru cheltuieli comune de la proprietari; impune penalizări pentru întârzierea la plata cotelor de întreținere;",
+              "e) adoptă sau amendează decizii, reguli sau regulamente;",
+              "f) inițiază și apără în procese, în nume propriu și/sau al asociaților, interesele comune legate de clădire;",
+              "g) exercită și alte atribuții care i-au fost conferite prin acordul de asociere sau prin votul asociaților.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(3) Pentru furnizarea unor servicii necesare realizării obiectului sau de activitate asociația de proprietari poate angaja persoane fizice sau juridice specializate, din cadrul asociației și/sau din afara acesteia. Personalul necesar bunei gospodăriri a proprietății comune din clădire poate fi angajat prin contract individual de muncă sau prin convenție civilă de prestări de servicii, conform celor ce se stabilesc prin negociere.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 4 - Sediul asociației",
+            content: "Sediul asociației de proprietari este în România, localitatea ..., str. ... nr. ..., județul/sectorul ... (se va specifica și locul/adresa de primire a corespondenței).",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 5 - Durata asociației de proprietari",
+            content: "Durata asociației de proprietari este nelimitată.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 6 - Membrii asociației de proprietari",
+            content: "Membrii asociației de proprietari sunt toți proprietarii, persoane fizice sau juridice, deținători ai uneia sau mai multor locuințe ori spații cu altă destinație decât cea de locuință din condominiu (pentru cazurile în care asociația se constituie pe mai multe clădiri, în condițiile de excepție prevăzute de lege), care au semnat acordul de asociere, prezentați în anexă.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL II - Patrimoniul asociației de proprietari",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 7",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Patrimoniul asociației de proprietari este format din:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) mijloace bănești, în valoare de ... lei, care pot fi majorate sau reduse în urma deciziei adunării generale a asociației de proprietari, cu respectarea prevederilor legale. Majorarea acestor fonduri se poate face numai prin vărsarea de lichidități;",
+              "b) mijloace materiale: scule, dispozitive, utilaje și mijloace fixe necesare în administrarea proprietății comune.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(2) Mijloacele bănești ale asociației de proprietari sunt alcătuite din fondurile constituite la înființarea asociației, din sumele prevăzute și încasate conform listelor lunare de plată a cotelor de contribuție a proprietarilor la cheltuielile asociației, care reprezintă contravaloarea facturilor sau actelor de plată, precum și din alte venituri ale asociației. Asociația de proprietari are unul sau mai multe conturi la unitatea bancară sau la filiala C.E.C. stabilită de comitetul executiv al acesteia.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Fondul de rulment se constituie pe baza hotărârii adunării generale a asociației de proprietari. Necesitatea constituirii acestuia este determinată de modul de întocmire a listei lunare de plată, termenul de plată a cotelor de contribuție și sistemul de penalizări al asociației de proprietari și al furnizorilor de servicii.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) Fondul de rulment se calculează pentru fiecare proprietar în funcție de numărul de persoane înregistrate în cartea de imobil și de cota-parte de proprietate indiviză din proprietatea comună, după natura serviciului facturat (modul de repartizare a consumurilor aferente facturilor).",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Valoarea fondului de rulment trebuie să fie egală cu suma corespunzătoare acoperirii cheltuielilor lunare, la nivelul lunii cu cheltuielile cele mai mari, dintr-un an calendaristic.",
+          },
+          {
+            type: "paragraph",
+            content: "(6) Dacă este cazul, în condiții de instabilitate economică, fondul de rulment se actualizează periodic prin depunerea de către fiecare proprietar a unei sume reprezentând diferența dintre valoarea existentă și cea necesară acoperirii cheltuielilor lunare ale asociației de proprietari, corespunzătoare fiecărui proprietar.",
+          },
+          {
+            type: "paragraph",
+            content: "(7) Fiecare proprietar va beneficia de propriul fond de rulment pentru acoperirea cheltuielilor curente.",
+          },
+          {
+            type: "paragraph",
+            content: "(8) Fondul de rulment constituit se utilizează numai pentru plata facturilor curente, aferente consumurilor lunii anterioare. După plata facturilor curente fondul de rulment se reîntregește lunar prin încasarea cotelor de contribuție afișate pe lista de plată a lunii în curs, având ca referință de calcul aceste facturi curente, corespunzătoare consumurilor lunii anterioare.",
+          },
+          {
+            type: "paragraph",
+            content: "(9) În perioadele în care valoarea fondului de rulment este mai mare decât volumul cheltuielilor, diferența devine depozit bancar purtător de dobândă.",
+          },
+          {
+            type: "paragraph",
+            content: "(10) Fondul de rulment se încasează distinct față de cota de contribuție lunară.",
+          },
+          {
+            type: "paragraph",
+            content: "(11) Fondul de rulment se restituie în întregime respectivului proprietar, în momentul pierderii calității de membru al asociației de proprietari, urmând ca viitorul proprietar, membru al asociației, să achite fondul de rulment, corespunzător cheltuielilor aferente lui.",
+          },
+          {
+            type: "paragraph",
+            content: "(12) Fondul de reparații se constituie până la limita maximă aprobată de adunarea generală a asociației de proprietari la stabilirea bugetului de venituri și cheltuieli anual, în funcție de necesitățile stabilite de comitetul executiv, prin contribuția lunară a membrilor, proporțional cu cota-parte din proprietatea comună.",
+          },
+          {
+            type: "paragraph",
+            content: "(13) După efectuarea reparațiilor, fondul de reparații se reîntregește lunar prin contribuția fiecărui proprietar, iar sumele rămase necheltuite fie se restituie proprietarilor, fie se constituie într-un depozit bancar, urmând a fi incluse în bugetul anual următor, potrivit hotărârii adunării generale a asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(14) În momentul pierderii calității de membru al asociației de proprietari, fondul de reparații nu se restituie decât în condițiile alineatului precedent, urmând a fi alimentat în continuare de viitorul proprietar.",
+          },
+          {
+            type: "paragraph",
+            content: "(15) Fondurile special constituite și alte fonduri au același regim ca și fondul de reparații.",
+          },
+          {
+            type: "paragraph",
+            content: "(16) Mijloacele materiale se compun din: mobilier, unelte, utilaje, materiale pentru curățenie și iluminat, consumabile necesare desfășurării activităților în cadrul asociației de proprietari și altele asemenea.",
+          },
+          {
+            type: "paragraph",
+            content: "(17) Mijloacele materiale se dobândesc prin cumpărare sau prin donație. Sumele necesare pentru cumpărarea mijloacelor materiale, altele decât cele care sunt cuprinse în cheltuielile administrative, se obțin prin contribuția proprietarilor, proporțional cu cota-parte din proprietatea comună, și se restituie sau se depozitează, în măsura în care nu au fost cheltuite, conform hotărârii adunării generale a asociației de proprietari.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 8",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Patrimoniul asociației de proprietari poate proveni și din donații și sponsorizări.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Apartamentele sau spațiile cu altă destinație decât cea de locuință, cumpărate de asociația de proprietari, vor face parte din patrimoniul asociației.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 9",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Gestionarea patrimoniului, precum și activitatea financiar-contabilă se exercită fie de membri ai comisiei de cenzori sau alți membri ai asociației de proprietari, cu cunoștințe de specialitate și experiență în domeniile economic, financiar și juridic, fie de persoane fizice sau juridice, asociații ori agenți economici specializați.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Controlul gestiunii patrimoniului, precum și al activității financiar-contabile se exercită de comitetul executiv al asociației de proprietari.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 10",
+            content: "Patrimoniul asociației de proprietari nu poate fi grevat de datorii sau de alte obligații personale ale asociaților.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL III - Structura organizatorică",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 11 - Adunarea generală",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Asociația de proprietari este condusă de adunarea generală. După prima întrunire organizatorică adunarea generală se întrunește cel puțin o dată în fiecare an calendaristic.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Întrunirea adunării generale va fi anunțată în scris prin afișare la loc vizibil, cu cel puțin 10 zile înainte de data convocării.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Pentru ca hotărârile adunării generale să fie valabile, este necesară prezența majorității membrilor asociați, personal sau prin reprezentant.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) În cazul în care cvorumul nu este întrunit, adunarea generală va fi convocată la o dată ulterioară, când proprietarii prezenți pot hotărî, cu majoritate de voturi, asupra problemelor înscrise pe ordinea de zi, indiferent de cvorum.",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Hotărârile adunării generale vor fi luate cu majoritate de voturi (cu cel puțin jumătate plus unu din voturile proprietarilor prezenți la adunarea generală).",
+          },
+          {
+            type: "paragraph",
+            content: "(6) Hotărârile adunării generale privind modificarea statutului sau dizolvarea asociației de proprietari ori perceperea unei sume speciale destinate achitării cheltuielilor comune neprevăzute în buget, dar necesare, se adoptă cu votul a două treimi din numărul membrilor asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(7) Votul fiecărui proprietar are o pondere egală cu cota-parte din proprietatea comună. Proprietarul poate fi reprezentat de un membru al familiei sau de un alt reprezentant care are o împuternicire semnată de proprietarul în numele căruia votează. Un membru al asociației de proprietari poate reprezenta cel mult încă un membru absent, prin împuternicire scrisă. În cazul egalității de voturi, votul președintelui este decisiv.",
+          },
+          {
+            type: "paragraph",
+            content: "(8) Dacă o decizie a asociației de proprietari este contrară legii sau acordului de asociere ori este de natură să producă daune considerabile intereselor unei minorități a proprietarilor, orice proprietar poate inițiă acțiune în justiție împotriva respectivei decizii, în termen de 60 de zile de la adoptarea acesteia. Acțiunea în justiție nu trebuie să întrerupă aplicarea deciziei decât atunci când instanța hotărăște suspendarea aplicării deciziei respective.",
+          },
+          {
+            type: "paragraph",
+            content: "(9) Adunarea generală are următoarele atribuții principale:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) aprobă darea de seamă anuală asupra activității comitetului executiv al asociației de proprietari, raportul comisiei de cenzori și raportul exercițiului bugetar, acordând anual descărcare de gestiune comitetului executiv și celui care exercită administrarea condominiului, în măsura în care cei în cauză nu se fac vinovați de lipsuri în gestiune sau de alte fapte care implică răspunderi materiale ori penale; adoptă și amendează bugetele de venituri și cheltuieli, precum și fondul de rulment, dacă acesta se constituie; validează rectificări ale bugetului de venituri și cheltuieli;",
+              "b) adoptă sau amendează deciziile, regulile și regulamentele asociației de proprietari;",
+              "c) hotărăște cu majoritate de voturi din numărul membrilor prezenți asupra necesității constituirii fondului de rulment, fondului de reparații și a altor fonduri speciale, în condițiile legii;",
+              "d) hotărăște cu acordul a cel puțin două treimi din numărul membrilor asociați modificările ulterioare ale statutului asociației de proprietari și/sau ale acordului de asociere;",
+              "e) hotărăște asupra: naturii și volumului mijloacelor materiale și bănești necesare desfășurării activității asociației de proprietari; modului de folosire a mijloacelor bănești, sumele până la care comitetul executiv poate angaja cheltuieli în numele asociației de proprietari și limita maximă sau cuantumul sumelor ce se pot reține în casă proprie pentru efectuarea plăților curente (plafonul de casă);",
+              "f) hotărăște modul de asigurare a administrării condominiului de către o persoană fizică sau juridică;",
+              "g) hotărăște volumul serviciilor necesare a fi efectuate pentru buna funcționare a condominiului;",
+              "h) hotărăște asupra cuantumului salariilor, indemnizațiilor și premiilor pentru personalul angajat cu contract individual de muncă sau cu convenție civilă de prestări de servicii, membri sau nemembri ai asociației de proprietari, și asupra valorii de contractare, în cazul în care managementul clădirii este asigurat de persoane juridice; hotărăște care dintre funcțiile din structura organizatorică a asociației de proprietari pot fi salarizate;",
+              "i) hotărăște asupra acordării unor drepturi bănești membrilor asociației de proprietari, aleși sau nu în structura organizatorică a asociației, care desfășoară activități lucrative folositoare acesteia;",
+              "j) hotărăște asupra duratei celor care locuiesc temporar, veniți în vizită, sau care prestează activități gospodărești în timpul zilei, precum și asupra perioadei de la care proprietarii, respectiv chiriaşii, pot solicita, în scris, scutirea de la plata cheltuielilor pe persoană;",
+              "k) la constituirea asociației de proprietari, hotărăște numărul membrilor comitetului executiv și ai comisiei de cenzori, precum și durata mandatelor acestora;",
+              "l) alege, dintre membrii asociației de proprietari, comitetul executiv al asociației, validându-l dintre aceștia pe președinte;",
+              "m) alege, dintre membrii asociației de proprietari, Comisia de cenzori sau hotărăște delegarea atribuțiilor comisiei de cenzori unor persoane fizice sau juridice, asociații ori agenți economici specializați, pe bază de contract;",
+              "n) revocă, atunci când este cazul, oricare dintre membrii comitetului executiv sau ai comisiei de cenzori, alegând un succesor pentru ocuparea locului vacant, prin votul majorității simple a celor prezenți;",
+              "o) hotărăște termenul și forma de plată a cotelor de contribuție a membrilor asociației de proprietari;",
+              "p) validează sistemul de penalizări stabilit de comitetul executiv al asociației de proprietari;",
+              "r) hotărăște cu votul tuturor membrilor asociației de proprietari asupra necesității angajării de credite bancare pentru îndeplinirea scopurilor asociației de proprietari și modul de garantare a acestora;",
+              "s) hotărăște cu votul tuturor membrilor asociației de proprietari asupra participării cu capital la constituirea de agenți economici sau asupra oportunității cumpărării ori preluării în locație de gestiune a spațiilor comerciale situate la parterul condominiului; de asemenea, decide asupra cumpărării de apartamente sau de spații cu altă destinație decât cea de locuință;",
+              "t) hotărăște cu votul tuturor membrilor asociației de proprietari preluarea în administrare, concesiune sau închiriere a terenurilor aferente condominiului;",
+              "u) adoptă măsuri sau programe sociale privind ajutorarea familiilor nevoiașe, membre ale asociației de proprietari, pe perioade limitate; adoptă programe de instruire și conștientizare a proprietarilor asupra importanței folosirii raționale a utilităților;",
+              "v) hotărăște cu votul a două treimi dintre membrii asociației de proprietari schimbarea instalațiilor comune precum: încălzirea centrală, boilerele cu apă caldă, rezervoarele cu apă, lifturile și alte dotări de amploare similară;",
+              "x) adoptă măsuri privind condițiile ce trebuie îndeplinite de deținătorii de animale de casă din cadrul condominiului.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(10) Discuțiile și hotărârile adunării generale se consemnează într-un registru de procese-verbale, care se păstrează la președintele asociației de proprietari; procesul verbal se va semna de toți membrii participanți.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 12 - Comitetul executiv",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Autoritatea de a stabili direcțiile privind funcționalitatea și administrarea condominiului poate fi delegată de către asociația de proprietari către comitetul executiv al acesteia.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Comitetul executiv va acționa în numele proprietarilor în ceea ce privește administrarea și funcționalitatea condominiului, cu excepția atribuțiilor rezervate exclusiv acestora.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Comitetul executiv se va întruni de cel puțin 4 ori pe an. Numărul membrilor ce formează comitetul executiv va fi stabilit de adunarea generală a asociației de proprietari, dar va fi un număr impar și nu mai mic de 3.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) Comitetul executiv va fi condus de un președinte care va fi desemnat în persoana celui care întrunește cel mai mare număr de voturi la alegerea comitetului executiv.",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Comitetul executiv va alege vicepreședintele și secretarul, care sunt membri ai comitetului executiv.",
+          },
+          {
+            type: "paragraph",
+            content: "(6) Președintele asociației de proprietari va fi și președintele comitetului executiv.",
+          },
+          {
+            type: "paragraph",
+            content: "(7) Atribuțiile comitetului executiv sunt:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) aduce la îndeplinire hotărârile adunării generale a asociației de proprietari, execută bugetul de venituri și cheltuieli al asociației de proprietari și întocmește proiectul bugetului pentru anul următor; prezintă dări de seamă asupra activității desfășurate, precum și propuneri de măsuri pentru îmbunătățirea acesteia; convoacă adunarea generală a asociației de proprietari în ședințe extraordinare ori de câte ori este nevoie;",
+              "b) răspunde de îngrijirea, păstrarea în bune condiții și supravegherea utilităților condominiului, spațiilor comune și instalațiilor. Angajarea personalului se face cu contract individual de muncă sau cu convenție civilă de prestări de servicii, prin negociere;",
+              "c) analizează oferte și negociază contracte, în cazul în care administrarea condominiului, parțial sau total, va fi asigurată de persoane juridice;",
+              "d) răspunde de încasarea lunară a cotelor de contribuție de la proprietari; emite somații către restanțierii care depășesc termenul de plată; rezolvă contestațiile proprietarilor cu privire la cuantumul cotelor de contribuție;",
+              "e) urmărește, în condițiile legii, recuperarea pagubelor produse asociației de proprietari;",
+              "f) negociază contracte cu persoane fizice sau juridice, membre sau nemembre ale asociației de proprietari, pentru închirierea ori întrebuințarea unor elemente sau suprafețe din proprietatea comună;",
+              "g) propune adunării generale ca managementul de proprietate și managementul financiar, inclusiv atribuțiile comisiei de cenzori, să fie preluate, pe bază de contract, de către persoane juridice;",
+              "h) hotărăște necesitatea efectuării operațiunilor de verificare și control asupra modului de gestionare a bunurilor asociației de proprietari;",
+              "i) înștiințează proprietarii despre necesitatea efectuării reparațiilor la părțile și instalațiile comune ale clădirii; avizează începerea, într-o ordine de priorități, a lucrărilor de reparații;",
+              "j) dă dispoziții de realizare a unui sistem propriu de protejare a bunurilor asociației de proprietari, de securitate a clădirii, a proprietății;",
+              "k) propune adunării generale crearea unor fonduri speciale necesare pentru buna funcționare și dezvoltare a clădirii; urmărește completarea la zi a cărții tehnice a construcției;",
+              "l) împuternicește administratorul pentru a putea efectua verificări privind: situația reparațiilor la instalațiile proprietate comună, înlăturarea pierderilor de apă, citirea contoarelor individuale și, dacă este cazul, asigurarea unei igiene corespunzătoare;",
+              "m) participă la recepția lucrărilor angajate de asociația de proprietari pentru reparații asupra proprietății comune, precum și a altor lucrări;",
+              "n) stabilește modul de calcul și de încasare a fondului de rulment, dacă acesta se constituie, și avizează actualizarea acestuia, dacă este cazul;",
+              "o) hotărăște asupra managementului financiar al asociației de proprietari; stabilește și supune validării adunării generale sistemul de penalizări pentru neplata cotelor lunare de contribuție;",
+              "p) hotărăște acționarea în justiție a proprietarilor vinovați de neplata cotelor lunare de contribuție la cheltuielile asociației de proprietari, timp de mai mult de 90 de zile de la termenul stabilit;",
+              "r) hotărăște acționarea în justiție a celor ce se fac vinovați de încălcarea prevederilor contractuale pe care asociația de proprietari le-a angajat;",
+              "s) asigură condițiile necesare securității și igienei în procesul muncii, precum și măsuri de prevenire și stingere a incendiilor;",
+              "t) supune aprobării adunării generale a asociației de proprietari hotărârea cu privire la transformarea suprafețelor apartamentelor în spații cu altă destinație decât cea de locuință;",
+              "u) hotărăște societatea bancară la care asociația de proprietari își va deschide unul sau mai multe conturi;",
+              "v) propune adunării generale a asociației de proprietari măsuri și soluții cu privire la dezvoltarea condominiului și eficientizarea activității asociației de proprietari;",
+              "x) răspunde tuturor întrebărilor și solicitărilor venite de la proprietari; încurajează și sprijină inițiative personale ale membrilor asociației de proprietari.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(8) Asociația de proprietari, prin comitetul executiv, poate suspenda din funcție sau poate rezilia contractul individual de muncă ori convenția civilă de prestări de servicii, încheiată cu oricine din rândul personalului angajat ori, după caz, poate rezilia contractele încheiate cu alte persoane fizice sau juridice, în condițiile legii.",
+          },
+          {
+            type: "paragraph",
+            content: "(9) Comitetul executiv lucrează valabil în prezența a jumătate plus unu din numărul membrilor săi și adoptă hotărâri cu cel puțin două treimi din numărul membrilor prezenți.",
+          },
+          {
+            type: "paragraph",
+            content: "(10) Discuțiile și hotărârile se consemnează în registrul de procese-verbale, care se păstrează la președinte, procesele-verbale semnându-se de toți membrii comitetului executiv prezenți.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 13 - Comisia de cenzori",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Adunarea generală a asociației de proprietari alege dintre membrii asociației de proprietari o comisie de cenzori care va verifica situația financiară și contabilă și va concilia asociația în ceea ce privește problemele financiare și statutare.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Numărul membrilor comisiei de cenzori, care va fi impar, dar nu mai mic de 3, și durata mandatului acestora se stabilesc la adunarea generală de constituire a asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Membrii comisiei de cenzori nu pot face parte din comitetul executiv și trebuie să aibă cunoștințe în domeniile financiar, economic și/sau juridic. Comisia de cenzori va alege dintre membrii săi un președinte.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) Mandatul membrilor comisiei de cenzori încetează înainte de expirarea duratei sale, prin revocare sau în cazul imposibilității de a-și continua atribuțiile.",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Comisia de cenzori are următoarele atribuții:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) verifică îndeplinirea condițiilor statutare privind prezența și votul în adunările generale ale asociației de proprietari;",
+              "b) verifică execuția bugetară, propunerile pentru proiectul bugetului de venituri și cheltuieli pentru anul următor și propunerile pentru rectificarea bugetului pentru anul în curs;",
+              "c) efectuează controlul preventiv pentru plățile cu numerar și urmărește depunerile în contul curent al asociației de proprietari ale numerarului ce depășește plafonul de casă;",
+              "d) verifică, cel puțin o dată pe semestru, gestiunea asociației de proprietari, stabilirea și încasarea cotelor de contribuție la cheltuielile asociației;",
+              "e) verifică dacă registrele asociației de proprietari îndeplinesc condițiile legale necesare desfășurării corespunzătoare a managementului financiar;",
+              "f) întocmește, pe baza verificărilor efectuate, și prezintă adunării generale a asociației de proprietari rapoarte asupra activității sale și asupra gestiunii asociației de proprietari, propunând anual descărcarea de gestiune;",
+              "g) propune spre aprobare adunării generale a asociației de proprietari programe cu măsuri necesare desfășurării managementului financiar; propune recuperarea, în condițiile legii, a pagubelor produse de personalul ce deservește asociația de proprietari;",
+              "h) în cazul în care managementul financiar se hotărăște a fi asigurat de persoane juridice, Comisia de cenzori, prin președinte sau membri delegați, participă la negocierea contractelor respective.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(6) Adunarea generală a asociației de proprietari poate hotărî transferarea atribuțiilor comisiei de cenzori unor persoane fizice sau juridice, asociații sau agenți economici specializați, pe bază de contract.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 14 - Președintele",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Conducătorul executiv al asociației de proprietari este președintele. Președintele este înlocuit de vicepreședinte, care îi va îndeplini atribuțiile, în cazul absenței acestuia sau când se află în imposibilitatea de a-și îndeplini atribuțiile.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Președintele asociației de proprietari are următoarele atribuții:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) verifică respectarea și îndeplinirea hotărârilor adoptate de adunarea generală a asociației de proprietari și de comitetul executiv, controlează persoanele care deservesc asociația de proprietari;",
+              "b) reprezintă asociația de proprietari în încheierea și derularea contractelor și își asumă obligații în numele asociației; reprezintă asociația de proprietari împotriva unor terți, inclusiv în acțiunile judecătorești;",
+              "c) avizează ordinea de priorități și planul lucrărilor de întreținere și reparații ale părților și instalațiilor comune ale condominiului;",
+              "d) are drept de semnătură asupra conturilor asociației de proprietari;",
+              "e) primește cererile și reclamațiile de la proprietari și sesizările administratorului, pe care le supune dezbaterii comitetului executiv;",
+              "f) convoacă comitetul executiv trimestrial sau ori de câte ori este nevoie;",
+              "g) întocmește ordinea de zi a ședinței comitetului executiv și conduce lucrările acesteia;",
+              "h) eliberează adeverințele necesare proprietarilor care își înstrăinează apartamentele sau spațiile cu altă destinație decât cea de locuință;",
+              "i) semnează deciziile de imputare, precum și orice alte acte emise de comitetul executiv; semnează contractele individuale de muncă sau convențiile civile de prestări de servicii;",
+              "j) păstrează și folosește ștampila asociației de proprietari.",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "(3) La asociațiile de proprietari care cuprind până la 10 proprietari președintele poate îndeplini și funcția de administrator.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 15 - Secretarul comitetului executiv",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Secretarul comitetului executiv va păstra și va întocmi procesele-verbale ale ședințelor comitetului executiv și procesele-verbale ale tuturor adunărilor generale ale asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Secretarul comitetului executiv poate păstra registrele și celelalte acte ale asociației de proprietari, potrivit hotărârii comitetului executiv.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 16 - Contabilul asociației de proprietari",
+            content: "Contabilul asociației de proprietari răspunde de organizarea și conducerea contabilității potrivit legii. La asociațiile de proprietari care optează pentru conducerea contabilității în partidă simplă administratorul poate cumula și funcția de contabil.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 17 - Casierul asociației de proprietari",
+            content: "Casierul asociației de proprietari răspunde de efectuarea de încasări și plăți în numerar, cu respectarea prevederilor Regulamentului operațiunilor de casă. La asociațiile de proprietari care optează pentru conducerea contabilității în partidă simplă administratorul poate cumula și funcția de casier.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL IV - Managementul asociației de proprietari",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 18",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Prin managementul asociației de proprietari, managementul condominiului sau administrarea condominiului se înțelege managementul de proprietate (administrarea propriu-zisă a condominiului, a instalațiilor și a tuturor elementelor proprietății comune, funcționarea centralelor termice sau a punctelor termice aflate în proprietatea sau în administrarea asociației de proprietari) și managementul financiar (contabilitate și casierie).",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Activitatea de management al condominiului se asigură fie de persoane fizice angajate cu contracte individuale de muncă sau convenții civile de prestări de servicii, fie de persoane juridice, prin contracte de administrare, potrivit hotărârii adunării generale a asociației de proprietari.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 19 - Administratorul",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Administratorul, persoana fizică, poate fi desemnat dintre membrii asociației de proprietari sau dintre alte persoane cu cunoștințe profesionale ori cu experiență necesară în domeniu.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Administratorul, persoana fizică, poate fi angajat și pe funcția de contabil, dacă îndeplinește condițiile prevăzute în statut și în normele metodologice.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Asociația de proprietari angajează administratorul și contabilul, persoane fizice, pe baza de contract individual de muncă sau de convenție civilă de prestări de servicii, care prevede drepturile și obligațiile fiecăreia dintre părți, stabilite prin negociere.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) Pentru reparații și pentru alte activități de întreținere administratorul, ținând cont de cost, timp de execuție și calitate, propune comitetului executiv, spre analiză și aprobare, agenți economici care satisfac cerințele în vederea executării lucrărilor, conform legilor existente.",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Pentru asigurarea funcționării centralelor termice aparținând asociațiilor de proprietari sau aflate în administrarea acestora pot fi angajați fochiști și alte persoane, prin contract individual de muncă sau prin convenție civilă de prestări de servicii, sau poate fi delegat un agent economic specializat, persoana juridică.",
+          },
+          {
+            type: "paragraph",
+            content: "(6) Încadrarea personalului cu contract individual de muncă se face cu respectarea dispozițiilor legale în vigoare.",
+          },
+          {
+            type: "paragraph",
+            content: "(7) Durata și valoarea contractului individual de muncă și a convenției civile de prestări de servicii, sarcinile, drepturile și obligațiile se stabilesc prin negocieri între părți, cu respectarea prevederilor legale.",
+          },
+          {
+            type: "paragraph",
+            content: "(8) Administratorul, persoana fizică sau juridică, are următoarele atribuții principale:",
+          },
+          {
+            type: "paragraph",
+            content: "A. asigură managementul financiar al asociației de proprietari prin:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) gestiunea bunurilor și fondurilor bănești;",
+              "b) întocmirea listelor lunare de plată;",
+              "c) încasarea, în locuri specifice, a cotelor de contribuție a proprietarilor la cheltuielile curente ale asociației de proprietari;",
+              "d) efectuarea plăților și încasărilor;",
+              "e) sesizarea comitetului executiv în vederea somării restanțierilor și aplicarea procedurii de recuperare a restanțelor, cu penalizările aferente;",
+              "f) calcularea și încasarea penalizărilor conform sistemului aprobat de adunarea generală a asociației de proprietari;",
+              "g) actualizarea, dacă este cazul, cu avizul comitetului executiv, a fondului de rulment;",
+              "h) întocmirea și păstrarea evidențelor contabile și a registrelor asociației de proprietari, specifice managementului financiar;",
+              "i) prezentarea, la solicitarea comitetului executiv sau a comisiei de cenzori, a rapoartelor ori a documentelor necesare unor verificări financiar-contabile ale asociației de proprietari;",
+              "j) verificarea sau avizarea, dacă este cazul, a indexului contoarelor de rețea aferente mai multor asociații de proprietari;",
+              "k) controlul facturării corecte a consumurilor în funcție de indexul contoarelor de bloc sau al contoarelor individuale;",
+              "l) verificarea existenței contractelor între persoanele juridice, membre ale asociației de proprietari și furnizorii de servicii;",
+              "m) respectarea altor prevederi privind modul de exercitare a managementului financiar;",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "B. asigură managementul de proprietate al asociației de proprietari prin:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) urmărirea comportării în timp a construcției, pe toata durata contractului; întocmirea fișelor tehnice periodice cu privire la starea clădirii și a instalațiilor acesteia;",
+              "b) răspunderea față de funcționalitatea și integritatea elementelor proprietății comune, față de mijloacele materiale ale asociației de proprietari și de utilizarea în bune condiții a acestora;",
+              "c) procurarea mijloacelor materiale necesare pentru întreținerea și reparațiile curente ale elementelor proprietății comune; răspunderea asupra integrității acestora;",
+              "d) înștiințarea comitetului executiv și luarea măsurilor necesare pentru efectuarea la timp și eficient a lucrărilor de întreținere și reparații;",
+              "e) urmărirea realizării contractelor cu persoane fizice sau juridice pentru reparații, închirierea unor spații sau elemente din proprietatea comună, activități sociale și alte tipuri de activități;",
+              "f) verificarea existenței contractelor de închiriere între asociația de proprietari și persoane fizice sau juridice care la data constituirii acesteia folosesc spații ori elemente din proprietatea comună;",
+              "g) supravegherea execuției lucrărilor de reparații și de întreținere și participarea la recepția lor, consemnând finalizarea acestora;",
+              "h) controlul personalului angajat de asociația de proprietari pentru curățenie, încărcarea și evacuarea gunoiului menajer și alte activități;",
+              "i) efectuarea de verificări în vederea înlăturării defecțiunilor apărute la instalațiile de folosință comună și a eliminării pierderilor care determină creșterea nejustificată a cheltuielilor asociației de proprietari;",
+              "j) asigurarea cunoașterii și respectării regulilor de locuit în condominiu;",
+            ],
+          },
+          {
+            type: "paragraph",
+            content: "C. îndeplinește orice alte obligații prevăzute de legislația în vigoare.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 20 – Venituri și cheltuieli comune; calculul cotelor de contribuție la cheltuielile asociației de proprietari",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Anul fiscal al asociației de proprietari va fi anul calendaristic.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Înainte de începutul următorului an fiscal și pentru fiecare an fiscal ce urmează comitetul executiv va pregăti și va prezenta proprietarilor, în adunarea generală a asociației de proprietari, un buget de venituri și cheltuieli anual, suficient pentru a acoperi cheltuielile anticipate ale asociației.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) Bugetul anual de venituri și cheltuieli se adoptă prin votul majorității simple a adunării generale a asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(4) Toți proprietarii trebuie să plătească în avans cota ce le revine din bugetul pentru cheltuielile comune - cheltuieli repartizate în funcție de cota-parte de proprietate indiviză din proprietatea comună. Plata se face conform hotărârii luate în adunarea generală a asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(5) Cota de contribuție la cheltuielile asociației de proprietari reprezintă suma pe care fiecare proprietar trebuie să o plătească lunar.",
+          },
+          {
+            type: "paragraph",
+            content: "(6) Cheltuielile lunare ale asociației de proprietari sunt repartizate în cheltuieli de întreținere și cheltuieli comune.",
+          },
+          {
+            type: "paragraph",
+            content: "(7) Cotele de contribuție se calculează în baza facturilor emise de furnizorii de servicii, fondurilor aprobate în adunarea generală a asociației de proprietari și a normelor metodologice în domeniu.",
+          },
+          {
+            type: "paragraph",
+            content: "(8) Cheltuielile de întreținere (apă rece și caldă; combustibil pentru prepararea apei calde; gaze naturale; energie electrică; iluminarea scării; instalații scară și forță ascensor; salubritate; salarii pentru administrare, contabilitate, casierie și curățenie; materiale consumabile; pentru întreținere; alte servicii ce deservesc proprietarii) se repartizează în funcție de numărul de persoane care locuiesc în luna respectivă în condominiu.",
+          },
+          {
+            type: "paragraph",
+            content: "(9) Pentru proprietarii care determină consumuri suplimentare (spălări de mașini, covoare și altele asemenea) calculul cotei de contribuție se face conform baremurilor stabilite prin legile sau actele normative existente.",
+          },
+          {
+            type: "paragraph",
+            content: "(10) Cheltuielile comune (fonduri stabilite; cheltuieli administrative; întreținerea și repararea ascensorului; întreținerea interfonului; salarii pentru fochist, instalator, electrician, portar și altele asemenea; prime; credite bancare; alte servicii către proprietatea comună) se calculează în funcție de cota-parte indiviză din proprietatea comună.",
+          },
+          {
+            type: "paragraph",
+            content: "(11) Facturile primite de asociația de proprietari de la furnizorii de servicii, care nu conțin index de consum, trebuie să respecte normele metodologice de repartizare a consumurilor, conform prevederilor legale.",
+          },
+          {
+            type: "paragraph",
+            content: "(12) Stabilirea cotelor-părți din veniturile asociației de proprietari, care sunt venituri comune, se face proporțional cu cota-parte din proprietatea comună aferentă fiecărui proprietar.",
+          },
+          {
+            type: "paragraph",
+            content: "(13) Pentru neplata cotelor de contribuție prevăzute în lista de plată afișată lunar, inclusiv a celor neprevăzute, asociația de proprietari, prin sistemul de penalizări propriu, impune o penalizare oricărui proprietar care se face vinovat, după o perioadă mai mare de 30 de zile calendaristice de la termenul stabilit pentru plată, fără ca suma penalizărilor să poată depăși suma cotei de întreținere lunare la care s-a aplicat.",
+          },
+          {
+            type: "paragraph",
+            content: "(14) Urmărirea de către asociația de proprietari a sumelor datorate de proprietarii restanțieri se face în baza extrasului din ultima listă de plată. Cheltuielile efectuate în scopul recuperării datoriilor vor fi suportate de restanțierii în cauză.",
+          },
+          {
+            type: "paragraph",
+            content: "(15) Sentința dată în favoarea asociației de proprietari pentru sumele datorate de oricare proprietar poate fi pusă în aplicare prin orice modalitate permisă de Codul de procedură civilă pentru acoperirea datoriilor.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL V - Obligațiile proprietarilor",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 21",
+            content: "Fiecare proprietar este obligat să își mențină proprietatea imobiliară (proprietatea individuală și cota-parte de proprietate comună indiviză aferentă acesteia) în buna stare și este răspunzător de daunele provocate din cauza neîndeplinirii acestei obligații.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 22",
+            content: "Proprietarii de apartamente și spații cu altă destinație decât cea de locuință sunt obligați să plătească cotele de întreținere obișnuite sau speciale către asociația de proprietari, pentru a se putea acoperi toate cheltuielile comune ale clădirii.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 23",
+            content: "Proprietarii din condominiu, indiferent dacă fac parte sau nu din asociația de proprietari, sunt obligați:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) să plătească în avans cota ce le revine din bugetul de venituri și cheltuieli al asociației de proprietari;",
+              "b) să anunțe, în scris, numele persoanelor care locuiesc temporar, venite în vizită, sau care prestează activități gospodărești în timpul zilei, de minimum 15 zile pe lună;",
+              "c) să semnaleze în timp util orice problemă care apare la instalațiile de folosință comună;",
+              "d) să respecte regulamentul intern al asociației de proprietari cu privire la normele de conviețuire socială în cadrul condominiului, să anunțe comitetul executiv al asociației de proprietari despre intenția de a schimba destinația proprietății individuale;",
+              "e) să nu schimbe aspectul proprietății comune fără acceptul scris al comitetului executiv al asociației de proprietari;",
+              "f) să accepte accesul în spațiul sau, cu un preaviz de 15 zile, al unui reprezentant al asociației de proprietari, atunci când este necesar să se repare sau să se înlocuiască elemente din proprietatea comună. Fac excepție cazurile de maximă urgență, când nu este necesar nici un preaviz;",
+              "g) în condiții de neparticipare la luarea deciziilor și la desfășurarea activităților în cadrul asociației de proprietari, să nu aducă prejudicii morale celorlalți proprietari asociați;",
+              "h) să încheie cu asociația de proprietari contracte de închiriere, pe care le negociază cu comitetul executiv, pentru elemente sau suprafețe din proprietatea comună folosită în interes personal.",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 24",
+            content: "Proprietarii, membri ai asociației de proprietari, au următoarele obligații:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) să respecte statutul asociației de proprietari;",
+              "b) să se supună hotărârilor adunării generale a asociației de proprietari;",
+              "c) să participe la adunările generale ale asociației de proprietari;",
+              "d) să respecte orice angajament făcut față de asociația de proprietari;",
+              "e) să nu aducă prejudicii materiale asociației de proprietari;",
+              "f) să participe, atunci când este solicitat, la acțiuni deosebite, de maximă urgență, corespunzătoare scopurilor asociației de proprietari;",
+              "g) să se conformeze obligațiilor proprietarilor din condominiu, prevăzute la art. 23.",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 25",
+            content: "Dacă proprietarul unui apartament sau spațiu cu altă destinație decât cea de locuință sau orice altă persoană care acționează în numele sau provoacă daune oricărei părți din proprietatea comună sau altei proprietăți individuale, trebuie să realizeze reparațiile necesare ori să plătească cheltuielile pentru lucrările de reparații.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 26",
+            content: "În cazul spațiilor cu altă destinație decât cea de locuință, respectiv al apartamentelor, cu mai mult de un proprietar, relațiile de coproprietate dintre proprietari vor fi reglementate în conformitate cu prevederile Codului civil.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 27",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Zidurile dintre apartamentele alăturate, care nu fac parte din structura de rezistență a condominiului, pot fi reamplasate, prin acord între proprietarii apartamentelor sau spațiilor respective și cu înștiințarea asociației de proprietari, în condițiile legii.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Zidurile dintre apartamente și proprietatea comună, care nu fac parte din structura de rezistență a condominiului, pot fi reamplasate numai prin amendarea acordului de asociere.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 28",
+            content: "Dacă unul dintre proprietari împiedică, cu bună știință și sub orice formă, folosirea normală a condominiului, creând prejudicii celorlalți proprietari, după caz, măsurile pentru folosirea normală a condominiului se vor hotărî pe cale judecătorească, la solicitarea asociației de proprietari.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 29",
+            content: "Fiecare proprietar, chiriaș sau ocupant al unui apartament ori spațiu cu altă destinație decât cea de locuință are obligația să se conformeze regulilor prezentului statut, precum și regulilor, regulamentelor, hotărârilor și rezoluțiilor adoptate legal de asociația de proprietari.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL VI - Drepturile proprietarilor",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 30",
+            content: "Fiecare proprietar, indiferent dacă face parte sau nu din asociația de proprietari, are dreptul de a folosi proprietatea comună din condominiu în condițiile stabilite de lege, de regulamente ale autorităților în drept, dar nici un proprietar nu poate folosi această proprietate astfel încât să lezeze drepturile sau interesele oricărui alt proprietar al acesteia, inclusiv cele stabilite prin prezentul statut.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 31",
+            content: "Fiecare proprietar poate folosi, poate ipoteca sau poate înstrăina, în deplină libertate, proprietatea imobiliară pe care o deține în cadrul condominiului.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 32",
+            content: "Membrii asociației de proprietari au și următoarele drepturi:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) să participe cu vot deliberativ la adunarea generală a asociației de proprietari, să aleagă și să fie aleși în structura organizatorică a asociației. Pentru a beneficia de acest drept, persoana în cauză trebuie să posede capacitate juridică deplină. Minorii și persoanele puse sub interdicție nu pot fi aleși în organele de conducere sau de control ale asociației de proprietari;",
+              "b) să solicite și să primească, ori de câte ori este necesar și motivat, explicații cu privire la calculul cotei de contribuție afișat pe lista de plată și să conteste, în scris, la comitetul executiv al asociației de proprietari, în termen de 10 zile de la afișarea listei, cuantumul stabilit al acestei cote;",
+              "c) dacă o decizie a asociației de proprietari este contrară statutului, acordului de asociere, legilor sau este de natură să producă daune considerabile unei minorități a proprietarilor, orice proprietar poate acționa în justiție valabilitatea respectivei decizii, în termen de 60 de zile de la adoptarea acesteia;",
+              "d) să solicite, în baza unei cereri către președintele asociației de proprietari, diminuarea temporară a cotelor de contribuție la cheltuielile asociației (reducerea cheltuielilor de întreținere, dar nu și a cheltuielilor comune), dacă lipsa din apartament este de cel puțin 15 zile calendaristice pe lună;",
+              "e) să pună întrebări și să solicite explicații comitetului executiv, referitoare la activitatea asociației de proprietari;",
+              "f) să beneficieze, când este cazul, de toate facilitățile rezultate în urma activităților desfășurate de asociația de proprietari, în funcție de cota-parte de proprietate și de gradul de implicare;",
+              "g) să participe la activitățile lucrative ale asociației, benevol, în funcție de capacitățile profesionale;",
+              "h) să beneficieze de garanții morale și materiale, stabilite de adunarea generală a asociației de proprietari, pentru inițiative personale, finalizate, în folosul asociației de proprietari;",
+              "i) să prezinte spre rezolvare probleme specifice asociației de proprietari sau probleme deosebite, care nu au putut fi soluționate pe cale obișnuită, și să participe activ la acțiunea de soluționare.",
+            ],
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL VII - Dizolvarea asociației de proprietari",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 33",
+            content: "Asociația de proprietari se va dizolva în situația în care numărul proprietarilor condominiului scade sub 5 sau cu acordul tuturor proprietarilor ori al reprezentanților acestora, în condiții de maximă urgență, când situația sau când starea condominiului o impune.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 34",
+            content: "Asociația de proprietari se va putea dizolva și în următoarele cazuri:",
+          },
+          {
+            type: "list",
+            items: [
+              "a) când scopul pentru care a fost legal înființată nu se îndeplinește;",
+              "b) prin hotărârea adunării generale a asociației de proprietari, adoptată cu votul a cel puțin două treimi din numărul membrilor asociați.",
+            ],
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 35",
+            content: "În momentul dizolvării patrimoniul asociației de proprietari, respectiv veniturile provenite din preluarea sau din lichidarea bunurilor asociației, acesta va fi distribuit proprietarilor proporțional cu cotele-părți din proprietatea comună sau, dacă este cazul, după cota de participare a proprietarilor la constituirea bunurilor asociației.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 36",
+            content: "Dizolvarea asociației de proprietari va fi anunțată la judecătoria sau administrația financiară unde aceasta a fost înregistrată.",
+          },
+          {
+            type: "heading",
+            title: "CAPITOLUL VIII - Dispoziții finale",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 37",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Activitatea asociației de proprietari se desfășoară și cu respectarea metodologiei de încheiere, de executare și încetare a raporturilor de muncă, de conducere a evidenței, de efectuare a operațiunilor de disciplină financiară și de casă, precum și de verificare financiar-contabilă, stabilite de ministerele de resort și consiliile locale ale municipiilor, orașelor și comunelor, respectiv ale sectoarelor municipiului București.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Arhivarea documentelor și a registrelor asociației de proprietari se face conform prevederilor legale.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 38",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Dacă toți proprietarii, membri ai asociației, sunt abonați individuali, pe bază de contract, ai furnizorilor de servicii, asociația de proprietari este degrevată de atribuțiile avute până la data respectivă, cu referire la calculul și încasarea cotelor de contribuție, precum și la plata facturilor aferente.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Pe baza unui contract între furnizorii de servicii și asociația de proprietari, cu aprobarea adunării generale a asociației de proprietari, asociația poate presta servicii de intermediere, conform statutului și legilor în vigoare.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 39",
+            content: "Pentru obținerea de venituri necesare desfășurării activităților sale, asociația de proprietari poate desfășura activități lucrative, în condițiile legii.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 40",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Consiliile locale ale municipiilor, orașelor, comunelor și, respectiv, ale sectoarelor municipiului București, cu sprijinul aparatului propriu al consiliilor județene, respectiv al Consiliului General al Municipiului București, vor organiza exercitarea controlului financiar-contabil și gestionar asupra activității asociației de proprietari, la solicitarea unuia sau mai multor membri ai asociației de proprietari.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) În acest scop asociația de proprietari este obligată să pună la dispoziție autorităților prevăzute la alineatul precedent registrele, actele asociației și toate informațiile considerate utile de acestea.",
+          },
+          {
+            type: "paragraph",
+            content: "(3) În situația în care se constată fraude sau lipsuri în gestiune, vor fi sesizate organele de cercetare, iar comitetul executiv al asociației de proprietari va fi îndrumat să folosească căile legale pentru recuperarea prejudiciului și pentru a acționa în justiție împotriva celui care se face vinovat.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 41",
+            content: "Organizarea și conducerea contabilității asociației de proprietari se face potrivit legii.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 42",
+            content: "În cazul decesului unuia dintre asociați, activitatea asociației de proprietari va putea continua cu succesorii testamentari sau legali, după caz.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 43",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Soluționarea litigiilor dintre asociația de proprietari și terțe persoane fizice sau juridice române este de competența instanțelor judecătorești române.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Litigiile asociației de proprietari cu persoane fizice sau juridice străine sunt de competența organelor judecătorești prevăzute în legislația română.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 44",
+          },
+          {
+            type: "paragraph",
+            content: "(1) Pentru recuperarea banilor datorați și a dobânzii aferente, asociația de proprietari îi va putea chema în justiție pe proprietarii care nu își achită cotele de întreținere datorate mai mult de 90 de zile.",
+          },
+          {
+            type: "paragraph",
+            content: "(2) Executarea acestor hotărâri judecătorești se va face conform Codului de procedură civilă.",
+          },
+          {
+            type: "subheading",
+            title: "ARTICOLUL 45",
+            content: "Prezentul statut a fost redactat în ... exemplare.",
+          },
+        ],
+      },
+    ],
+  },
 ];
