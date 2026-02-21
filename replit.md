@@ -48,6 +48,9 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **API**: GET/POST/PATCH/DELETE /api/meters, GET/POST/DELETE /api/meter-readings with scope-based access control
 
 ## Key Features
+- **Super Admin Dashboard**: Overview of all federations and associations with hierarchy stats (buildings, staircases, units breakdown by type). Associations grouped by federation. Clickable cards navigate to association portal.
+- **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Buildings (with staircase/floor breakdown), Finance (expenses, payments, funds), Contact (president/admin info), and Announcements. Stats summary at top.
+- **Hierarchy Stats API** (`/api/hierarchy-stats`): SQL aggregation returning per-association counts for buildings, staircases, units by type, and max floors.
 - **Explorer (Explorator)**: Hierarchical drill-down navigation - click federation to see associations, click association to see buildings, etc. through all 6 levels including floors (implicit from unit floor numbers). Supports negative floors (basements).
 - **Infographic (Infografie)**: Tree view showing complete hierarchy structure as expandable/collapsible tree with summary stats.
 - **Unit Types**: Apartments support unitType field: apartment (default), box (storage), parking. Shown throughout explorer, tree view, and units list page.

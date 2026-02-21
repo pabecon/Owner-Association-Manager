@@ -28,11 +28,13 @@ import Gdpr from "@/pages/gdpr";
 import Juridic from "@/pages/juridic";
 import Administratie from "@/pages/administratie";
 import Fonduri from "@/pages/fonduri";
+import AssociationPortal from "@/pages/association-portal";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/asociatie/:id" component={AssociationPortal} />
       <Route path="/administratie" component={Administratie} />
       <Route path="/explorer" component={Explorer} />
       <Route path="/hierarchy-tree" component={HierarchyTree} />
