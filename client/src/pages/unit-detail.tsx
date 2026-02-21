@@ -1,11 +1,19 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X } from "lucide-react";
 import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
@@ -31,10 +39,31 @@ const TABS: { key: UnitTab; label: string; icon: any }[] = [
   { key: "anunturi", label: "Anunturi", icon: Megaphone },
 ];
 
+const editUnitSchema = z.object({
+  unitType: z.string().min(1),
+  number: z.string().min(1, "Numarul este obligatoriu"),
+  floor: z.coerce.number(),
+  surface: z.string().optional(),
+  builtSurface: z.string().optional(),
+  rooms: z.coerce.number().optional(),
+  residents: z.coerce.number().optional(),
+  ownerName: z.string().optional(),
+  ownerPhone: z.string().optional(),
+  ownerEmail: z.string().optional(),
+});
+
+type EditUnitValues = z.infer<typeof editUnitSchema>;
+
+function getGoogleMapsUrl(address: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+}
+
 export default function UnitDetail() {
   const [, params] = useRoute("/unitate/:id");
   const unitId = params?.id;
   const [activeTab, setActiveTab] = useState<UnitTab>("general");
+  const [isEditing, setIsEditing] = useState(false);
+  const { toast } = useToast();
 
   const { data: unit, isLoading: unitLoading } = useQuery<Apartment>({
     queryKey: ["/api/apartments", unitId],
@@ -67,6 +96,67 @@ export default function UnitDetail() {
   const building = allBuildings?.find(b => b.id === staircase?.buildingId);
   const association = allAssociations?.find(a => a.id === building?.associationId);
   const unitMeters = meters || [];
+
+  const form = useForm<EditUnitValues>({
+    resolver: zodResolver(editUnitSchema),
+    defaultValues: {
+      unitType: "apartment",
+      number: "",
+      floor: 0,
+      surface: "",
+      builtSurface: "",
+      rooms: undefined,
+      residents: undefined,
+      ownerName: "",
+      ownerPhone: "",
+      ownerEmail: "",
+    },
+  });
+
+  useEffect(() => {
+    if (unit) {
+      form.reset({
+        unitType: unit.unitType || "apartment",
+        number: unit.number,
+        floor: unit.floor,
+        surface: unit.surface || "",
+        builtSurface: unit.builtSurface || "",
+        rooms: unit.rooms || undefined,
+        residents: unit.residents ?? undefined,
+        ownerName: unit.ownerName || "",
+        ownerPhone: unit.ownerPhone || "",
+        ownerEmail: unit.ownerEmail || "",
+      });
+    }
+  }, [unit, form]);
+
+  const updateUnit = useMutation({
+    mutationFn: async (data: EditUnitValues) => {
+      const body = {
+        unitType: data.unitType,
+        number: data.number,
+        floor: data.floor,
+        surface: data.surface || null,
+        builtSurface: data.builtSurface || null,
+        rooms: data.rooms || null,
+        residents: data.residents ?? null,
+        ownerName: data.ownerName || null,
+        ownerPhone: data.ownerPhone || null,
+        ownerEmail: data.ownerEmail || null,
+      };
+      const res = await apiRequest("PATCH", `/api/apartments/${unitId}`, body);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/apartments", unitId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/apartments"] });
+      toast({ title: "Informatiile au fost salvate" });
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
 
   if (unitLoading) {
     return (
@@ -109,6 +199,24 @@ export default function UnitDetail() {
     if (floor < 0) return `Subsol ${Math.abs(floor)}`;
     if (floor === 0) return "Parter";
     return `Etaj ${floor}`;
+  }
+
+  function handleCancel() {
+    if (unit) {
+      form.reset({
+        unitType: unit.unitType || "apartment",
+        number: unit.number,
+        floor: unit.floor,
+        surface: unit.surface || "",
+        builtSurface: unit.builtSurface || "",
+        rooms: unit.rooms || undefined,
+        residents: unit.residents ?? undefined,
+        ownerName: unit.ownerName || "",
+        ownerPhone: unit.ownerPhone || "",
+        ownerEmail: unit.ownerEmail || "",
+      });
+    }
+    setIsEditing(false);
   }
 
   return (
@@ -179,121 +287,375 @@ export default function UnitDetail() {
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === "general" && (
           <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Informatii Generale</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Ruler className="w-4 h-4 text-primary" />
-                    Date Unitate
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tip</span>
-                    <span className="font-medium" data-testid="text-unit-type">{typeLabel}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Numar</span>
-                    <span className="font-medium" data-testid="text-unit-number">{unit.number}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Etaj</span>
-                    <span className="font-medium">{getFloorLabel(unit.floor)}</span>
-                  </div>
-                  {unit.surface && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Suprafata utila</span>
-                      <span className="font-medium">{unit.surface} m²</span>
-                    </div>
-                  )}
-                  {unit.builtSurface && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Suprafata construita</span>
-                      <span className="font-medium">{unit.builtSurface} m²</span>
-                    </div>
-                  )}
-                  {unit.rooms && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Nr. Camere</span>
-                      <span className="font-medium">{unit.rooms}</span>
-                    </div>
-                  )}
-                  {unit.residents !== null && unit.residents !== undefined && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Nr. Rezidenti</span>
-                      <span className="font-medium">{unit.residents}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <User className="w-4 h-4 text-primary" />
-                    Proprietar
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {unit.ownerName ? (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="font-medium" data-testid="text-owner-name">{unit.ownerName}</span>
-                      </div>
-                      {unit.ownerPhone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{unit.ownerPhone}</span>
-                        </div>
-                      )}
-                      {unit.ownerEmail && (
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{unit.ownerEmail}</span>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-muted-foreground italic">Niciun proprietar inregistrat</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    Locatie
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {association && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Asociatia</span>
-                      <span className="font-medium">{association.name}</span>
-                    </div>
-                  )}
-                  {building && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Bloc</span>
-                      <span className="font-medium">{building.name}</span>
-                    </div>
-                  )}
-                  {staircase && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Scara</span>
-                      <span className="font-medium">{staircase.name}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Etaj</span>
-                    <span className="font-medium">{getFloorLabel(unit.floor)}</span>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold">Informatii Generale</h2>
+              {!isEditing ? (
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} data-testid="button-edit-unit">
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Editeaza
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCancel} data-testid="button-cancel-edit">
+                    <X className="w-3.5 h-3.5 mr-1.5" />
+                    Anuleaza
+                  </Button>
+                  <Button size="sm" onClick={form.handleSubmit((data) => updateUnit.mutate(data))} disabled={updateUnit.isPending} data-testid="button-save-unit">
+                    <Save className="w-3.5 h-3.5 mr-1.5" />
+                    {updateUnit.isPending ? "Se salveaza..." : "Salveaza"}
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {isEditing ? (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => updateUnit.mutate(data))} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Ruler className="w-4 h-4 text-primary" />
+                          Date Unitate
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="unitType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tip</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger data-testid="select-unit-type">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="apartment">Apartament</SelectItem>
+                                  <SelectItem value="box">Box</SelectItem>
+                                  <SelectItem value="parking">Parking</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="number"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Numar</FormLabel>
+                              <FormControl>
+                                <Input {...field} data-testid="input-unit-number" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="floor"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Etaj</FormLabel>
+                              <FormControl>
+                                <Input type="number" {...field} data-testid="input-unit-floor" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            control={form.control}
+                            name="surface"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Suprafata utila (m²)</FormLabel>
+                                <FormControl>
+                                  <Input {...field} data-testid="input-unit-surface" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="builtSurface"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Suprafata construita (m²)</FormLabel>
+                                <FormControl>
+                                  <Input {...field} data-testid="input-unit-built-surface" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <FormField
+                            control={form.control}
+                            name="rooms"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nr. Camere</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} value={field.value ?? ""} data-testid="input-unit-rooms" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="residents"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nr. Rezidenti</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} value={field.value ?? ""} data-testid="input-unit-residents" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <User className="w-4 h-4 text-primary" />
+                          Proprietar
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <FormField
+                          control={form.control}
+                          name="ownerName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nume Proprietar</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nume complet" data-testid="input-owner-name" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="ownerPhone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefon</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Telefon" data-testid="input-owner-phone" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="ownerEmail"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" {...field} placeholder="Email" data-testid="input-owner-email" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        Locatie
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      {association && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Asociatia</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{association.name}</span>
+                            {association.address && (
+                              <a
+                                href={getGoogleMapsUrl(association.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary/80"
+                                title="Deschide in Google Maps"
+                                data-testid="link-association-maps"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {building && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bloc</span>
+                          <span className="font-medium">{building.name}</span>
+                        </div>
+                      )}
+                      {staircase && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Scara</span>
+                          <span className="font-medium">{staircase.name}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Etaj</span>
+                        <span className="font-medium">{getFloorLabel(unit.floor)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </form>
+              </Form>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Ruler className="w-4 h-4 text-primary" />
+                      Date Unitate
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tip</span>
+                      <span className="font-medium" data-testid="text-unit-type">{typeLabel}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Numar</span>
+                      <span className="font-medium" data-testid="text-unit-number">{unit.number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Etaj</span>
+                      <span className="font-medium">{getFloorLabel(unit.floor)}</span>
+                    </div>
+                    {unit.surface && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Suprafata utila</span>
+                        <span className="font-medium">{unit.surface} m²</span>
+                      </div>
+                    )}
+                    {unit.builtSurface && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Suprafata construita</span>
+                        <span className="font-medium">{unit.builtSurface} m²</span>
+                      </div>
+                    )}
+                    {unit.rooms && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Nr. Camere</span>
+                        <span className="font-medium">{unit.rooms}</span>
+                      </div>
+                    )}
+                    {unit.residents !== null && unit.residents !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Nr. Rezidenti</span>
+                        <span className="font-medium">{unit.residents}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      Proprietar
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {unit.ownerName ? (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <User className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="font-medium" data-testid="text-owner-name">{unit.ownerName}</span>
+                        </div>
+                        {unit.ownerPhone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span>{unit.ownerPhone}</span>
+                          </div>
+                        )}
+                        {unit.ownerEmail && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span>{unit.ownerEmail}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground italic">Niciun proprietar inregistrat</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      Locatie
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {association && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Asociatia</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{association.name}</span>
+                          {association.address && (
+                            <a
+                              href={getGoogleMapsUrl(association.address)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-primary/80"
+                              title="Deschide in Google Maps"
+                              data-testid="link-association-maps"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {building && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Bloc</span>
+                        <span className="font-medium">{building.name}</span>
+                      </div>
+                    )}
+                    {staircase && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Scara</span>
+                        <span className="font-medium">{staircase.name}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Etaj</span>
+                      <span className="font-medium">{getFloorLabel(unit.floor)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         )}
 

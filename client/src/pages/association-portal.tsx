@@ -135,9 +135,16 @@ export default function AssociationPortal() {
                 {association?.name || <Skeleton className="h-5 w-32 inline-block" />}
               </h1>
               {association?.address && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(association.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex hover:text-primary transition-colors"
+                  title="Deschide in Google Maps"
+                  data-testid="link-association-maps"
+                >
                   <MapPin className="w-3 h-3" />{association.address}
-                </span>
+                </a>
               )}
             </div>
             <div className="flex items-center gap-2">

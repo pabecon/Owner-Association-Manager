@@ -34,11 +34,12 @@ interface TreeNodeProps {
   defaultOpen?: boolean;
   isLeaf?: boolean;
   subtitle?: string;
+  subtitleLink?: string;
   onAdd?: () => void;
   onPortal?: () => void;
 }
 
-function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, onAdd, onPortal }: TreeNodeProps) {
+function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, subtitleLink, onAdd, onPortal }: TreeNodeProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = !!children;
   const indentPx = level * 24;
@@ -62,7 +63,23 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className={`text-sm ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
-            {subtitle && <span className="text-xs text-muted-foreground hidden sm:inline">{subtitle}</span>}
+            {subtitle && (
+              subtitleLink ? (
+                <a
+                  href={subtitleLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-muted-foreground hidden sm:inline hover:text-primary transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                  title="Deschide in Google Maps"
+                  data-testid="link-address-maps"
+                >
+                  {subtitle}
+                </a>
+              ) : (
+                <span className="text-xs text-muted-foreground hidden sm:inline">{subtitle}</span>
+              )
+            )}
           </div>
           {stats && stats.length > 0 && (
             <div className="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -199,6 +216,7 @@ export default function HierarchyTree() {
         level={2}
         badge={`${bldSts.length} scari`}
         subtitle={bld.address || undefined}
+        subtitleLink={bld.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bld.address)}` : undefined}
         onAdd={() => openAdd("staircase", bld.id, bld.name)}
       >
         {bldSts.map(st => {
