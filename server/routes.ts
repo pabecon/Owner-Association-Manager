@@ -501,6 +501,22 @@ export async function registerRoutes(
       }
     });
 
+    app.patch(`${basePath}/:id`, ...auth, requireRole("admin"), async (req, res) => {
+      try {
+        const supabaseData = mapRowToSupabase(req.body, config.columnMap);
+        const { data, error } = await supabase.from(config.supabaseTable).update(supabaseData).eq("id", req.params.id).select().single();
+        if (error) {
+          console.warn(`Supabase PATCH fallback for ${config.supabaseTable}: ${error.message}`);
+          const [localRow] = await db.update(config.table).set(req.body).where(eq((config.table as any).id, req.params.id)).returning();
+          return res.json(localRow);
+        }
+        res.json(mapRowFromSupabase(data));
+      } catch (err: any) {
+        console.error(`PATCH ${config.supabaseTable}:`, err.message);
+        res.status(500).json({ message: err.message });
+      }
+    });
+
     app.delete(`${basePath}/:id`, ...auth, requireRole("admin"), async (req, res) => {
       try {
         const { error } = await supabase.from(config.supabaseTable).delete().eq("id", req.params.id);

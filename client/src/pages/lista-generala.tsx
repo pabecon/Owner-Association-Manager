@@ -33,7 +33,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, Search, Trash2, List } from "lucide-react";
+import { Plus, Search, Trash2, List, Pencil } from "lucide-react";
 
 interface ListColumn {
   key: string;
@@ -52,6 +52,8 @@ export default function ListaGenerala() {
   const listKey = params?.listKey;
 
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Record<string, string> | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -72,6 +74,10 @@ export default function ListaGenerala() {
     defaultValues: {},
   });
 
+  const editForm = useForm<Record<string, string>>({
+    defaultValues: {},
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
       const res = await apiRequest("POST", `/api/liste/${listKey}`, data);
@@ -82,6 +88,23 @@ export default function ListaGenerala() {
       setOpen(false);
       form.reset();
       toast({ title: "Inregistrare adaugata cu succes" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (data: Record<string, string>) => {
+      const { id, ...body } = data;
+      const res = await apiRequest("PATCH", `/api/liste/${listKey}/${id}`, body);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/liste", listKey] });
+      setEditOpen(false);
+      setEditTarget(null);
+      toast({ title: "Inregistrare actualizata cu succes" });
     },
     onError: (error: Error) => {
       toast({ title: "Eroare", description: error.message, variant: "destructive" });
@@ -102,6 +125,22 @@ export default function ListaGenerala() {
       toast({ title: "Eroare la stergere", description: error.message, variant: "destructive" });
     },
   });
+
+  const handleEditClick = (item: Record<string, string>) => {
+    const defaults: Record<string, string> = { id: item.id };
+    if (config) {
+      config.columns.forEach((col) => {
+        defaults[col.key] = item[col.key] || "";
+      });
+    }
+    editForm.reset(defaults);
+    setEditTarget(item);
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = (data: Record<string, string>) => {
+    editMutation.mutate({ ...data, id: editTarget?.id || "" });
+  };
 
   const handleDeleteClick = (id: string) => {
     setDeleteTarget(id);
@@ -243,6 +282,51 @@ export default function ListaGenerala() {
         </div>
       </div>
 
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editeaza inregistrare</DialogTitle>
+            <DialogDescription>Modificati campurile dorite si salvati.</DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
+              {columns.map((col) => (
+                <FormField
+                  key={col.key}
+                  control={editForm.control}
+                  name={col.key}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {col.label}
+                        {col.required && <span className="text-destructive ml-1">*</span>}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ""}
+                          placeholder={col.label}
+                          data-testid={`input-edit-${col.key}`}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={editMutation.isPending}
+                data-testid="button-submit-edit"
+              >
+                {editMutation.isPending ? "Se salveaza..." : "Salveaza"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -306,7 +390,7 @@ export default function ListaGenerala() {
                           {col.label}
                         </TableHead>
                       ))}
-                      <TableHead className="w-12 py-1"></TableHead>
+                      <TableHead className="w-20 py-1"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -326,14 +410,24 @@ export default function ListaGenerala() {
                           );
                         })}
                         <TableCell className="py-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeleteClick(item.id || String(index))}
-                            data-testid={`button-delete-item-${item.id || index}`}
-                          >
-                            <Trash2 className="w-4 h-4 text-muted-foreground" />
-                          </Button>
+                          <div className="flex items-center gap-0.5">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEditClick(item)}
+                              data-testid={`button-edit-item-${item.id || index}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeleteClick(item.id || String(index))}
+                              data-testid={`button-delete-item-${item.id || index}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

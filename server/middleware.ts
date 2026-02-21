@@ -96,12 +96,16 @@ export function requirePermission(permission: keyof PermissionSet): RequestHandl
 
 export function requireRole(...roles: UserRole[]): RequestHandler {
   return (req: AuthenticatedRequest, res, next) => {
-    if (!req.highestRole || !roles.includes(req.highestRole)) {
-      const hasRole = req.userRoles?.some(r => roles.includes(r.role as UserRole));
-      if (!hasRole) {
-        return res.status(403).json({ message: "Nu aveti rolul necesar" });
-      }
+    const minLevel = Math.min(...roles.map(r => ROLE_HIERARCHY[r] || 0));
+    const userLevel = ROLE_HIERARCHY[req.highestRole || "tenant"] || 0;
+    if (userLevel >= minLevel) {
+      return next();
     }
-    next();
+    const hasRole = req.userRoles?.some(r => {
+      const rLevel = ROLE_HIERARCHY[r.role as UserRole] || 0;
+      return rLevel >= minLevel;
+    });
+    if (hasRole) return next();
+    return res.status(403).json({ message: "Nu aveti rolul necesar" });
   };
 }
