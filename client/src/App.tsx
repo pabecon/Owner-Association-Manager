@@ -15,6 +15,9 @@ import ListaGenerala from "@/pages/lista-generala";
 import Legislatie from "@/pages/legislatie";
 import UnitDetail from "@/pages/unit-detail";
 import UsersPage from "@/pages/users";
+import ContractsPage from "@/pages/contracts";
+import PermissionsMatrix from "@/pages/permissions-matrix";
+import RoluriPage from "@/pages/roluri";
 
 function SuperAdminRouter() {
   return (
@@ -25,6 +28,9 @@ function SuperAdminRouter() {
       <Route path="/legislatie" component={Legislatie} />
       <Route path="/unitate/:id" component={UnitDetail} />
       <Route path="/utilizatori" component={UsersPage} />
+      <Route path="/matrice-permisiuni" component={PermissionsMatrix} />
+      <Route path="/roluri" component={RoluriPage} />
+      <Route path="/contracte" component={ContractsPage} />
       <Route component={NotFound} />
     </Switch>
   );

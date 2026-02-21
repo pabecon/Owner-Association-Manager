@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, UserCog } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,8 @@ export function AppSidebar() {
   const { user } = useAuth();
   const [listsOpen, setListsOpen] = useState<boolean | null>(null);
   const [legislatieOpen, setLegistatieOpen] = useState<boolean | null>(null);
+  const [juridicOpen, setJuridicOpen] = useState<boolean | null>(null);
+  const [usersOpen, setUsersOpen] = useState<boolean | null>(null);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -53,10 +55,13 @@ export function AppSidebar() {
   const isInfografieActive = location === "/";
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
-  const isUsersActive = location === "/utilizatori";
+  const isJuridicActive = location.startsWith("/contracte");
+  const isUsersSection = location === "/utilizatori" || location === "/matrice-permisiuni" || location === "/roluri";
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
+  const isJuridicExpanded = juridicOpen !== null ? juridicOpen : isJuridicActive;
+  const isUsersExpanded = usersOpen !== null ? usersOpen : isUsersSection;
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -153,14 +158,69 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild data-active={isUsersActive} className={`h-8 text-sm ${isUsersActive ? "bg-sidebar-accent" : ""}`}>
-                  <Link href="/utilizatori" data-testid="link-nav-utilizatori">
-                    <Users className="w-4 h-4" />
-                    <span>Utilizatori</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible open={isJuridicExpanded} onOpenChange={(val) => setJuridicOpen(val)}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isJuridicActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-juridic">
+                      <Gavel className="w-4 h-4" />
+                      <span className="flex-1">Juridic</span>
+                      {isJuridicExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/contracte"} className={location === "/contracte" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/contracte" data-testid="link-nav-contracte">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Contracte</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              <Collapsible open={isUsersExpanded} onOpenChange={(val) => setUsersOpen(val)}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isUsersSection ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-utilizatori">
+                      <Users className="w-4 h-4" />
+                      <span className="flex-1">Utilizatori</span>
+                      {isUsersExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/utilizatori"} className={location === "/utilizatori" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/utilizatori" data-testid="link-nav-users-list">
+                            <UserCog className="w-3.5 h-3.5" />
+                            <span>Gestionare</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/matrice-permisiuni"} className={location === "/matrice-permisiuni" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/matrice-permisiuni" data-testid="link-nav-permissions-matrix">
+                            <Grid3X3 className="w-3.5 h-3.5" />
+                            <span>Matrice Permisiuni</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/roluri"} className={location === "/roluri" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/roluri" data-testid="link-nav-roluri">
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>Roluri</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

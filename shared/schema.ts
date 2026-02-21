@@ -221,6 +221,60 @@ export const insertDocumentSchema = createInsertSchema(documents).omit({ id: tru
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
 
+export const contractClientTypeEnum = ["federation", "association"] as const;
+export type ContractClientType = typeof contractClientTypeEnum[number];
+
+export const CONTRACT_CLIENT_TYPE_LABELS: Record<ContractClientType, string> = {
+  federation: "Federatie",
+  association: "Asociatie",
+};
+
+export const contractStatusEnum = ["draft", "active", "expired", "terminated"] as const;
+export type ContractStatus = typeof contractStatusEnum[number];
+
+export const CONTRACT_STATUS_LABELS: Record<ContractStatus, string> = {
+  draft: "Ciorna",
+  active: "Activ",
+  expired: "Expirat",
+  terminated: "Reziliat",
+};
+
+export const contracts = pgTable("contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  clientType: text("client_type").notNull(),
+  clientId: varchar("client_id").notNull(),
+  startDate: date("start_date").notNull(),
+  durationValue: integer("duration_value").notNull(),
+  durationUnit: text("duration_unit").notNull(),
+  endDate: date("end_date").notNull(),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("LEI"),
+  status: text("status").notNull().default("active"),
+  documentPath: text("document_path"),
+  documentName: text("document_name"),
+  templateId: varchar("template_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const contractTemplates = pgTable("contract_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  documentPath: text("document_path").notNull(),
+  documentName: text("document_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true });
+export type InsertContract = z.infer<typeof insertContractSchema>;
+export type Contract = typeof contracts.$inferSelect;
+
+export const insertContractTemplateSchema = createInsertSchema(contractTemplates).omit({ id: true, createdAt: true });
+export type InsertContractTemplate = z.infer<typeof insertContractTemplateSchema>;
+export type ContractTemplate = typeof contractTemplates.$inferSelect;
+
 export const insertFederationSchema = createInsertSchema(federations).omit({ id: true, createdAt: true });
 export const insertAssociationSchema = createInsertSchema(associations).omit({ id: true, createdAt: true });
 export const insertBuildingSchema = createInsertSchema(buildings).omit({ id: true });

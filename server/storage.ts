@@ -14,9 +14,11 @@ import {
   type MeterReading, type InsertMeterReading,
   type Fund, type InsertFund,
   type FundCategory, type InsertFundCategory,
+  type Contract, type InsertContract,
+  type ContractTemplate, type InsertContractTemplate,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
-  meters, meterReadings, funds, fundCategories,
+  meters, meterReadings, funds, fundCategories, contracts, contractTemplates,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
@@ -120,6 +122,17 @@ export interface IStorage {
   createFundCategory(data: InsertFundCategory): Promise<FundCategory>;
   updateFundCategory(id: string, data: Partial<InsertFundCategory>): Promise<FundCategory | undefined>;
   deleteFundCategory(id: string): Promise<void>;
+
+  getContracts(): Promise<Contract[]>;
+  getContract(id: string): Promise<Contract | undefined>;
+  createContract(data: InsertContract): Promise<Contract>;
+  updateContract(id: string, data: Partial<InsertContract>): Promise<Contract | undefined>;
+  deleteContract(id: string): Promise<void>;
+
+  getContractTemplates(): Promise<ContractTemplate[]>;
+  getContractTemplate(id: string): Promise<ContractTemplate | undefined>;
+  createContractTemplate(data: InsertContractTemplate): Promise<ContractTemplate>;
+  deleteContractTemplate(id: string): Promise<void>;
 
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
@@ -533,6 +546,47 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRefListItem(table: PgTableWithColumns<any>, id: string): Promise<void> {
     await db.delete(table).where(eq(table.id, id));
+  }
+
+  async getContracts(): Promise<Contract[]> {
+    return db.select().from(contracts).orderBy(desc(contracts.createdAt));
+  }
+
+  async getContract(id: string): Promise<Contract | undefined> {
+    const [contract] = await db.select().from(contracts).where(eq(contracts.id, id));
+    return contract;
+  }
+
+  async createContract(data: InsertContract): Promise<Contract> {
+    const [contract] = await db.insert(contracts).values(data).returning();
+    return contract;
+  }
+
+  async updateContract(id: string, data: Partial<InsertContract>): Promise<Contract | undefined> {
+    const [contract] = await db.update(contracts).set(data).where(eq(contracts.id, id)).returning();
+    return contract;
+  }
+
+  async deleteContract(id: string): Promise<void> {
+    await db.delete(contracts).where(eq(contracts.id, id));
+  }
+
+  async getContractTemplates(): Promise<ContractTemplate[]> {
+    return db.select().from(contractTemplates).orderBy(desc(contractTemplates.createdAt));
+  }
+
+  async getContractTemplate(id: string): Promise<ContractTemplate | undefined> {
+    const [template] = await db.select().from(contractTemplates).where(eq(contractTemplates.id, id));
+    return template;
+  }
+
+  async createContractTemplate(data: InsertContractTemplate): Promise<ContractTemplate> {
+    const [template] = await db.insert(contractTemplates).values(data).returning();
+    return template;
+  }
+
+  async deleteContractTemplate(id: string): Promise<void> {
+    await db.delete(contractTemplates).where(eq(contractTemplates.id, id));
   }
 }
 

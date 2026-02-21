@@ -9,6 +9,7 @@ import {
   insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
   insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema,
   insertFundSchema, insertFundCategorySchema,
+  insertContractSchema, insertContractTemplateSchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
 import { users } from "@shared/schema";
@@ -1065,6 +1066,87 @@ export async function registerRoutes(
         } catch (parseError: any) {
           res.status(400).json({ message: `Eroare la procesarea fisierului: ${parseError.message}` });
         }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
+  // Contracts
+  app.get("/api/contracts", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const data = await storage.getContracts();
+    res.json(data);
+  });
+
+  app.get("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const contract = await storage.getContract(req.params.id as string);
+    if (!contract) return res.status(404).json({ message: "Contractul nu a fost gasit" });
+    res.json(contract);
+  });
+
+  app.post("/api/contracts", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertContractSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const contract = await storage.createContract(parsed.data);
+    res.json(contract);
+  });
+
+  app.patch("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getContract(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Contractul nu a fost gasit" });
+    const parsed = insertContractSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const updated = await storage.updateContract(req.params.id as string, parsed.data);
+    res.json(updated);
+  });
+
+  app.delete("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getContract(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Contractul nu a fost gasit" });
+    await storage.deleteContract(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  // Contract Templates
+  app.get("/api/contract-templates", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const data = await storage.getContractTemplates();
+    res.json(data);
+  });
+
+  app.post("/api/contract-templates", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertContractTemplateSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const template = await storage.createContractTemplate(parsed.data);
+    res.json(template);
+  });
+
+  app.delete("/api/contract-templates/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const existing = await storage.getContractTemplate(req.params.id as string);
+    if (!existing) return res.status(404).json({ message: "Sablonul nu a fost gasit" });
+    await storage.deleteContractTemplate(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  // Contract file upload
+  app.post("/api/contracts/:id/upload", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const contract = await storage.getContract(req.params.id as string);
+    if (!contract) return res.status(404).json({ message: "Contractul nu a fost gasit" });
+    try {
+      const multer = (await import("multer")).default;
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+      upload.single("file")(req, res, async (err: any) => {
+        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+        const { Client } = await import("@replit/object-storage");
+        const client = new Client();
+        const path = `.private/contracts/${contract.id}/${file.originalname}`;
+        await client.uploadFromBytes(path, file.buffer);
+        const updated = await storage.updateContract(contract.id, {
+          documentPath: path,
+          documentName: file.originalname,
+        });
+        res.json(updated);
       });
     } catch (error: any) {
       res.status(500).json({ message: "Eroare interna" });
