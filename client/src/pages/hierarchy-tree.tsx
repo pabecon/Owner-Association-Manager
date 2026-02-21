@@ -3,12 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, List, Scale } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
+import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
+
+interface ListConfig {
+  key: string;
+  label: string;
+}
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -16,12 +23,19 @@ const UNIT_TYPE_ICONS: Record<string, any> = {
   parking: Car,
 };
 
+interface StatBadge {
+  label: string;
+  icon?: any;
+  variant?: "default" | "secondary" | "outline" | "destructive";
+}
+
 interface TreeNodeProps {
   label: string;
   icon: any;
   children?: React.ReactNode;
   badge?: string;
   badgeVariant?: "default" | "secondary" | "outline" | "destructive";
+  stats?: StatBadge[];
   level: number;
   defaultOpen?: boolean;
   isLeaf?: boolean;
@@ -30,7 +44,7 @@ interface TreeNodeProps {
   onPortal?: () => void;
 }
 
-function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", level, defaultOpen = false, isLeaf = false, subtitle, onAdd, onPortal }: TreeNodeProps) {
+function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, onAdd, onPortal }: TreeNodeProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = !!children;
   const indentPx = level * 24;
@@ -51,9 +65,26 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
         <div className={`flex items-center justify-center w-6 h-6 rounded shrink-0 ${isLeaf ? "bg-muted" : "bg-primary/10"}`}>
           <Icon className={`w-3.5 h-3.5 ${isLeaf ? "text-muted-foreground" : "text-primary"}`} />
         </div>
-        <span className={`text-sm ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
-        {subtitle && <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">{subtitle}</span>}
-        {badge && <Badge variant={badgeVariant} className="text-[10px] ml-auto shrink-0">{badge}</Badge>}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={`text-sm ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
+            {subtitle && <span className="text-xs text-muted-foreground hidden sm:inline">{subtitle}</span>}
+          </div>
+          {stats && stats.length > 0 && (
+            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+              {stats.map((s, i) => {
+                const SIcon = s.icon;
+                return (
+                  <Badge key={i} variant={s.variant || "outline"} className="text-[9px] py-0 gap-0.5">
+                    {SIcon && <SIcon className="w-2.5 h-2.5" />}
+                    {s.label}
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {badge && <Badge variant={badgeVariant} className="text-[10px] shrink-0">{badge}</Badge>}
         {onPortal && (
           <Button
             size="sm"
@@ -109,8 +140,11 @@ export default function HierarchyTree() {
   const { data: buildings, isLoading: lb } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
   const { data: staircases, isLoading: ls } = useQuery<Staircase[]>({ queryKey: ["/api/staircases"] });
   const { data: apartments, isLoading: lap } = useQuery<Apartment[]>({ queryKey: ["/api/apartments"] });
+  const { data: listConfigs } = useQuery<ListConfig[]>({ queryKey: ["/api/liste-config"] });
 
   const [addDialog, setAddDialog] = useState<AddDialogState>({ open: false, level: "federation" });
+  const [listsOpen, setListsOpen] = useState(false);
+  const [legislatieOpen, setLegistatieOpen] = useState(false);
 
   const isLoading = lf || la || lb || ls || lap;
 
@@ -126,6 +160,24 @@ export default function HierarchyTree() {
 
   const openAdd = (level: EntityLevel, parentId?: string, parentName?: string) => {
     setAddDialog({ open: true, level, parentId, parentName });
+  };
+
+  const getAssocStats = (assocId: string): StatBadge[] => {
+    const assocBlds = buildings?.filter(b => b.associationId === assocId) || [];
+    const bldIds = assocBlds.map(b => b.id);
+    const assocSts = staircases?.filter(s => bldIds.includes(s.buildingId)) || [];
+    const stIds = assocSts.map(s => s.id);
+    const assocApts = apartments?.filter(a => stIds.includes(a.staircaseId)) || [];
+    const aptCount = assocApts.filter(a => !a.unitType || a.unitType === "apartment").length;
+    const boxCount = assocApts.filter(a => a.unitType === "box").length;
+    const parkCount = assocApts.filter(a => a.unitType === "parking").length;
+    const stats: StatBadge[] = [];
+    if (assocBlds.length > 0) stats.push({ label: `${assocBlds.length} blocuri`, icon: Building2, variant: "secondary" });
+    if (assocSts.length > 0) stats.push({ label: `${assocSts.length} scari`, icon: ArrowUpDown, variant: "outline" });
+    if (aptCount > 0) stats.push({ label: `${aptCount} apt.`, icon: Home, variant: "outline" });
+    if (boxCount > 0) stats.push({ label: `${boxCount} boxe`, icon: Package, variant: "outline" });
+    if (parkCount > 0) stats.push({ label: `${parkCount} parking`, icon: Car, variant: "outline" });
+    return stats;
   };
 
   if (isLoading) {
@@ -283,7 +335,7 @@ export default function HierarchyTree() {
                           label={assoc.name}
                           icon={Users}
                           level={1}
-                          badge={`${assocBlds.length} blocuri`}
+                          stats={getAssocStats(assoc.id)}
                           subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
                           onAdd={() => openAdd("building", assoc.id, assoc.name)}
                           onPortal={() => navigate(`/asociatie/${assoc.id}`)}
@@ -306,7 +358,7 @@ export default function HierarchyTree() {
                         label={assoc.name}
                         icon={Users}
                         level={1}
-                        badge={`${assocBlds.length} blocuri`}
+                        stats={getAssocStats(assoc.id)}
                         subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
                         onAdd={() => openAdd("building", assoc.id, assoc.name)}
                         onPortal={() => navigate(`/asociatie/${assoc.id}`)}
@@ -319,6 +371,80 @@ export default function HierarchyTree() {
               )}
             </CardContent>
           </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <Card>
+              <Collapsible open={listsOpen} onOpenChange={setListsOpen}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <List className="w-4 h-4 text-primary" />
+                        Liste Generale
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px]">{listConfigs?.length || 0} liste</Badge>
+                        {listsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {(listConfigs || []).map(config => (
+                        <Link key={config.key} href={`/liste-generale/${config.key}`}>
+                          <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-xs" data-testid={`link-lista-${config.key}`}>
+                            <List className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{config.label}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+
+            <Card>
+              <Collapsible open={legislatieOpen} onOpenChange={setLegistatieOpen}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
+                    <CardTitle className="text-sm flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Scale className="w-4 h-4 text-primary" />
+                        Legislatie
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px]">{LEGISLATION_ITEMS.length} legi</Badge>
+                        {legislatieOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0">
+                    <div className="space-y-1">
+                      {LEGISLATION_ITEMS.map(law => (
+                        <Link key={law.id} href={`/legislatie/${law.id}`}>
+                          <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-xs" data-testid={`link-law-${law.id}`}>
+                            <Scale className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="flex-1 truncate">{law.shortTitle}</span>
+                            <Badge
+                              variant={law.status === "in_vigoare" ? "default" : "secondary"}
+                              className="text-[9px] px-1 py-0 shrink-0"
+                            >
+                              {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
+                            </Badge>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          </div>
         </div>
       </div>
 

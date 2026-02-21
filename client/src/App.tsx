@@ -11,18 +11,22 @@ import { UserMenu } from "@/components/user-menu";
 import NotFound from "@/pages/not-found";
 import HierarchyTree from "@/pages/hierarchy-tree";
 import AssociationPortal from "@/pages/association-portal";
+import ListaGenerala from "@/pages/lista-generala";
+import Legislatie from "@/pages/legislatie";
 
-function Router() {
+function SuperAdminRouter() {
   return (
     <Switch>
       <Route path="/" component={HierarchyTree} />
-      <Route path="/asociatie/:id" component={AssociationPortal} />
+      <Route path="/liste-generale/:listKey" component={ListaGenerala} />
+      <Route path="/legislatie/:lawId" component={Legislatie} />
+      <Route path="/legislatie" component={Legislatie} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function AuthenticatedApp() {
+function SuperAdminLayout() {
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
@@ -41,7 +45,7 @@ function AuthenticatedApp() {
             </div>
           </header>
           <main className="flex-1 overflow-hidden">
-            <Router />
+            <SuperAdminRouter />
           </main>
         </div>
       </div>
@@ -49,8 +53,15 @@ function AuthenticatedApp() {
   );
 }
 
-function AppContent() {
-  return <AuthenticatedApp />;
+function AppRouter() {
+  return (
+    <Switch>
+      <Route path="/asociatie/:id" component={AssociationPortal} />
+      <Route>
+        <SuperAdminLayout />
+      </Route>
+    </Switch>
+  );
 }
 
 function App() {
@@ -58,7 +69,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AppContent />
+          <AppRouter />
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

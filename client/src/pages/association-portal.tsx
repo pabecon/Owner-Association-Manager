@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AssociationSidebar } from "@/components/association-sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import {
   Building2, Home, ArrowUpDown, Layers, Car, Package, MapPin, User, Phone, Mail,
-  FileText, ChevronLeft, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
+  FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
   ChevronDown, ChevronRight, Trash2, Plus, Banknote
 } from "lucide-react";
 import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory } from "@shared/schema";
@@ -22,6 +25,7 @@ export default function AssociationPortal() {
   const associationId = params?.id;
   const { toast } = useToast();
 
+  const [activeTab, setActiveTab] = useState("imobiliar");
   const [expandedBuildings, setExpandedBuildings] = useState<Record<string, boolean>>({});
   const [expandedStaircases, setExpandedStaircases] = useState<Record<string, boolean>>({});
   const [expandedFunds, setExpandedFunds] = useState<Record<string, boolean>>({});
@@ -102,53 +106,49 @@ export default function AssociationPortal() {
     },
   });
 
+  const sidebarStyle = {
+    "--sidebar-width": "16rem",
+    "--sidebar-width-icon": "3rem",
+  };
+
   if (!association && !loadingAssocs) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-6">
+      <div className="flex flex-col items-center justify-center h-screen p-6">
         <Building2 className="w-16 h-16 text-muted-foreground/30 mb-4" />
         <h2 className="text-lg font-semibold mb-2">Asociatia nu a fost gasita</h2>
         <Link href="/">
-          <Button variant="outline">
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Inapoi la Panou
-          </Button>
+          <Button variant="outline">Inapoi la Super Administrator</Button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-center gap-2">
-          <Link href="/">
-            <Button variant="ghost" size="icon" className="h-8 w-8" data-testid="button-back-dashboard">
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </Link>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold tracking-tight truncate" data-testid="text-portal-title">
-              {association?.name || <Skeleton className="h-6 w-48 inline-block" />}
-            </h1>
-            <div className="flex items-center gap-3 flex-wrap">
-              {association?.cui && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <FileText className="w-3 h-3" />CUI: {association.cui}
-                </span>
-              )}
+    <SidebarProvider style={sidebarStyle as React.CSSProperties}>
+      <div className="flex h-screen w-full">
+        <AssociationSidebar associationId={associationId!} activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <header className="flex items-center justify-between gap-2 p-2 border-b sticky top-0 z-50 bg-background">
+            <SidebarTrigger data-testid="button-assoc-sidebar-toggle" />
+            <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0 ml-2">
+              <h1 className="text-sm font-semibold truncate" data-testid="text-portal-title">
+                {association?.name || <Skeleton className="h-5 w-32 inline-block" />}
+              </h1>
               {association?.address && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex">
                   <MapPin className="w-3 h-3" />{association.address}
                 </span>
               )}
             </div>
-          </div>
-        </div>
-      </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <UserMenu />
+            </div>
+          </header>
+          <main className="flex-1 overflow-y-auto p-3">
+            <div className="max-w-7xl mx-auto space-y-4">
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             <Card>
               <CardContent className="p-2.5 text-center">
                 <Building2 className="w-4 h-4 text-primary mx-auto mb-1" />
@@ -193,24 +193,8 @@ export default function AssociationPortal() {
             </Card>
           </div>
 
-          <Tabs defaultValue="imobiliar" className="w-full">
-            <TabsList className="w-full justify-start flex-wrap h-auto gap-1 p-1" data-testid="portal-tabs">
-              <TabsTrigger value="imobiliar" data-testid="tab-imobiliar" className="text-xs">
-                <Building2 className="w-3.5 h-3.5 mr-1" />Imobiliar
-              </TabsTrigger>
-              <TabsTrigger value="financiar" data-testid="tab-financiar" className="text-xs">
-                <Receipt className="w-3.5 h-3.5 mr-1" />Financiar
-              </TabsTrigger>
-              <TabsTrigger value="contact" data-testid="tab-contact" className="text-xs">
-                <User className="w-3.5 h-3.5 mr-1" />Contact
-              </TabsTrigger>
-              <TabsTrigger value="anunturi" data-testid="tab-anunturi" className="text-xs">
-                <Megaphone className="w-3.5 h-3.5 mr-1" />Anunturi
-              </TabsTrigger>
-            </TabsList>
-
-            {/* ═══ IMOBILIAR TAB ═══ */}
-            <TabsContent value="imobiliar" className="mt-3">
+          {activeTab === "imobiliar" && (
+            <div className="space-y-3">
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
@@ -365,10 +349,11 @@ export default function AssociationPortal() {
                   })}
                 </div>
               )}
-            </TabsContent>
+            </div>
+          )}
 
-            {/* ═══ FINANCIAR TAB ═══ */}
-            <TabsContent value="financiar" className="mt-3 space-y-4">
+          {activeTab === "financiar" && (
+            <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <Card>
                   <CardContent className="p-3">
@@ -575,10 +560,11 @@ export default function AssociationPortal() {
                   </Card>
                 )}
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            {/* ═══ CONTACT TAB ═══ */}
-            <TabsContent value="contact" className="mt-3">
+          {activeTab === "contact" && (
+            <div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {association?.presidentName && (
                   <Card data-testid="card-portal-president">
@@ -639,10 +625,11 @@ export default function AssociationPortal() {
                   </Card>
                 )}
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            {/* ═══ ANUNTURI TAB ═══ */}
-            <TabsContent value="anunturi" className="mt-3">
+          {activeTab === "anunturi" && (
+            <div>
               {assocAnnouncements.length === 0 ? (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-8">
@@ -677,11 +664,14 @@ export default function AssociationPortal() {
                   ))}
                 </div>
               )}
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
+
+            </div>
+          </main>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
 
