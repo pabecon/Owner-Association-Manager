@@ -601,6 +601,9 @@ export default function Explorer() {
         level={editLevel}
         entity={editEntity}
         federations={federations}
+        associations={associations}
+        buildings={buildings}
+        staircases={staircases}
       />
     </div>
   );

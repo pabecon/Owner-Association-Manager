@@ -1,15 +1,17 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
+import type { Federation, Association, Building, Staircase, Apartment, UnitRoom } from "@shared/schema";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Building2, ArrowUpDown, Users, Network } from "lucide-react";
 
 type EntityLevel = "federation" | "association" | "building" | "staircase" | "apartment";
 
@@ -19,6 +21,9 @@ interface EditEntityDialogProps {
   level: EntityLevel;
   entity: any;
   federations?: Federation[];
+  associations?: Association[];
+  buildings?: Building[];
+  staircases?: Staircase[];
 }
 
 const LEVEL_LABELS: Record<EntityLevel, string> = {
@@ -37,16 +42,45 @@ const LEVEL_ENDPOINTS: Record<EntityLevel, string> = {
   apartment: "/api/apartments",
 };
 
+interface RoomEntry {
+  id?: string;
+  name: string;
+  surface: string;
+}
+
 export function EditEntityDialog({
   open,
   onOpenChange,
   level,
   entity,
   federations,
+  associations,
+  buildings,
+  staircases,
 }: EditEntityDialogProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [rooms, setRooms] = useState<RoomEntry[]>([]);
+
+  const aptId = level === "apartment" && entity?.id ? entity.id : null;
+  const { data: existingRooms } = useQuery<UnitRoom[]>({
+    queryKey: ["/api/unit-rooms", aptId],
+    enabled: !!aptId && open,
+  });
+
+  const hierarchyInfo = useMemo(() => {
+    if (level !== "apartment" || !entity) return null;
+    const staircase = staircases?.find(s => s.id === entity.staircaseId);
+    const building = staircase ? buildings?.find(b => b.id === staircase.buildingId) : null;
+    const association = building ? associations?.find(a => a.id === building.associationId) : null;
+    const federation = association?.federationId ? federations?.find(f => f.id === association.federationId) : null;
+    return { staircase, building, association, federation };
+  }, [level, entity, staircases, buildings, associations, federations]);
+
+  const roomsSurfaceSum = useMemo(() => {
+    return rooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+  }, [rooms]);
 
   useEffect(() => {
     if (open && entity) {
@@ -95,9 +129,44 @@ export function EditEntityDialog({
     }
   }, [open, entity, level]);
 
+  useEffect(() => {
+    if (existingRooms && open && level === "apartment") {
+      setRooms(existingRooms.map(r => ({
+        id: r.id,
+        name: r.name,
+        surface: r.surface?.toString() || "",
+      })));
+    }
+  }, [existingRooms, open, level]);
+
   const updateField = useCallback((key: string, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   }, []);
+
+  const addRoom = useCallback(() => {
+    setRooms(prev => [...prev, { name: `Camera ${prev.length + 1}`, surface: "" }]);
+  }, []);
+
+  const updateRoom = useCallback((index: number, field: "name" | "surface", value: string) => {
+    setRooms(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
+  }, []);
+
+  const removeRoom = useCallback((index: number) => {
+    setRooms(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  useEffect(() => {
+    if (level === "apartment") {
+      if (rooms.length > 0) {
+        const sum = rooms.reduce((s, r) => s + (parseFloat(r.surface) || 0), 0);
+        setFormData(prev => ({
+          ...prev,
+          surface: sum > 0 ? sum.toFixed(2) : prev.surface,
+          rooms: rooms.length.toString(),
+        }));
+      }
+    }
+  }, [rooms, level]);
 
   const handleSubmit = useCallback(async () => {
     if (!entity) return;
@@ -183,6 +252,19 @@ export function EditEntityDialog({
 
       await apiRequest("PATCH", `${LEVEL_ENDPOINTS[level]}/${entity.id}`, body);
 
+      if (level === "apartment" && entity.id) {
+        const roomsToSave = rooms.filter(r => r.name.trim());
+        await apiRequest("POST", "/api/unit-rooms", {
+          apartmentId: entity.id,
+          rooms: roomsToSave.map((r, i) => ({
+            name: r.name,
+            surface: r.surface ? parseFloat(r.surface) : null,
+            sortOrder: i,
+          })),
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/unit-rooms", entity.id] });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/federations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/associations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/buildings"] });
@@ -195,7 +277,7 @@ export function EditEntityDialog({
     } finally {
       setIsSaving(false);
     }
-  }, [level, formData, entity, onOpenChange, toast]);
+  }, [level, formData, entity, rooms, onOpenChange, toast]);
 
   const renderFields = () => {
     switch (level) {
@@ -348,7 +430,40 @@ export function EditEntityDialog({
       case "apartment":
         return (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            {hierarchyInfo && (
+              <div className="rounded-md bg-muted/50 p-2.5 space-y-1 text-xs" data-testid="edit-unit-hierarchy">
+                {hierarchyInfo.federation && (
+                  <div className="flex items-center gap-2">
+                    <Network className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">Federatie:</span>
+                    <span className="font-medium">{hierarchyInfo.federation.name}</span>
+                  </div>
+                )}
+                {hierarchyInfo.association && (
+                  <div className="flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">Asociatie:</span>
+                    <span className="font-medium">{hierarchyInfo.association.name}</span>
+                  </div>
+                )}
+                {hierarchyInfo.building && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">Bloc:</span>
+                    <span className="font-medium">{hierarchyInfo.building.name}</span>
+                  </div>
+                )}
+                {hierarchyInfo.staircase && (
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-muted-foreground">Scara:</span>
+                    <span className="font-medium">{hierarchyInfo.staircase.name}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="edit-apt-num">Numar *</Label>
                 <Input id="edit-apt-num" value={formData.number || ""} onChange={e => updateField("number", e.target.value)} placeholder="Ex: 1, B1, P1" data-testid="edit-input-number" />
@@ -366,31 +481,98 @@ export function EditEntityDialog({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="edit-apt-floor">Etaj</Label>
                 <Input id="edit-apt-floor" type="number" value={formData.floor || "0"} onChange={e => updateField("floor", e.target.value)} data-testid="edit-input-floor" />
               </div>
+            </div>
+
+            <div className="border rounded-md p-2.5 space-y-2" data-testid="edit-rooms-section">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Camere ({rooms.length})</Label>
+                <Button variant="outline" size="sm" onClick={addRoom} data-testid="edit-btn-add-room">
+                  <Plus className="w-3 h-3 mr-1" /> Adauga Camera
+                </Button>
+              </div>
+              {rooms.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-[1fr_100px_28px] gap-2 text-xs text-muted-foreground px-0.5">
+                    <span>Nume camera</span>
+                    <span>Suprafata (mp)</span>
+                    <span></span>
+                  </div>
+                  {rooms.map((room, i) => (
+                    <div key={i} className="grid grid-cols-[1fr_100px_28px] gap-2 items-center" data-testid={`edit-room-row-${i}`}>
+                      <Input
+                        value={room.name}
+                        onChange={e => updateRoom(i, "name", e.target.value)}
+                        placeholder={`Camera ${i + 1}`}
+                        className="h-7 text-xs"
+                        data-testid={`edit-room-name-${i}`}
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={room.surface}
+                        onChange={e => updateRoom(i, "surface", e.target.value)}
+                        placeholder="mp"
+                        className="h-7 text-xs"
+                        data-testid={`edit-room-surface-${i}`}
+                      />
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeRoom(i)} data-testid={`edit-room-delete-${i}`}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {rooms.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-1">Nicio camera adaugata. Apasati butonul pentru a adauga.</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="edit-apt-surface">Suprafata Utila (mp)</Label>
-                <Input id="edit-apt-surface" type="number" step="0.01" value={formData.surface || ""} onChange={e => updateField("surface", e.target.value)} data-testid="edit-input-surface" />
+                <Input
+                  id="edit-apt-surface"
+                  type="number"
+                  step="0.01"
+                  value={formData.surface || ""}
+                  onChange={e => updateField("surface", e.target.value)}
+                  readOnly={rooms.length > 0}
+                  className={rooms.length > 0 ? "bg-muted" : ""}
+                  data-testid="edit-input-surface"
+                />
+                {rooms.length > 0 && roomsSurfaceSum > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Calculata din camere: {roomsSurfaceSum.toFixed(2)} mp</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="edit-apt-built">Suprafata Construita (mp)</Label>
                 <Input id="edit-apt-built" type="number" step="0.01" value={formData.builtSurface || ""} onChange={e => updateField("builtSurface", e.target.value)} data-testid="edit-input-built-surface" />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="edit-apt-rooms">Camere</Label>
-                <Input id="edit-apt-rooms" type="number" value={formData.rooms || ""} onChange={e => updateField("rooms", e.target.value)} data-testid="edit-input-rooms" />
+                <Label htmlFor="edit-apt-rooms-count">Nr. Camere</Label>
+                <Input
+                  id="edit-apt-rooms-count"
+                  type="number"
+                  value={formData.rooms || ""}
+                  onChange={e => updateField("rooms", e.target.value)}
+                  readOnly={rooms.length > 0}
+                  className={rooms.length > 0 ? "bg-muted" : ""}
+                  data-testid="edit-input-rooms"
+                />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="edit-apt-res">Locatari</Label>
                 <Input id="edit-apt-res" type="number" value={formData.residents || "1"} onChange={e => updateField("residents", e.target.value)} data-testid="edit-input-residents" />
               </div>
             </div>
+
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="edit-apt-owner">Proprietar</Label>

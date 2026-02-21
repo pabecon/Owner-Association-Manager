@@ -103,7 +103,7 @@ function highlightText(text: string, term: string) {
   return <>{result}</>;
 }
 
-const LAW_REFERENCE_MAP: Record<string, string> = {
+const LAW_INTERNAL_MAP: Record<string, string> = {
   "Legea nr. 10/1995": "/legislatie/legea-10-1995",
   "Legea nr. 114/1996": "/legislatie/legea-114-1996",
   "Legea nr. 196/2018": "/legislatie/legea-196-2018",
@@ -111,8 +111,25 @@ const LAW_REFERENCE_MAP: Record<string, string> = {
   "Legea nr. 307/2006": "/legislatie/legea-307-2006",
 };
 
+const LAW_EXTERNAL_MAP: Record<string, string> = {
+  "Legea nr. 114/1996": "https://legislatie.just.ro/Public/DetaliiDocument/8597",
+  "Legea nr. 10/1995": "https://legislatie.just.ro/Public/DetaliiDocument/5729",
+  "Legea nr. 307/2006": "https://legislatie.just.ro/Public/DetaliiDocument/73657",
+  "Legea nr. 230/2007": "https://legislatie.just.ro/Public/DetaliiDocument/83753",
+  "Legea nr. 196/2018": "https://legislatie.just.ro/Public/DetaliiDocument/203233",
+  "HG nr. 400/2003": "https://legislatie.just.ro/Public/DetaliiDocument/43623",
+  "HG nr. 1.386/2003": "https://legislatie.just.ro/Public/DetaliiDocumentAfis/49385",
+  "HG nr. 1.588/2007": "https://legislatie.just.ro/Public/DetaliiDocument/88906",
+  "OG nr. 85/2001": "https://legislatie.just.ro/Public/DetaliiDocument/30381",
+  "Ordinul nr. 1.058/2019": "https://legislatie.just.ro/Public/DetaliiDocument/211163",
+  "Ordinul nr. 959/2023": "https://legislatie.just.ro/Public/DetaliiDocument/271142",
+  "Hotărârea Guvernului nr. 400/2003": "https://legislatie.just.ro/Public/DetaliiDocument/43623",
+  "Hotărârea Guvernului nr. 1.386/2003": "https://legislatie.just.ro/Public/DetaliiDocumentAfis/49385",
+  "Hotărârea Guvernului nr. 1.588/2007": "https://legislatie.just.ro/Public/DetaliiDocument/88906",
+};
+
 function renderWithLawLinks(text: string, searchTerm?: string): JSX.Element {
-  const lawPattern = /(Legea nr\. \d+\/\d{4}|Hotărârea Guvernului nr\. [\d.]+\/\d{4}|Ordonanța de urgență a Guvernului nr\. \d+\/\d{4}|Regulamentul \(UE\) nr\. \d+\/\d{4}|Directivei \d+\/\d+\/CEE|Codul civil)/g;
+  const lawPattern = /(Legea nr\. \d+\/\d{4}|Hotărârea Guvernului nr\. [\d.]+\/\d{4}|HG nr\. [\d.]+\/\d{4}|OG nr\. \d+\/\d{4}|Ordinul nr\. [\d.]+\/\d{4}|Ordonanța de urgență a Guvernului nr\. \d+\/\d{4}|Regulamentul \(UE\) nr\. \d+\/\d{4}|Directivei \d+\/\d+\/CEE|Codul civil)/g;
 
   const parts: (string | JSX.Element)[] = [];
   let lastIndex = 0;
@@ -125,7 +142,8 @@ function renderWithLawLinks(text: string, searchTerm?: string): JSX.Element {
     }
 
     const ref = match[0];
-    const internalUrl = LAW_REFERENCE_MAP[ref];
+    const internalUrl = LAW_INTERNAL_MAP[ref];
+    const externalUrl = LAW_EXTERNAL_MAP[ref];
 
     if (internalUrl) {
       parts.push(
@@ -133,12 +151,24 @@ function renderWithLawLinks(text: string, searchTerm?: string): JSX.Element {
           <span className="underline text-primary cursor-pointer font-medium not-italic">{searchTerm ? highlightText(ref, searchTerm) as any : ref}</span>
         </Link>
       );
-    } else {
-      const searchQuery = encodeURIComponent(ref);
+    } else if (externalUrl) {
       parts.push(
         <a
           key={match.index}
-          href={`https://legislatie.just.ro/Public/RezultateCautare?tipact=0&cautession=${searchQuery}`}
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary cursor-pointer font-medium not-italic"
+          title={`Deschide ${ref} pe legislatie.just.ro`}
+        >
+          {searchTerm ? highlightText(ref, searchTerm) as any : ref}
+        </a>
+      );
+    } else {
+      parts.push(
+        <a
+          key={match.index}
+          href={`https://legislatie.just.ro/Public/RezultateCautare?tipact=0&cautession=${encodeURIComponent(ref)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="underline text-primary cursor-pointer font-medium not-italic"
