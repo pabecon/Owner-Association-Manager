@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, List, Scale } from "lucide-react";
+import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, List, Scale, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
+import { ExcelImportDialog } from "@/components/excel-import-dialog";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 
 interface ListConfig {
@@ -143,6 +144,7 @@ export default function HierarchyTree() {
   const { data: listConfigs } = useQuery<ListConfig[]>({ queryKey: ["/api/liste-config"] });
 
   const [addDialog, setAddDialog] = useState<AddDialogState>({ open: false, level: "federation" });
+  const [importOpen, setImportOpen] = useState(false);
   const [listsOpen, setListsOpen] = useState(false);
   const [legislatieOpen, setLegistatieOpen] = useState(false);
 
@@ -276,6 +278,9 @@ export default function HierarchyTree() {
             </Button>
             <Button size="sm" variant="outline" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
               <Plus className="w-4 h-4 mr-1.5" />Unitate
+            </Button>
+            <Button size="sm" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
+              <FileSpreadsheet className="w-4 h-4 mr-1.5" />Import Excel
             </Button>
           </div>
         </div>
@@ -459,6 +464,8 @@ export default function HierarchyTree() {
         buildings={buildings}
         staircases={staircases}
       />
+
+      <ExcelImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

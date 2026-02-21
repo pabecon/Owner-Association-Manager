@@ -80,6 +80,15 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 ### Reference Lists (17 tables under "Liste Generale")
 Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB table, API routes, and a generic UI page.
 
+## Excel Import (Import Asociatie din Excel)
+- **Upload**: .xlsx, .xls, .csv files up to 10MB
+- **Expected columns**: Tip (Apartament/Box/Parking), Bloc*, Scara, Etaj, Nr, Camere, Suprafata, Nr. Camera, Suprafata Camera
+- **Auto-detection**: Headers are matched flexibly (case-insensitive, multiple aliases)
+- **Process**: Creates association -> buildings -> staircases -> units with rooms from Excel rows
+- **UI**: 4-step wizard dialog (Upload -> Preview -> Config -> Done) accessible from "Import Excel" button on Infografie page
+- **API**: POST /api/import-excel/preview (preview), POST /api/import-excel (import), both require admin role
+- **Component**: `client/src/components/excel-import-dialog.tsx`
+
 ## API Routes (all prefixed with /api, auth bypassed)
 - GET /api/me/roles - Current user role info with permissions
 - GET/POST /api/federations, DELETE /api/federations/:id

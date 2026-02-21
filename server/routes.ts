@@ -850,6 +850,215 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  app.post("/api/import-excel", ...auth, requireRole("admin") as RequestHandler, async (req, res) => {
+    try {
+      const multer = (await import("multer")).default;
+      const XLSX = await import("xlsx");
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+      upload.single("file")(req, res, async (err: any) => {
+        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+
+        const associationName = req.body.associationName;
+        if (!associationName) return res.status(400).json({ message: "Numele asociatiei este obligatoriu" });
+
+        try {
+          const workbook = XLSX.read(file.buffer, { type: "buffer" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          if (rows.length === 0) return res.status(400).json({ message: "Fisierul Excel este gol" });
+
+          const headers = Object.keys(rows[0]);
+          const findHeader = (candidates: string[]) =>
+            headers.find(h => candidates.some(c => h.toLowerCase().trim().includes(c.toLowerCase())));
+
+          const tipCol = findHeader(["tip", "type", "tip imobil", "tip unitate"]);
+          const blocCol = findHeader(["bloc", "block", "building", "imobil", "cladire"]);
+          const scaraCol = findHeader(["scara", "staircase", "intrare", "tronson"]);
+          const etajCol = findHeader(["etaj", "floor", "nivel", "planta"]);
+          const nrCol = findHeader(["numar", "nr", "number", "apartament", "unitate", "nr."]);
+          const camereCol = findHeader(["camere", "rooms", "nr camere", "nr. camere"]);
+          const suprafataCol = findHeader(["suprafata", "supraf", "surface", "mp", "suprafata utila", "suprafata totala"]);
+
+          if (!blocCol) return res.status(400).json({ message: "Nu s-a gasit coloana pentru Bloc. Verificati headerele Excel.", headers });
+
+          const typeMap: Record<string, string> = {
+            "apartament": "apartment", "apartment": "apartment", "apt": "apartment", "ap": "apartment",
+            "box": "box", "boxa": "box", "depozit": "box", "magazie": "box",
+            "parking": "parking", "parcare": "parking", "loc parcare": "parking", "par": "parking", "garaj": "parking",
+            "comercial": "apartment", "espacio comercial": "apartment", "spatiu comercial": "apartment",
+          };
+
+          const association = await storage.createAssociation({
+            name: associationName,
+            cui: req.body.cui || undefined,
+            address: req.body.address || undefined,
+            federationId: req.body.federationId || undefined,
+          });
+
+          const buildingMap = new Map<string, any>();
+          const staircaseMap = new Map<string, any>();
+          let unitCount = 0;
+          const roomRows: { apartmentId: string; rooms: { name: string; surface: string }[] }[] = [];
+
+          for (const row of rows) {
+            const blocName = String(row[blocCol] || "").trim();
+            if (!blocName) continue;
+
+            const scaraName = scaraCol ? String(row[scaraCol] || "").trim() : "Scara 1";
+            const etaj = etajCol ? parseInt(String(row[etajCol] || "0")) || 0 : 0;
+            const tip = tipCol ? String(row[tipCol] || "").trim().toLowerCase() : "apartament";
+            const unitType = typeMap[tip] || "apartment";
+            const unitNumber = nrCol ? String(row[nrCol] || "").trim() : String(unitCount + 1);
+            const nrCamere = camereCol ? parseInt(String(row[camereCol] || "0")) || 0 : 0;
+            const suprafata = suprafataCol ? String(row[suprafataCol] || "").trim() : "";
+
+            if (!buildingMap.has(blocName)) {
+              const building = await storage.createBuilding({
+                name: blocName,
+                address: blocName,
+                associationId: association.id,
+              });
+              buildingMap.set(blocName, building);
+            }
+            const building = buildingMap.get(blocName);
+
+            const staircaseKey = `${blocName}|${scaraName || "Scara 1"}`;
+            if (!staircaseMap.has(staircaseKey)) {
+              const staircase = await storage.createStaircase({
+                name: scaraName || "Scara 1",
+                buildingId: building.id,
+              });
+              staircaseMap.set(staircaseKey, staircase);
+            }
+            const staircase = staircaseMap.get(staircaseKey);
+
+            const apartment = await storage.createApartment({
+              staircaseId: staircase.id,
+              unitType,
+              number: unitNumber || String(unitCount + 1),
+              floor: etaj,
+              surface: suprafata || undefined,
+              rooms: nrCamere || undefined,
+            });
+
+            const roomCols = headers.filter(h => {
+              const lower = h.toLowerCase();
+              return lower.includes("camera") || lower.includes("room") || lower.includes("suprafata camera");
+            });
+
+            const roomNameCols = headers.filter(h => {
+              const lower = h.toLowerCase();
+              return (lower.includes("nr") && lower.includes("camera")) || lower.includes("nr. camera") || lower.includes("nombre camera");
+            });
+            const roomSurfaceCols = headers.filter(h => {
+              const lower = h.toLowerCase();
+              return (lower.includes("suprafata") && lower.includes("camera")) || lower.includes("sup. camera");
+            });
+
+            if (roomNameCols.length > 0) {
+              for (let ri = 0; ri < roomNameCols.length; ri++) {
+                const roomName = String(row[roomNameCols[ri]] || "").trim();
+                const roomSurface = ri < roomSurfaceCols.length ? String(row[roomSurfaceCols[ri]] || "").trim() : "";
+                if (roomName) {
+                  await storage.createUnitRoom({
+                    apartmentId: apartment.id,
+                    name: roomName,
+                    surface: roomSurface || undefined,
+                    sortOrder: ri,
+                  });
+                }
+              }
+            }
+
+            unitCount++;
+          }
+
+          res.json({
+            message: "Import finalizat cu succes",
+            associationId: association.id,
+            associationName: association.name,
+            stats: {
+              buildings: buildingMap.size,
+              staircases: staircaseMap.size,
+              units: unitCount,
+            },
+          });
+        } catch (parseError: any) {
+          console.error("Excel parse error:", parseError);
+          res.status(400).json({ message: `Eroare la procesarea fisierului: ${parseError.message}` });
+        }
+      });
+    } catch (error: any) {
+      console.error("Import error:", error);
+      res.status(500).json({ message: "Eroare interna la import" });
+    }
+  });
+
+  app.post("/api/import-excel/preview", ...auth, requireRole("admin") as RequestHandler, async (req, res) => {
+    try {
+      const multer = (await import("multer")).default;
+      const XLSX = await import("xlsx");
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+      upload.single("file")(req, res, async (err: any) => {
+        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+
+        try {
+          const workbook = XLSX.read(file.buffer, { type: "buffer" });
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+          const headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+          const preview = rows.slice(0, 20);
+
+          const findHeader = (candidates: string[]) =>
+            headers.find(h => candidates.some(c => h.toLowerCase().trim().includes(c.toLowerCase())));
+
+          const blocCol = findHeader(["bloc", "block", "building", "imobil", "cladire"]);
+          const scaraCol = findHeader(["scara", "staircase", "intrare", "tronson"]);
+          const tipCol = findHeader(["tip", "type", "tip imobil", "tip unitate"]);
+
+          const buildings = new Set<string>();
+          const staircases = new Set<string>();
+          rows.forEach(row => {
+            if (blocCol && row[blocCol]) buildings.add(String(row[blocCol]).trim());
+            if (scaraCol && row[scaraCol]) staircases.add(String(row[scaraCol]).trim());
+          });
+
+          res.json({
+            headers,
+            totalRows: rows.length,
+            preview,
+            detectedColumns: {
+              tip: tipCol || null,
+              bloc: blocCol || null,
+              scara: scaraCol || null,
+            },
+            summary: {
+              buildings: buildings.size,
+              staircases: staircases.size,
+              units: rows.length,
+            },
+          });
+        } catch (parseError: any) {
+          res.status(400).json({ message: `Eroare la procesarea fisierului: ${parseError.message}` });
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
   return httpServer;
 }
 
