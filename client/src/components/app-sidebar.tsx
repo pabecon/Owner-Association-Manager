@@ -14,8 +14,9 @@ import {
 import {
   Building2, LayoutDashboard, Home, Receipt, CreditCard, Search,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
-  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale
+  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText
 } from "lucide-react";
+import { GDPR_DOCUMENTS } from "@/lib/gdpr-data";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -56,6 +57,7 @@ export function AppSidebar() {
   const [adminOpen, setAdminOpen] = useState(() => adminPaths.some(p => location.startsWith(p)));
   const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
   const [legislatieOpen, setLegistatieOpen] = useState(() => location.startsWith("/legislatie"));
+  const [gdprOpen, setGdprOpen] = useState(() => location.startsWith("/gdpr"));
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -266,6 +268,40 @@ export function AppSidebar() {
                         <Link href={url} data-testid={`link-nav-lista-${config.key}`}>
                           <List className="w-4 h-4" />
                           <span className="text-xs">{config.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+
+        <SidebarGroup className="py-0.5">
+          <SidebarGroupLabel
+            className="cursor-pointer select-none flex items-center justify-between gap-2 h-6 text-xs"
+            onClick={() => setGdprOpen(!gdprOpen)}
+            data-testid="button-toggle-gdpr"
+          >
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              GDPR
+            </span>
+            {gdprOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </SidebarGroupLabel>
+          {gdprOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {GDPR_DOCUMENTS.map((doc) => {
+                  const url = `/gdpr/${doc.id}`;
+                  const isActive = location === url;
+                  return (
+                    <SidebarMenuItem key={doc.id}>
+                      <SidebarMenuButton asChild data-active={isActive} className={`h-7 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
+                        <Link href={url} data-testid={`link-nav-gdpr-${doc.id}`}>
+                          <FileText className="w-3.5 h-3.5" />
+                          <span className="truncate">{doc.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

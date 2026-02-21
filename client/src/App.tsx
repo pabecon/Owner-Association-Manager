@@ -24,6 +24,7 @@ import UsersPage from "@/pages/users";
 import ListaGenerala from "@/pages/lista-generala";
 import PermissionsMatrix from "@/pages/permissions-matrix";
 import Legislatie from "@/pages/legislatie";
+import Gdpr from "@/pages/gdpr";
 
 function Router() {
   return (
@@ -44,6 +45,8 @@ function Router() {
       <Route path="/legislatie/:lawId" component={Legislatie} />
       <Route path="/legislatie" component={Legislatie} />
       <Route path="/liste-generale/:listKey" component={ListaGenerala} />
+      <Route path="/gdpr/:docId" component={Gdpr} />
+      <Route path="/gdpr" component={Gdpr} />
       <Route component={NotFound} />
     </Switch>
   );
