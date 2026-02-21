@@ -50,8 +50,8 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 ## Key Features
 - **Infografie (Home page `/`)**: THE main page. Tree view showing complete hierarchy: Federations -> Associations -> Buildings -> Staircases -> Floors -> Units. Expandable/collapsible nodes with summary stats. CRUD buttons to create entities at any level. Each association has a "Deschide" button to open its portal.
 - **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Imobiliar (buildings/staircases/floors/units drill-down), Financiar (expenses, payments, funds), Contact (president/admin info), and Anunturi. Stats summary at top. Back button returns to Infografie.
-- **Sidebar**: Shows "Infografie" link, collapsible "Liste Generale" (with all 18 reference list sub-items including Tipuri Camere), collapsible "Legislatie" (with all law sub-items), collapsible "Juridic" (with Contracte sub-item), and collapsible "Utilizatori" (with Gestionare, Matrice Permisiuni, Roluri sub-items). Sections auto-expand when child routes are active and can be toggled closed/open.
-- **Unit Detail Page** (`/unitate/:id`): Dedicated page for each unit (apartment/box/parking). Sidebar layout with tabs: Informatii, Camere, Contoare, Documente, Plati, Anunturi. Shows general info, owner details, location hierarchy, rooms, and meters. Accessible via "Deschide" button on units in both Infografie tree and Association portal.
+- **Sidebar**: Shows "Infografie" link, collapsible "Liste Generale" (with all 18 reference list sub-items including Tipuri Camere), collapsible "Legislatie" (with all law sub-items), collapsible "Juridic" (with Contracte sub-item), and collapsible "Matrice Utilizatoare" (with Roluri, Matrice Permisiuni sub-items). Sections auto-expand when child routes are active and can be toggled closed/open.
+- **Unit Detail Page** (`/unitate/:id`): Dedicated page for each unit (apartment/box/parking). Opens with its OWN layout (no super admin sidebar). Has its own sidebar with tabs: Informatii, Camere, Contoare, Documente, Plati, Anunturi. Shows general info, owner details, location hierarchy, rooms, and meters. Accessible via "Deschide" button on units in both Infografie tree and Association portal.
 - **Unit Types**: apartment (default), box (storage), parking. Shown in tree and portal.
 - **Negative Floors**: Floors can be negative (e.g., -1 = Subsol 1, -2 = Subsol 2) for basements/garages.
 
@@ -63,7 +63,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
   - `manager` (3): Administrator - Federation/association administrator. Manages buildings, staircases, units.
   - `owner` (2): Proprietar - Property owner. Can view own data and create tenants.
   - `tenant` (1): Chirias - Read-only access to own unit data.
-- **Permissions Matrix**: Visual page at /permissions-matrix showing all roles vs all permissions in a table with 4 access levels (Total/Limitat/Propriu/Interzis). Defined in PERMISSION_MATRIX in shared/schema.ts.
+- **Permissions Matrix**: Editable page at /matrice-permisiuni showing all roles vs all permissions in a table with 4 access levels (Total/Limitat/Propriu/Interzis). Click cells to cycle access levels. Edit roles via card buttons. Add new custom roles. Save changes via PUT /api/settings/permission-matrix and /api/settings/custom-roles. Base data from PERMISSION_MATRIX in shared/schema.ts, overrides stored in app_settings table.
 - **Scope**: Roles are scoped to federation, building, or apartment level
 - **Permissions**: Computed from roles in middleware, checked via `requirePermission()` middleware
 

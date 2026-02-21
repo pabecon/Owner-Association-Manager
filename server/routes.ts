@@ -12,7 +12,7 @@ import {
   insertContractSchema, insertContractTemplateSchema,
   ROLE_HIERARCHY, type UserRole,
 } from "@shared/schema";
-import { users } from "@shared/schema";
+import { users, appSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray } from "drizzle-orm";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -1070,6 +1070,24 @@ export async function registerRoutes(
     } catch (error: any) {
       res.status(500).json({ message: "Eroare interna" });
     }
+  });
+
+  // App Settings (permission matrix overrides)
+  app.get("/api/settings/:key", ...auth, async (req: AuthenticatedRequest, res) => {
+    const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, req.params.key));
+    if (!setting) return res.json(null);
+    try {
+      res.json(JSON.parse(setting.value));
+    } catch {
+      res.json(setting.value);
+    }
+  });
+
+  app.put("/api/settings/:key", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    const value = JSON.stringify(req.body.value);
+    await db.insert(appSettings).values({ key: req.params.key, value, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: new Date() } });
+    res.json({ success: true });
   });
 
   // Contracts

@@ -413,6 +413,12 @@ export const PERMISSION_MATRIX: PermissionMatrixEntry[] = [
   { key: "view_permissions_matrix", label: "Vizualizare matrice permisiuni", category: "reports", categoryLabel: "Rapoarte / Vizualizare", roles: { super_admin: "full", admin: "full", manager: "none", owner: "none", tenant: "none" } },
 ];
 
+export const appSettings = pgTable("app_settings", {
+  key: varchar("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   super_admin: 5,
   admin: 4,

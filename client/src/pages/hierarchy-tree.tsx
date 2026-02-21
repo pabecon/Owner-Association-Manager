@@ -4,20 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, List, Scale, FileSpreadsheet } from "lucide-react";
+import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
 import { ExcelImportDialog } from "@/components/excel-import-dialog";
-import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
-
-interface ListConfig {
-  key: string;
-  label: string;
-}
-
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
@@ -141,12 +134,8 @@ export default function HierarchyTree() {
   const { data: buildings, isLoading: lb } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
   const { data: staircases, isLoading: ls } = useQuery<Staircase[]>({ queryKey: ["/api/staircases"] });
   const { data: apartments, isLoading: lap } = useQuery<Apartment[]>({ queryKey: ["/api/apartments"] });
-  const { data: listConfigs } = useQuery<ListConfig[]>({ queryKey: ["/api/liste-config"] });
-
   const [addDialog, setAddDialog] = useState<AddDialogState>({ open: false, level: "federation" });
   const [importOpen, setImportOpen] = useState(false);
-  const [listsOpen, setListsOpen] = useState(false);
-  const [legislatieOpen, setLegistatieOpen] = useState(false);
 
   const isLoading = lf || la || lb || ls || lap;
 
@@ -378,79 +367,6 @@ export default function HierarchyTree() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <Card>
-              <Collapsible open={listsOpen} onOpenChange={setListsOpen}>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
-                    <CardTitle className="text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <List className="w-4 h-4 text-primary" />
-                        Liste Generale
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px]">{listConfigs?.length || 0} liste</Badge>
-                        {listsOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {(listConfigs || []).map(config => (
-                        <Link key={config.key} href={`/liste-generale/${config.key}`}>
-                          <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-xs" data-testid={`link-lista-${config.key}`}>
-                            <List className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate">{config.label}</span>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-
-            <Card>
-              <Collapsible open={legislatieOpen} onOpenChange={setLegistatieOpen}>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t-lg">
-                    <CardTitle className="text-sm flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Scale className="w-4 h-4 text-primary" />
-                        Legislatie
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px]">{LEGISLATION_ITEMS.length} legi</Badge>
-                        {legislatieOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent className="pt-0">
-                    <div className="space-y-1">
-                      {LEGISLATION_ITEMS.map(law => (
-                        <Link key={law.id} href={`/legislatie/${law.id}`}>
-                          <div className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-xs" data-testid={`link-law-${law.id}`}>
-                            <Scale className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span className="flex-1 truncate">{law.shortTitle}</span>
-                            <Badge
-                              variant={law.status === "in_vigoare" ? "default" : "secondary"}
-                              className="text-[9px] px-1 py-0 shrink-0"
-                            >
-                              {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
-                            </Badge>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Collapsible>
-            </Card>
-          </div>
         </div>
       </div>
 

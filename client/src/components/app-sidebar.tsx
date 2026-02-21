@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, UserCog } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +56,7 @@ export function AppSidebar() {
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte");
-  const isUsersSection = location === "/utilizatori" || location === "/matrice-permisiuni" || location === "/roluri";
+  const isUsersSection = location === "/matrice-permisiuni" || location === "/roluri";
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
@@ -187,17 +187,17 @@ export function AppSidebar() {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className={`h-8 text-sm ${isUsersSection ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-utilizatori">
                       <Users className="w-4 h-4" />
-                      <span className="flex-1">Utilizatori</span>
+                      <span className="flex-1">Matrice Utilizatoare</span>
                       {isUsersExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild data-active={location === "/utilizatori"} className={location === "/utilizatori" ? "bg-sidebar-accent" : ""}>
-                          <Link href="/utilizatori" data-testid="link-nav-users-list">
-                            <UserCog className="w-3.5 h-3.5" />
-                            <span>Gestionare</span>
+                        <SidebarMenuSubButton asChild data-active={location === "/roluri"} className={location === "/roluri" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/roluri" data-testid="link-nav-roluri">
+                            <Shield className="w-3.5 h-3.5" />
+                            <span>Roluri</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
@@ -206,14 +206,6 @@ export function AppSidebar() {
                           <Link href="/matrice-permisiuni" data-testid="link-nav-permissions-matrix">
                             <Grid3X3 className="w-3.5 h-3.5" />
                             <span>Matrice Permisiuni</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild data-active={location === "/roluri"} className={location === "/roluri" ? "bg-sidebar-accent" : ""}>
-                          <Link href="/roluri" data-testid="link-nav-roluri">
-                            <Shield className="w-3.5 h-3.5" />
-                            <span>Roluri</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

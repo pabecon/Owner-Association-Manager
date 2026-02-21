@@ -26,7 +26,6 @@ function SuperAdminRouter() {
       <Route path="/liste-generale/:listKey" component={ListaGenerala} />
       <Route path="/legislatie/:lawId" component={Legislatie} />
       <Route path="/legislatie" component={Legislatie} />
-      <Route path="/unitate/:id" component={UnitDetail} />
       <Route path="/utilizatori" component={UsersPage} />
       <Route path="/matrice-permisiuni" component={PermissionsMatrix} />
       <Route path="/roluri" component={RoluriPage} />
@@ -63,10 +62,28 @@ function SuperAdminLayout() {
   );
 }
 
+function UnitLayout() {
+  return (
+    <div className="flex flex-col h-screen w-full">
+      <header className="flex items-center justify-between gap-2 p-2 border-b sticky top-0 z-50 bg-background">
+        <div />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
+      </header>
+      <main className="flex-1 overflow-hidden">
+        <UnitDetail />
+      </main>
+    </div>
+  );
+}
+
 function AppRouter() {
   return (
     <Switch>
       <Route path="/asociatie/:id" component={AssociationPortal} />
+      <Route path="/unitate/:id" component={UnitLayout} />
       <Route>
         <SuperAdminLayout />
       </Route>
