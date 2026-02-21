@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { LAW_114_1996_CONTENT, type LawSection } from "@/lib/law-content-114-1996";
+import { LAW_10_1995_CONTENT } from "@/lib/law-content-10-1995";
 import { Scale, ExternalLink, FileText, BookOpen, ListOrdered, Search, X, ChevronRight } from "lucide-react";
 
 const LAW_CONTENT_MAP: Record<string, LawSection[]> = {
   "legea-114-1996": LAW_114_1996_CONTENT,
+  "legea-10-1995": LAW_10_1995_CONTENT,
 };
 
 function parseChapterInfo(title: string) {

@@ -34,6 +34,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Search, Trash2, List, Pencil } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format, parse } from "date-fns";
 
 interface ListColumn {
   key: string;
@@ -230,30 +232,42 @@ export default function ListaGenerala() {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                  {columns.map((col) => (
-                    <FormField
-                      key={col.key}
-                      control={form.control}
-                      name={col.key}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {col.label}
-                            {col.required && <span className="text-destructive ml-1">*</span>}
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value || ""}
-                              placeholder={col.label}
-                              data-testid={`input-field-${col.key}`}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
+                  {columns.map((col) => {
+                    const isDateField = col.key.toLowerCase().startsWith("data") || col.key === "expiraConsimtamant" || col.key === "ultimaActualizare";
+                    return (
+                      <FormField
+                        key={col.key}
+                        control={form.control}
+                        name={col.key}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {col.label}
+                              {col.required && <span className="text-destructive ml-1">*</span>}
+                            </FormLabel>
+                            <FormControl>
+                              {isDateField ? (
+                                <DatePicker
+                                  value={field.value || ""}
+                                  onChange={field.onChange}
+                                  placeholder={col.label}
+                                  data-testid={`input-field-${col.key}`}
+                                />
+                              ) : (
+                                <Input
+                                  {...field}
+                                  value={field.value || ""}
+                                  placeholder={col.label}
+                                  data-testid={`input-field-${col.key}`}
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  })}
                   <Button
                     type="submit"
                     className="w-full"
@@ -290,30 +304,42 @@ export default function ListaGenerala() {
           </DialogHeader>
           <Form {...editForm}>
             <form onSubmit={editForm.handleSubmit(handleEditSubmit)} className="space-y-4">
-              {columns.map((col) => (
-                <FormField
-                  key={col.key}
-                  control={editForm.control}
-                  name={col.key}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {col.label}
-                        {col.required && <span className="text-destructive ml-1">*</span>}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value || ""}
-                          placeholder={col.label}
-                          data-testid={`input-edit-${col.key}`}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
+              {columns.map((col) => {
+                const isDateField = col.key.toLowerCase().startsWith("data") || col.key === "expiraConsimtamant" || col.key === "ultimaActualizare";
+                return (
+                  <FormField
+                    key={col.key}
+                    control={editForm.control}
+                    name={col.key}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {col.label}
+                          {col.required && <span className="text-destructive ml-1">*</span>}
+                        </FormLabel>
+                        <FormControl>
+                          {isDateField ? (
+                            <DatePicker
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              placeholder={col.label}
+                              data-testid={`input-edit-${col.key}`}
+                            />
+                          ) : (
+                            <Input
+                              {...field}
+                              value={field.value || ""}
+                              placeholder={col.label}
+                              data-testid={`input-edit-${col.key}`}
+                            />
+                          )}
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
               <Button
                 type="submit"
                 className="w-full"
@@ -399,6 +425,15 @@ export default function ListaGenerala() {
                         {columns.map((col) => {
                           const val = item[col.key];
                           let display = val || "";
+                          const isDateCol = col.key.toLowerCase().startsWith("data") || col.key === "expiraConsimtamant" || col.key === "ultimaActualizare";
+                          if (isDateCol && val && typeof val === "string") {
+                            try {
+                              const parsed = parse(val, "yyyy-MM-dd", new Date());
+                              if (!isNaN(parsed.getTime())) {
+                                display = format(parsed, "dd.MM.yyyy");
+                              }
+                            } catch {}
+                          }
                           if ((col.key === "cotaDeTva" || col.key === "cota_de_tva") && val) {
                             const num = parseFloat(val);
                             display = !isNaN(num) ? (num < 1 ? `${(num * 100).toFixed(0)}%` : `${num}%`) : val;
