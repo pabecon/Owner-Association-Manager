@@ -1,30 +1,20 @@
-import { useState, type ComponentType } from "react";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import {
-  Building2, LayoutDashboard, Home, Receipt, CreditCard, Search, Wallet,
-  Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
-  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText, Gavel, FolderOpen, ClipboardList
-} from "lucide-react";
-import { GDPR_DOCUMENTS } from "@/lib/gdpr-data";
-import { JURIDIC_CATEGORIES } from "@/lib/juridic-data";
-import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
+import { Building2, GitBranch, Shield } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import { ROLE_LABELS, type UserRole } from "@shared/schema";
 
 interface RoleInfo {
@@ -33,121 +23,17 @@ interface RoleInfo {
   roles: { role: string }[];
 }
 
-interface ListConfig {
-  key: string;
-  label: string;
-}
-
-interface NavItem {
-  title: string;
-  url: string;
-  icon: ComponentType<{ className?: string }>;
-  visible: boolean;
-}
-
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
 
-  const imobiliarPaths = ["/explorer", "/hierarchy-tree", "/federations", "/associations", "/buildings", "/staircases", "/apartments"];
-  const financiarPaths = ["/expenses", "/payments", "/fonduri"];
-  const adminPaths = ["/announcements", "/users", "/permissions-matrix"];
-
-  const [imobiliarOpen, setImobiliarOpen] = useState(() => imobiliarPaths.some(p => location.startsWith(p)));
-  const [financiarOpen, setFinanciarOpen] = useState(() => financiarPaths.some(p => location.startsWith(p)));
-  const [adminOpen, setAdminOpen] = useState(() => adminPaths.some(p => location.startsWith(p)));
-  const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
-  const [legislatieOpen, setLegistatieOpen] = useState(() => location.startsWith("/legislatie"));
-  const [gdprOpen, setGdprOpen] = useState(() => location.startsWith("/gdpr"));
-  const [juridicOpen, setJuridicOpen] = useState(() => location.startsWith("/juridic"));
-  const [juridicSubOpen, setJuridicSubOpen] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    JURIDIC_CATEGORIES.forEach(cat => {
-      initial[cat.id] = location.startsWith(`/juridic/${cat.id}`);
-    });
-    return initial;
-  });
-
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
   });
-  const { data: listConfigs } = useQuery<ListConfig[]>({
-    queryKey: ["/api/liste-config"],
-  });
 
-  const perms = roleInfo?.permissions || {};
   const highestRole = roleInfo?.highestRole;
 
-  const imobiliarItems: NavItem[] = [
-    { title: "Explorator", url: "/explorer", icon: FolderTree, visible: true },
-    { title: "Infografie", url: "/hierarchy-tree", icon: GitBranch, visible: true },
-    { title: "Federatii", url: "/federations", icon: Network, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
-    { title: "Asociatii", url: "/associations", icon: Users, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
-    { title: "Blocuri", url: "/buildings", icon: Building2, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
-    { title: "Scari", url: "/staircases", icon: ArrowUpDown, visible: !!perms.viewAllBuildings || !!perms.manageBuildings },
-    { title: "Unitati", url: "/apartments", icon: Home, visible: !!perms.viewAllApartments || !!perms.viewOwnApartment },
-  ];
-
-  const financiarItems: NavItem[] = [
-    { title: "Cheltuieli", url: "/expenses", icon: Receipt, visible: !!perms.viewAllExpenses || !!perms.viewOwnExpenses },
-    { title: "Plati", url: "/payments", icon: CreditCard, visible: !!perms.viewAllPayments || !!perms.viewOwnPayments },
-    { title: "Fonduri", url: "/fonduri", icon: Wallet, visible: !!perms.viewAllExpenses || !!perms.manageExpenses },
-  ];
-
-  const adminItems: NavItem[] = [
-    { title: "Anunturi", url: "/announcements", icon: Megaphone, visible: !!perms.viewAllAnnouncements || !!perms.viewOwnAnnouncements },
-    { title: "Utilizatori", url: "/users", icon: Users, visible: !!perms.viewUserManagement },
-    { title: "Matrice Permisiuni", url: "/permissions-matrix", icon: Table2, visible: !!perms.viewUserManagement || !!perms.manageUsers },
-  ];
-
-  const renderMenuItem = (item: NavItem) => {
-    const isActive = location === item.url || (item.url !== "/" && location.startsWith(item.url));
-    return (
-      <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild data-active={isActive} className={`h-7 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
-          <Link href={item.url} data-testid={`link-nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
-            <item.icon className="w-3.5 h-3.5" />
-            <span>{item.title}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  };
-
-  const renderCollapsibleGroup = (
-    label: string,
-    icon: ComponentType<{ className?: string }>,
-    items: NavItem[],
-    isOpen: boolean,
-    toggle: () => void,
-    testId: string,
-  ) => {
-    const visibleItems = items.filter(i => i.visible);
-    if (visibleItems.length === 0) return null;
-    const Icon = icon;
-    return (
-      <SidebarGroup className="py-0.5">
-        <SidebarGroupLabel
-          className="cursor-pointer select-none flex items-center justify-between gap-1.5 h-6 text-xs"
-          onClick={toggle}
-          data-testid={testId}
-        >
-          <span className="flex items-center gap-1">
-            <Icon className="w-3 h-3" />
-            {label}
-          </span>
-          {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-        </SidebarGroupLabel>
-        {isOpen && (
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleItems.map(renderMenuItem)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        )}
-      </SidebarGroup>
-    );
-  };
+  const isActive = location === "/";
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -173,205 +59,16 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderMenuItem({ title: "Panou Principal", url: "/", icon: LayoutDashboard, visible: true })}
-              {renderMenuItem({ title: "Administrație", url: "/administratie", icon: ClipboardList, visible: true })}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild data-active={isActive} className={`h-8 text-sm ${isActive ? "bg-sidebar-accent" : ""}`}>
+                  <Link href="/" data-testid="link-nav-infografie">
+                    <GitBranch className="w-4 h-4" />
+                    <span>Infografie</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>
-
-        {renderCollapsibleGroup(
-          "Management Imobiliar",
-          Landmark,
-          imobiliarItems,
-          imobiliarOpen,
-          () => setImobiliarOpen(!imobiliarOpen),
-          "button-toggle-imobiliar",
-        )}
-
-        {renderCollapsibleGroup(
-          "Financiar",
-          Receipt,
-          financiarItems,
-          financiarOpen,
-          () => setFinanciarOpen(!financiarOpen),
-          "button-toggle-financiar",
-        )}
-
-        {renderCollapsibleGroup(
-          "Administrare",
-          Shield,
-          adminItems,
-          adminOpen,
-          () => setAdminOpen(!adminOpen),
-          "button-toggle-administrare",
-        )}
-
-        <SidebarGroup>
-          <SidebarGroupLabel
-            className="cursor-pointer select-none flex items-center justify-between gap-2"
-            onClick={() => setJuridicOpen(!juridicOpen)}
-            data-testid="button-toggle-juridic"
-          >
-            <span className="flex items-center gap-1.5">
-              <Gavel className="w-3.5 h-3.5" />
-              Juridic
-            </span>
-            {juridicOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </SidebarGroupLabel>
-          {juridicOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {JURIDIC_CATEGORIES.map((cat) => (
-                  <SidebarMenuItem key={cat.id}>
-                    <SidebarMenuButton
-                      onClick={() => setJuridicSubOpen(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
-                      className="h-7 text-xs cursor-pointer"
-                      data-testid={`button-toggle-juridic-${cat.id}`}
-                    >
-                      <FolderOpen className="w-3.5 h-3.5" />
-                      <span className="flex-1 truncate">{cat.title}</span>
-                      {juridicSubOpen[cat.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                    </SidebarMenuButton>
-                    {juridicSubOpen[cat.id] && (
-                      <SidebarMenu className="ml-3 mt-0.5">
-                        {cat.documents.map((doc) => {
-                          const url = `/juridic/${cat.id}/${doc.id}`;
-                          const isActive = location === url;
-                          return (
-                            <SidebarMenuItem key={doc.id}>
-                              <SidebarMenuButton asChild data-active={isActive} className={`h-6 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
-                                <Link href={url} data-testid={`link-nav-juridic-${doc.id}`}>
-                                  <FileText className="w-3 h-3" />
-                                  <span className="truncate">{doc.title}</span>
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    )}
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel
-            className="cursor-pointer select-none flex items-center justify-between gap-2"
-            onClick={() => setListsOpen(!listsOpen)}
-            data-testid="button-toggle-liste-generale"
-          >
-            <span className="flex items-center gap-1.5">
-              <List className="w-3.5 h-3.5" />
-              Liste Generale
-            </span>
-            {listsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </SidebarGroupLabel>
-          {listsOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {(listConfigs || []).map((config) => {
-                  const url = `/liste-generale/${config.key}`;
-                  const isActive = location === url;
-                  return (
-                    <SidebarMenuItem key={config.key}>
-                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
-                        <Link href={url} data-testid={`link-nav-lista-${config.key}`}>
-                          <List className="w-4 h-4" />
-                          <span className="text-xs">{config.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel
-            className="cursor-pointer select-none flex items-center justify-between gap-2"
-            onClick={() => setLegistatieOpen(!legislatieOpen)}
-            data-testid="button-toggle-legislatie"
-          >
-            <span className="flex items-center gap-1.5">
-              <Scale className="w-3.5 h-3.5" />
-              Legislatie
-            </span>
-            {legislatieOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </SidebarGroupLabel>
-          {legislatieOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild data-active={location === "/legislatie"} className={location === "/legislatie" ? "bg-sidebar-accent" : ""}>
-                    <Link href="/legislatie" data-testid="link-nav-legislatie-search">
-                      <Search className="w-4 h-4 shrink-0" />
-                      <span className="text-xs flex-1 truncate">Cautare in legi</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {LEGISLATION_ITEMS.map((law) => {
-                  const url = `/legislatie/${law.id}`;
-                  const isActive = location === url;
-                  return (
-                    <SidebarMenuItem key={law.id}>
-                      <SidebarMenuButton asChild data-active={isActive} className={isActive ? "bg-sidebar-accent" : ""}>
-                        <Link href={url} data-testid={`link-nav-law-${law.id}`}>
-                          <Scale className="w-4 h-4 shrink-0" />
-                          <span className="text-xs flex-1 truncate">{law.shortTitle}</span>
-                          <Badge
-                            variant={law.status === "in_vigoare" ? "default" : "secondary"}
-                            className="text-[9px] px-1 py-0 shrink-0 no-default-hover-elevate no-default-active-elevate"
-                            data-testid={`badge-nav-law-${law.id}`}
-                          >
-                            {law.status === "in_vigoare" ? "Vigoare" : "Abrogata"}
-                          </Badge>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
-        </SidebarGroup>
-
-        <SidebarGroup className="py-0.5">
-          <SidebarGroupLabel
-            className="cursor-pointer select-none flex items-center justify-between gap-2 h-6 text-xs"
-            onClick={() => setGdprOpen(!gdprOpen)}
-            data-testid="button-toggle-gdpr"
-          >
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" />
-              GDPR
-            </span>
-            {gdprOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          </SidebarGroupLabel>
-          {gdprOpen && (
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {GDPR_DOCUMENTS.map((doc) => {
-                  const url = `/gdpr/${doc.id}`;
-                  const isActive = location === url;
-                  return (
-                    <SidebarMenuItem key={doc.id}>
-                      <SidebarMenuButton asChild data-active={isActive} className={`h-7 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
-                        <Link href={url} data-testid={`link-nav-gdpr-${doc.id}`}>
-                          <FileText className="w-3.5 h-3.5" />
-                          <span className="truncate">{doc.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          )}
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4">

@@ -11,7 +11,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - Dashboard, Explorer, HierarchyTree, Federations, Associations, Buildings, Staircases, Apartments, Expenses, Payments, Announcements, Users, ListaGenerala, PermissionsMatrix
+- `client/src/pages/` - HierarchyTree (home/infografie), AssociationPortal (per-association management)
 - `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
@@ -48,12 +48,10 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **API**: GET/POST/PATCH/DELETE /api/meters, GET/POST/DELETE /api/meter-readings with scope-based access control
 
 ## Key Features
-- **Super Admin Dashboard**: Overview of all federations and associations with hierarchy stats (buildings, staircases, units breakdown by type). Associations grouped by federation. Clickable cards navigate to association portal.
-- **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Buildings (with staircase/floor breakdown), Finance (expenses, payments, funds), Contact (president/admin info), and Announcements. Stats summary at top.
-- **Hierarchy Stats API** (`/api/hierarchy-stats`): SQL aggregation returning per-association counts for buildings, staircases, units by type, and max floors.
-- **Explorer (Explorator)**: Hierarchical drill-down navigation - click federation to see associations, click association to see buildings, etc. through all 6 levels including floors (implicit from unit floor numbers). Supports negative floors (basements).
-- **Infographic (Infografie)**: Tree view showing complete hierarchy structure as expandable/collapsible tree with summary stats.
-- **Unit Types**: Apartments support unitType field: apartment (default), box (storage), parking. Shown throughout explorer, tree view, and units list page.
+- **Infografie (Home page `/`)**: THE main page. Tree view showing complete hierarchy: Federations -> Associations -> Buildings -> Staircases -> Floors -> Units. Expandable/collapsible nodes with summary stats. CRUD buttons to create entities at any level. Each association has a "Deschide" button to open its portal.
+- **Association Portal** (`/asociatie/:id`): Dedicated management view scoped to a single association. Tabs for Imobiliar (buildings/staircases/floors/units drill-down), Financiar (expenses, payments, funds), Contact (president/admin info), and Anunturi. Stats summary at top. Back button returns to Infografie.
+- **Sidebar**: Minimal - only shows "Infografie" link. All other navigation removed.
+- **Unit Types**: apartment (default), box (storage), parking. Shown in tree and portal.
 - **Negative Floors**: Floors can be negative (e.g., -1 = Subsol 1, -2 = Subsol 2) for basements/garages.
 
 ## Authentication & Roles

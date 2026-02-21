@@ -9,53 +9,14 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import NotFound from "@/pages/not-found";
-import Dashboard from "@/pages/dashboard";
-import Explorer from "@/pages/explorer";
 import HierarchyTree from "@/pages/hierarchy-tree";
-import Federations from "@/pages/federations";
-import Associations from "@/pages/associations";
-import Buildings from "@/pages/buildings";
-import Staircases from "@/pages/staircases";
-import Apartments from "@/pages/apartments";
-import Expenses from "@/pages/expenses";
-import Payments from "@/pages/payments";
-import Announcements from "@/pages/announcements";
-import UsersPage from "@/pages/users";
-import ListaGenerala from "@/pages/lista-generala";
-import PermissionsMatrix from "@/pages/permissions-matrix";
-import Legislatie from "@/pages/legislatie";
-import Gdpr from "@/pages/gdpr";
-import Juridic from "@/pages/juridic";
-import Administratie from "@/pages/administratie";
-import Fonduri from "@/pages/fonduri";
 import AssociationPortal from "@/pages/association-portal";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={HierarchyTree} />
       <Route path="/asociatie/:id" component={AssociationPortal} />
-      <Route path="/administratie" component={Administratie} />
-      <Route path="/explorer" component={Explorer} />
-      <Route path="/hierarchy-tree" component={HierarchyTree} />
-      <Route path="/federations" component={Federations} />
-      <Route path="/associations" component={Associations} />
-      <Route path="/buildings" component={Buildings} />
-      <Route path="/staircases" component={Staircases} />
-      <Route path="/apartments" component={Apartments} />
-      <Route path="/expenses" component={Expenses} />
-      <Route path="/payments" component={Payments} />
-      <Route path="/fonduri" component={Fonduri} />
-      <Route path="/announcements" component={Announcements} />
-      <Route path="/users" component={UsersPage} />
-      <Route path="/permissions-matrix" component={PermissionsMatrix} />
-      <Route path="/legislatie/:lawId" component={Legislatie} />
-      <Route path="/legislatie" component={Legislatie} />
-      <Route path="/liste-generale/:listKey" component={ListaGenerala} />
-      <Route path="/gdpr/:docId" component={Gdpr} />
-      <Route path="/gdpr" component={Gdpr} />
-      <Route path="/juridic/:catId/:docId" component={Juridic} />
-      <Route path="/juridic" component={Juridic} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
@@ -26,9 +27,10 @@ interface TreeNodeProps {
   isLeaf?: boolean;
   subtitle?: string;
   onAdd?: () => void;
+  onPortal?: () => void;
 }
 
-function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", level, defaultOpen = false, isLeaf = false, subtitle, onAdd }: TreeNodeProps) {
+function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", level, defaultOpen = false, isLeaf = false, subtitle, onAdd, onPortal }: TreeNodeProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = !!children;
   const indentPx = level * 24;
@@ -52,6 +54,18 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
         <span className={`text-sm ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
         {subtitle && <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">{subtitle}</span>}
         {badge && <Badge variant={badgeVariant} className="text-[10px] ml-auto shrink-0">{badge}</Badge>}
+        {onPortal && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 invisible group-hover:visible"
+            onClick={e => { e.stopPropagation(); onPortal(); }}
+            data-testid={`button-portal-${label.replace(/\s+/g, "-").toLowerCase()}`}
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Deschide
+          </Button>
+        )}
         {onAdd && (
           <Button
             size="icon"
@@ -89,6 +103,7 @@ interface AddDialogState {
 }
 
 export default function HierarchyTree() {
+  const [, navigate] = useLocation();
   const { data: federations, isLoading: lf } = useQuery<Federation[]>({ queryKey: ["/api/federations"] });
   const { data: associations, isLoading: la } = useQuery<Association[]>({ queryKey: ["/api/associations"] });
   const { data: buildings, isLoading: lb } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
@@ -271,6 +286,7 @@ export default function HierarchyTree() {
                           badge={`${assocBlds.length} blocuri`}
                           subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
                           onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                          onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                         >
                           {assocBlds.map(bld => renderBuildingSubtree(bld))}
                         </TreeNode>
@@ -293,6 +309,7 @@ export default function HierarchyTree() {
                         badge={`${assocBlds.length} blocuri`}
                         subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
                         onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                        onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                       >
                         {assocBlds.map(bld => renderBuildingSubtree(bld))}
                       </TreeNode>
