@@ -14,9 +14,10 @@ import {
 import {
   Building2, LayoutDashboard, Home, Receipt, CreditCard, Search,
   Megaphone, Users, Shield, List, ChevronDown, ChevronRight,
-  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText
+  Network, ArrowUpDown, FolderTree, GitBranch, Table2, Landmark, Scale, ShieldCheck, FileText, Gavel, FolderOpen
 } from "lucide-react";
 import { GDPR_DOCUMENTS } from "@/lib/gdpr-data";
+import { JURIDIC_CATEGORIES } from "@/lib/juridic-data";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +59,14 @@ export function AppSidebar() {
   const [listsOpen, setListsOpen] = useState(() => location.startsWith("/liste-generale"));
   const [legislatieOpen, setLegistatieOpen] = useState(() => location.startsWith("/legislatie"));
   const [gdprOpen, setGdprOpen] = useState(() => location.startsWith("/gdpr"));
+  const [juridicOpen, setJuridicOpen] = useState(() => location.startsWith("/juridic"));
+  const [juridicSubOpen, setJuridicSubOpen] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    JURIDIC_CATEGORIES.forEach(cat => {
+      initial[cat.id] = location.startsWith(`/juridic/${cat.id}`);
+    });
+    return initial;
+  });
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -239,6 +248,57 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   );
                 })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel
+            className="cursor-pointer select-none flex items-center justify-between gap-2"
+            onClick={() => setJuridicOpen(!juridicOpen)}
+            data-testid="button-toggle-juridic"
+          >
+            <span className="flex items-center gap-1.5">
+              <Gavel className="w-3.5 h-3.5" />
+              Juridic
+            </span>
+            {juridicOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </SidebarGroupLabel>
+          {juridicOpen && (
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {JURIDIC_CATEGORIES.map((cat) => (
+                  <SidebarMenuItem key={cat.id}>
+                    <SidebarMenuButton
+                      onClick={() => setJuridicSubOpen(prev => ({ ...prev, [cat.id]: !prev[cat.id] }))}
+                      className="h-7 text-xs cursor-pointer"
+                      data-testid={`button-toggle-juridic-${cat.id}`}
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      <span className="flex-1 truncate">{cat.title}</span>
+                      {juridicSubOpen[cat.id] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                    </SidebarMenuButton>
+                    {juridicSubOpen[cat.id] && (
+                      <SidebarMenu className="ml-3 mt-0.5">
+                        {cat.documents.map((doc) => {
+                          const url = `/juridic/${cat.id}/${doc.id}`;
+                          const isActive = location === url;
+                          return (
+                            <SidebarMenuItem key={doc.id}>
+                              <SidebarMenuButton asChild data-active={isActive} className={`h-6 text-xs ${isActive ? "bg-sidebar-accent" : ""}`}>
+                                <Link href={url} data-testid={`link-nav-juridic-${doc.id}`}>
+                                  <FileText className="w-3 h-3" />
+                                  <span className="truncate">{doc.title}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    )}
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           )}
