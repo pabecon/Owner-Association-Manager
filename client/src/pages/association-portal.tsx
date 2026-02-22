@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +13,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Building2, Home, ArrowUpDown, Layers, Car, Package, MapPin, User, Phone, Mail,
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
   ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink,
-  Gauge, DoorOpen, Calendar, Hash
+  Gauge, DoorOpen, Calendar, Hash, Upload, Download, File, Image
 } from "lucide-react";
-import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType } from "@shared/schema";
+import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, Document } from "@shared/schema";
 import { METER_TYPE_LABELS, meterTypeEnum } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -280,6 +281,7 @@ export default function AssociationPortal() {
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <CardContent className="pt-0 space-y-3">
+                              <DocumentsSection entityType="building" entityId={building.id} />
                               {bldStaircases.length === 0 ? (
                                 <p className="text-xs text-muted-foreground py-2">Nicio scara inregistrata</p>
                               ) : (
@@ -302,6 +304,7 @@ export default function AssociationPortal() {
                                       </CollapsibleTrigger>
                                       <CollapsibleContent>
                                         <div className="ml-4 mt-2 space-y-2">
+                                          <DocumentsSection entityType="staircase" entityId={sc.id} />
                                           {floors.length === 0 ? (
                                             <p className="text-xs text-muted-foreground py-1">Nicio unitate inregistrata</p>
                                           ) : (
@@ -322,6 +325,7 @@ export default function AssociationPortal() {
                                                     <span className="text-xs font-medium">{getFloorLabel(fl)}</span>
                                                     <Badge variant="outline" className="text-[9px] py-0">{floorApts.length} unitati</Badge>
                                                   </div>
+                                                  <DocumentsSection entityType="floor" entityId={sc.id} floorNumber={fl} />
                                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                                                     {floorApts.map(apt => {
                                                       const UnitIcon = getUnitTypeIcon(apt.unitType);
@@ -724,6 +728,10 @@ function UnitExpandedContent({ apartmentId }: { apartmentId: string }) {
   const [installDate, setInstallDate] = useState("");
   const [initialReading, setInitialReading] = useState("");
 
+  const { data: roomTypes } = useQuery<{ id: string; nume: string }[]>({
+    queryKey: ["/api/liste/tip-camera"],
+  });
+
   const { data: rooms, isLoading: loadingRooms } = useQuery<UnitRoom[]>({
     queryKey: ["/api/unit-rooms", apartmentId],
     queryFn: async () => {
@@ -827,13 +835,16 @@ function UnitExpandedContent({ apartmentId }: { apartmentId: string }) {
               </div>
             )}
             <div className="flex items-center gap-1 mt-1">
-              <Input
-                placeholder="Nume camera"
-                value={roomName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomName(e.target.value)}
-                className="h-6 text-[10px] flex-1"
-                data-testid={`input-room-name-${apartmentId}`}
-              />
+              <Select value={roomName} onValueChange={setRoomName}>
+                <SelectTrigger className="h-6 text-[10px] flex-1" data-testid={`select-room-type-${apartmentId}`}>
+                  <SelectValue placeholder="Tip camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roomTypes && roomTypes.map(rt => (
+                    <SelectItem key={rt.id} value={rt.nume}>{rt.nume}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 placeholder="m²"
                 value={roomSurface}
@@ -920,12 +931,12 @@ function UnitExpandedContent({ apartmentId }: { apartmentId: string }) {
                 className="h-6 text-[10px] w-14"
                 data-testid={`input-meter-number-${apartmentId}`}
               />
-              <Input
-                type="date"
+              <DatePicker
                 value={installDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstallDate(e.target.value)}
-                className="h-6 text-[10px] w-28"
-                data-testid={`input-meter-date-${apartmentId}`}
+                onChange={setInstallDate}
+                placeholder="Data instalare"
+                className="h-6 text-[10px] w-32"
+                data-testid={`datepicker-meter-date-${apartmentId}`}
               />
               <Input
                 placeholder="Citire"
@@ -948,6 +959,149 @@ function UnitExpandedContent({ apartmentId }: { apartmentId: string }) {
           </>
         )}
       </div>
+
+      <DocumentsSection entityType="apartment" entityId={apartmentId} />
+    </div>
+  );
+}
+
+function DocumentsSection({ entityType, entityId, floorNumber }: { entityType: string; entityId: string; floorNumber?: number }) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [docDescription, setDocDescription] = useState("");
+
+  const queryKey = floorNumber !== undefined
+    ? ["/api/documents", entityType, entityId, String(floorNumber)]
+    : ["/api/documents", entityType, entityId];
+
+  const { data: docs, isLoading } = useQuery<Document[]>({
+    queryKey,
+    queryFn: async () => {
+      const url = floorNumber !== undefined
+        ? `/api/documents/${entityType}/${entityId}?floorNumber=${floorNumber}`
+        : `/api/documents/${entityType}/${entityId}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+      return res.json();
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: globalThis.File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("entityType", entityType);
+      formData.append("entityId", entityId);
+      if (docDescription.trim()) formData.append("description", docDescription.trim());
+      if (floorNumber !== undefined) formData.append("floorNumber", String(floorNumber));
+      const res = await fetch("/api/documents/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setDocDescription("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast({ title: "Document incarcat" });
+    },
+    onError: () => { toast({ title: "Eroare la incarcarea documentului", variant: "destructive" }); },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/documents/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      toast({ title: "Document sters" });
+    },
+  });
+
+  const handleFileSelect = () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (file) uploadMutation.mutate(file);
+  };
+
+  const isImage = (mime: string) => mime.startsWith("image/");
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  return (
+    <div className="border-l-2 border-primary/20 pl-2 space-y-1">
+      <div className="flex items-center gap-1">
+        <FileText className="w-3 h-3 text-primary" />
+        <span className="text-[10px] font-semibold">Documente</span>
+        <Badge variant="outline" className="text-[9px] py-0 ml-1">{docs?.length || 0}</Badge>
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-4 w-full" />
+      ) : (
+        <>
+          {docs && docs.length > 0 && (
+            <div className="space-y-0.5">
+              {docs.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5" data-testid={`doc-item-${doc.id}`}>
+                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                    {isImage(doc.mimeType) ? <Image className="w-2.5 h-2.5 shrink-0 text-muted-foreground" /> : <File className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />}
+                    <a
+                      href={`/api/documents/download/${doc.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline truncate"
+                      data-testid={`link-doc-${doc.id}`}
+                    >
+                      {doc.description || doc.originalName}
+                    </a>
+                    <span className="text-muted-foreground shrink-0">{formatSize(doc.size)}</span>
+                    {doc.createdAt && (
+                      <span className="text-muted-foreground shrink-0 text-[9px]">
+                        {new Date(doc.createdAt).toLocaleDateString("ro-RO")}
+                      </span>
+                    )}
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); deleteMutation.mutate(doc.id); }}
+                    data-testid={`button-delete-doc-${doc.id}`}
+                  >
+                    <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-1 mt-1">
+            <Input
+              placeholder="Descriere document"
+              value={docDescription}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
+              className="h-6 text-[10px] flex-1"
+              data-testid={`input-doc-desc-${entityType}-${entityId}`}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              onChange={handleFileSelect}
+              data-testid={`input-doc-file-${entityType}-${entityId}`}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 text-[10px] px-1.5"
+              disabled={uploadMutation.isPending}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              data-testid={`button-upload-doc-${entityType}-${entityId}`}
+            >
+              <Upload className="w-3 h-3 mr-0.5" />
+              {uploadMutation.isPending ? "..." : "Incarca"}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1000,7 +1154,7 @@ function CommonMeterAddForm({ scopeType, associationId, buildingId, staircaseId,
       </Select>
       <Input placeholder="Serie" value={serialNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSerialNumber(e.target.value)} className="h-6 text-[10px] w-16" data-testid={`input-common-serial-${scopeType}`} />
       <Input placeholder="Nr." value={meterNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMeterNumber(e.target.value)} className="h-6 text-[10px] w-14" data-testid={`input-common-number-${scopeType}`} />
-      <Input type="date" value={installDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstallDate(e.target.value)} className="h-6 text-[10px] w-28" data-testid={`input-common-date-${scopeType}`} />
+      <DatePicker value={installDate} onChange={setInstallDate} placeholder="Data" className="h-6 text-[10px] w-32" data-testid={`datepicker-common-date-${scopeType}`} />
       <Input placeholder="Citire" value={initialReading} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInitialReading(e.target.value)} className="h-6 text-[10px] w-14" data-testid={`input-common-reading-${scopeType}`} />
       <Button
         size="sm" variant="outline" className="h-6 text-[10px] px-1.5"

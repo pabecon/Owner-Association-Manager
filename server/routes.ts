@@ -882,9 +882,82 @@ export async function registerRoutes(
     res.json(doc);
   });
 
+  app.post("/api/documents/upload", ...auth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const multer = (await import("multer")).default;
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+      upload.single("file")(req, res, async (err: any) => {
+        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+        const entityType = req.body.entityType;
+        const entityId = req.body.entityId;
+        const description = req.body.description || null;
+        const floorNumber = req.body.floorNumber ? Number(req.body.floorNumber) : null;
+        if (!entityType || !entityId) return res.status(400).json({ message: "entityType si entityId sunt obligatorii" });
+        try {
+          const { Client } = await import("@replit/object-storage");
+          const client = new Client();
+          const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `.private/documents/${entityType}/${entityId}/${Date.now()}_${safeName}`;
+          await client.uploadFromBytes(path, file.buffer);
+          const doc = await storage.createDocument({
+            entityType,
+            entityId,
+            floorNumber,
+            fileName: safeName,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            size: file.size,
+            objectPath: path,
+            description,
+          });
+          res.json(doc);
+        } catch (uploadErr: any) {
+          console.error("Error uploading document:", uploadErr);
+          res.status(500).json({ message: "Eroare la salvarea documentului" });
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
+  app.get("/api/documents/download/:id", ...auth, async (req, res) => {
+    try {
+      const doc = await storage.getDocument(req.params.id as string);
+      if (!doc) return res.status(404).json({ message: "Documentul nu a fost gasit" });
+      const { Client } = await import("@replit/object-storage");
+      const client = new Client();
+      const { ok, value: buffer } = await client.downloadAsBytes(doc.objectPath);
+      if (!ok) return res.status(404).json({ message: "Fisierul nu a fost gasit in storage" });
+      res.set({
+        "Content-Type": doc.mimeType,
+        "Content-Disposition": `inline; filename="${encodeURIComponent(doc.originalName)}"`,
+        "Content-Length": String(buffer.length),
+      });
+      res.send(Buffer.from(buffer));
+    } catch (error: any) {
+      console.error("Error downloading document:", error);
+      res.status(500).json({ message: "Eroare la descarcarea documentului" });
+    }
+  });
+
   app.delete("/api/documents/:id", ...auth, async (req, res) => {
-    await storage.deleteDocument(req.params.id as string);
-    res.json({ ok: true });
+    try {
+      const doc = await storage.getDocument(req.params.id as string);
+      if (doc) {
+        try {
+          const { Client } = await import("@replit/object-storage");
+          const client = new Client();
+          await client.delete(doc.objectPath);
+        } catch (e) {}
+      }
+      await storage.deleteDocument(req.params.id as string);
+      res.json({ ok: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare la stergerea documentului" });
+    }
   });
 
   app.post("/api/import-excel", ...auth, requireRole("admin") as RequestHandler, async (req, res) => {

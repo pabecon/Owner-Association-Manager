@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Meter, MeterReading, MeterType } from "@shared/schema";
 import { METER_TYPE_LABELS, meterTypeEnum } from "@shared/schema";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Gauge, Plus, Trash2, ChevronDown, ChevronRight, CalendarIcon,
   Droplets, Zap, Flame, History, AlertCircle
@@ -371,7 +372,7 @@ function AddMeterDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Data instalarii</Label>
-              <Input type="date" className="h-8 text-xs" value={installDate} onChange={e => setInstallDate(e.target.value)} data-testid="input-meter-install-date" />
+              <DatePicker value={installDate} onChange={setInstallDate} placeholder="Data instalare" className="h-8 text-xs" data-testid="datepicker-meter-install-date" />
             </div>
             <div>
               <Label className="text-xs">Citire initiala</Label>
@@ -439,7 +440,7 @@ function AddReadingDialog({
         <div className="space-y-3">
           <div>
             <Label className="text-xs">Data citirii</Label>
-            <Input type="date" className="h-8 text-xs" value={readingDate} onChange={e => setReadingDate(e.target.value)} data-testid="input-reading-date" />
+            <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citirii" className="h-8 text-xs" data-testid="datepicker-reading-date" />
           </div>
           <div>
             <Label className="text-xs">Valoare citire</Label>

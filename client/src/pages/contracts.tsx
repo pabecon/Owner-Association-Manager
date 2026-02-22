@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -363,7 +364,7 @@ export default function ContractsPage() {
                       <FormItem>
                         <FormLabel>Data Inceput</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} data-testid="input-start-date" />
+                          <DatePicker value={field.value} onChange={field.onChange} placeholder="Selectati data" data-testid="datepicker-start-date" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -416,7 +417,7 @@ export default function ContractsPage() {
                       <FormItem>
                         <FormLabel>Data Sfarsit</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} data-testid="input-end-date" />
+                          <DatePicker value={field.value} onChange={field.onChange} placeholder="Selectati data" data-testid="datepicker-end-date" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

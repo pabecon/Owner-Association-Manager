@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { useForm } from "react-hook-form";
@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X } from "lucide-react";
-import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter } from "@shared/schema";
+import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image } from "lucide-react";
+import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -718,15 +718,8 @@ export default function UnitDetail() {
           </div>
         )}
 
-        {activeTab === "documente" && (
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Documente</h2>
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground text-center">Niciun document disponibil</p>
-              </CardContent>
-            </Card>
-          </div>
+        {activeTab === "documente" && unitId && (
+          <UnitDocumentsTab unitId={unitId} />
         )}
 
         {activeTab === "plati" && (
@@ -751,6 +744,143 @@ export default function UnitDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function UnitDocumentsTab({ unitId }: { unitId: string }) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [docDescription, setDocDescription] = useState("");
+
+  const { data: docs, isLoading } = useQuery<Document[]>({
+    queryKey: ["/api/documents", "apartment", unitId],
+    queryFn: async () => {
+      const res = await fetch(`/api/documents/apartment/${unitId}`);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+      return res.json();
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: globalThis.File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("entityType", "apartment");
+      formData.append("entityId", unitId);
+      if (docDescription.trim()) formData.append("description", docDescription.trim());
+      const res = await fetch("/api/documents/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/documents", "apartment", unitId] });
+      setDocDescription("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      toast({ title: "Document incarcat" });
+    },
+    onError: () => { toast({ title: "Eroare la incarcarea documentului", variant: "destructive" }); },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/documents/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/documents", "apartment", unitId] });
+      toast({ title: "Document sters" });
+    },
+  });
+
+  const handleFileSelect = () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (file) uploadMutation.mutate(file);
+  };
+
+  const isImage = (mime: string) => mime.startsWith("image/");
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  return (
+    <div className="space-y-4 max-w-4xl">
+      <h2 className="text-base font-semibold">Documente</h2>
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Descriere document (optional)"
+              value={docDescription}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
+              className="flex-1"
+              data-testid="input-unit-doc-desc"
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              onChange={handleFileSelect}
+              data-testid="input-unit-doc-file"
+            />
+            <Button
+              variant="outline"
+              disabled={uploadMutation.isPending}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="button-upload-unit-doc"
+            >
+              <Upload className="w-4 h-4 mr-1" />
+              {uploadMutation.isPending ? "Se incarca..." : "Incarca document"}
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <Skeleton className="h-16 w-full" />
+          ) : docs && docs.length > 0 ? (
+            <div className="space-y-2">
+              {docs.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between gap-2 p-2 border rounded-md" data-testid={`unit-doc-${doc.id}`}>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {isImage(doc.mimeType) ? <Image className="w-4 h-4 shrink-0 text-muted-foreground" /> : <File className="w-4 h-4 shrink-0 text-muted-foreground" />}
+                    <div className="flex-1 min-w-0">
+                      <a
+                        href={`/api/documents/download/${doc.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline truncate block"
+                        data-testid={`link-unit-doc-${doc.id}`}
+                      >
+                        {doc.description || doc.originalName}
+                      </a>
+                      <p className="text-xs text-muted-foreground">
+                        {doc.originalName} — {formatSize(doc.size)}
+                        {doc.createdAt && ` — ${new Date(doc.createdAt).toLocaleDateString("ro-RO")}`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noopener noreferrer">
+                      <Button size="icon" variant="ghost" data-testid={`button-download-doc-${doc.id}`}>
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </a>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteMutation.mutate(doc.id)}
+                      data-testid={`button-delete-unit-doc-${doc.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">Niciun document disponibil</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
