@@ -1386,7 +1386,25 @@ export async function registerRoutes(
   app.patch("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     const existing = await storage.getContract(req.params.id as string);
     if (!existing) return res.status(404).json({ message: "Contractul nu a fost gasit" });
-    const parsed = insertContractSchema.partial().safeParse(req.body);
+    const body = { ...req.body };
+    const clientId = body.clientId || existing.clientId;
+    if (clientId) {
+      const allBuildings = await storage.getBuildings();
+      const assocBuildings = allBuildings.filter((b: any) => b.associationId === clientId);
+      const buildingIds = new Set(assocBuildings.map((b: any) => b.id));
+      const allStaircases = await storage.getStaircases();
+      const assocStaircases = allStaircases.filter((s: any) => buildingIds.has(s.buildingId));
+      const staircaseIds = new Set(assocStaircases.map((s: any) => s.id));
+      const allApartments = await storage.getApartments();
+      const unitCount = allApartments.filter((a: any) => staircaseIds.has(a.staircaseId)).length;
+      body.numberOfUnits = unitCount;
+      const price = body.pricePerUnit || existing.pricePerUnit;
+      if (price) {
+        body.totalMonthly = (parseFloat(price) * unitCount).toFixed(2);
+        body.amount = body.totalMonthly;
+      }
+    }
+    const parsed = insertContractSchema.partial().safeParse(body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const updated = await storage.updateContract(req.params.id as string, parsed.data);
     res.json(updated);

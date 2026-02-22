@@ -71,7 +71,7 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Serie & Numar**: Auto-generated correlative numbering (Serie: AL, Numar: 0001, 0002...). API GET /api/contracts/next-number returns next available number.
 - **Prestator (Administrator)**: prestatorName, prestatorCui, prestatorAddress, prestatorRegistruComert, prestatorRepresentative
 - **Beneficiar**: Always association (clientType=association). Shows association details (address, CIF, president, unit count) auto-populated.
-- **Onorariu**: pricePerUnit (per imobil/luna), numberOfUnits (auto-fetched from association hierarchy), totalMonthly (calculated: pricePerUnit × numberOfUnits), currency (from "Tip Moneda" reference list, default RON)
+- **Onorariu**: pricePerUnit (per imobil/luna), numberOfUnits (auto-computed server-side from association hierarchy on POST and PATCH), totalMonthly (calculated server-side: pricePerUnit × numberOfUnits), currency (from "Tip Moneda" reference list, default RON)
 - **Facturare**: invoiceDay (day of month), paymentTermDays (payment term in calendar days)
 - **Durata**: signingDate, startDate, durationValue (cantitate), durationUnit (from "Unitate Masura" reference list, time category), endDate (auto-calculated), autoRenewalNoticeDays
 - **Status**: draft/active/expired/terminated
@@ -110,6 +110,8 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 
 ### Reference Lists (17 tables under "Liste Generale")
 Config-driven CRUD system in `server/reference-lists.ts`. Each list has a DB table, API routes, and a generic UI page.
+- **Unitati de Masura** (`/liste-generale/unitate-masura`): Special category-grouped view. Units are grouped by category (Timp, Distanta, Suprafata, Volum, Greutate, Energie, Temperatura, Presiune, Debit, Cantitate). Collapsible category cards with add/rename/delete category and add/edit/delete units within each category. 31 pre-seeded units across 10 categories.
+- Other reference lists use the generic flat table view with search, add, edit, delete.
 
 ## Excel Import (Import Asociatie din Excel)
 - **Upload**: .xlsx, .xls, .csv files up to 10MB
