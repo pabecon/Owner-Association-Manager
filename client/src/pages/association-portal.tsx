@@ -326,32 +326,25 @@ export default function AssociationPortal() {
                                                     <Badge variant="outline" className="text-[9px] py-0">{floorApts.length} unitati</Badge>
                                                   </div>
                                                   <DocumentsSection entityType="floor" entityId={sc.id} floorNumber={fl} />
-                                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                                                  <div className="flex flex-wrap gap-1.5">
                                                     {floorApts.map(apt => {
                                                       const UnitIcon = getUnitTypeIcon(apt.unitType);
                                                       const isUnitExpanded = expandedUnits[apt.id];
                                                       return (
                                                         <Collapsible key={apt.id} open={isUnitExpanded} onOpenChange={() => toggleUnit(apt.id)}>
-                                                          <div className="rounded-md bg-background border text-xs" data-testid={`unit-card-${apt.id}`}>
+                                                          <div className={`rounded-md bg-background border text-xs ${isUnitExpanded ? 'w-full' : ''}`} data-testid={`unit-card-${apt.id}`}>
                                                             <CollapsibleTrigger asChild>
-                                                              <div className="flex items-center gap-2 p-1.5 cursor-pointer group/unit" data-testid={`trigger-unit-${apt.id}`}>
+                                                              <div className="flex items-center gap-1.5 px-2 py-1 cursor-pointer group/unit whitespace-nowrap" data-testid={`trigger-unit-${apt.id}`}>
                                                                 <UnitIcon className="w-3.5 h-3.5 text-primary shrink-0" />
-                                                                <div className="flex-1 min-w-0">
-                                                                  <div className="flex items-center gap-1.5">
-                                                                    <span className="font-medium">{getUnitTypeLabel(apt.unitType)} {apt.number}</span>
-                                                                  </div>
-                                                                  {apt.ownerName && (
-                                                                    <span className="text-muted-foreground truncate block">{apt.ownerName}</span>
-                                                                  )}
-                                                                </div>
-                                                                <div className="text-right shrink-0 text-muted-foreground">
-                                                                  {apt.surface && <span className="block text-[10px]">{apt.surface} m²</span>}
-                                                                  {apt.rooms && <span className="block text-[10px]">{apt.rooms} cam.</span>}
-                                                                </div>
+                                                                <span className="font-medium text-xs">{getUnitTypeLabel(apt.unitType)} {apt.number}</span>
+                                                                {apt.ownerName && (
+                                                                  <span className="text-muted-foreground text-[10px] truncate max-w-[120px]">{apt.ownerName}</span>
+                                                                )}
+                                                                {apt.surface && <span className="text-[10px] text-muted-foreground">{apt.surface} m²</span>}
+                                                                {apt.rooms && <span className="text-[10px] text-muted-foreground">{apt.rooms} cam.</span>}
                                                                 <Link href={`/unitate/${apt.id}`} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                                                                  <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] invisible group-hover/unit:visible shrink-0" data-testid={`button-open-unit-${apt.id}`}>
-                                                                    <ExternalLink className="w-3 h-3 mr-0.5" />
-                                                                    Deschide
+                                                                  <Button size="sm" variant="ghost" className="h-5 px-1 text-[10px] invisible group-hover/unit:visible shrink-0" data-testid={`button-open-unit-${apt.id}`}>
+                                                                    <ExternalLink className="w-3 h-3" />
                                                                   </Button>
                                                                 </Link>
                                                                 {isUnitExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
