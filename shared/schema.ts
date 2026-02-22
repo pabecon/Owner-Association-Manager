@@ -93,9 +93,25 @@ export const METER_TYPE_LABELS: Record<MeterType, string> = {
   gas: "Gaz",
 };
 
+export const meterScopeEnum = ["apartment", "association", "building", "staircase", "floor"] as const;
+export type MeterScope = typeof meterScopeEnum[number];
+
+export const METER_SCOPE_LABELS: Record<MeterScope, string> = {
+  apartment: "Apartament",
+  association: "Asociatie",
+  building: "Bloc",
+  staircase: "Scara",
+  floor: "Etaj",
+};
+
 export const meters = pgTable("meters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  apartmentId: varchar("apartment_id").notNull().references(() => apartments.id, { onDelete: "cascade" }),
+  apartmentId: varchar("apartment_id").references(() => apartments.id, { onDelete: "cascade" }),
+  associationId: varchar("association_id").references(() => associations.id, { onDelete: "cascade" }),
+  buildingId: varchar("building_id").references(() => buildings.id, { onDelete: "cascade" }),
+  staircaseId: varchar("staircase_id").references(() => staircases.id, { onDelete: "cascade" }),
+  floor: integer("floor"),
+  scopeType: text("scope_type").notNull().default("apartment"),
   meterType: text("meter_type").notNull(),
   serialNumber: text("serial_number").notNull(),
   meterNumber: text("meter_number").notNull(),

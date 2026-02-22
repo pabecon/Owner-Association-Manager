@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, Home, ArrowUpDown, Receipt, Wallet, Megaphone, User, ArrowLeft, Shield } from "lucide-react";
+import { Building2, Home, ArrowUpDown, Receipt, Wallet, Megaphone, User, ArrowLeft, Shield, Gauge } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,7 @@ export function AssociationSidebar({ associationId, activeTab, onTabChange }: As
 
   const menuItems = [
     { id: "imobiliar", label: "Imobiliar", icon: Building2 },
+    { id: "contoare", label: "Contoare Comune", icon: Gauge },
     { id: "financiar", label: "Financiar", icon: Receipt },
     { id: "contact", label: "Contact", icon: User },
     { id: "anunturi", label: "Anunturi", icon: Megaphone },

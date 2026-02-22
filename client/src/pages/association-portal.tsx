@@ -11,12 +11,16 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AssociationSidebar } from "@/components/association-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Building2, Home, ArrowUpDown, Layers, Car, Package, MapPin, User, Phone, Mail,
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
-  ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink
+  ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink,
+  Gauge, DoorOpen, Calendar, Hash
 } from "lucide-react";
-import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory } from "@shared/schema";
+import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType } from "@shared/schema";
+import { METER_TYPE_LABELS, meterTypeEnum } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +33,7 @@ export default function AssociationPortal() {
   const [expandedBuildings, setExpandedBuildings] = useState<Record<string, boolean>>({});
   const [expandedStaircases, setExpandedStaircases] = useState<Record<string, boolean>>({});
   const [expandedFunds, setExpandedFunds] = useState<Record<string, boolean>>({});
+  const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({});
 
   const { data: associations, isLoading: loadingAssocs } = useQuery<Association[]>({ queryKey: ["/api/associations"] });
   const { data: buildings, isLoading: loadingBuildings } = useQuery<Building[]>({ queryKey: ["/api/buildings"] });
@@ -69,6 +74,7 @@ export default function AssociationPortal() {
   const toggleBuilding = (id: string) => setExpandedBuildings(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleStaircase = (id: string) => setExpandedStaircases(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleFund = (id: string) => setExpandedFunds(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleUnit = (id: string) => setExpandedUnits(prev => ({ ...prev, [id]: !prev[id] }));
 
   const getFloorLabel = (floor: number) => {
     if (floor < 0) return `Subsol ${Math.abs(floor)}`;
@@ -319,28 +325,39 @@ export default function AssociationPortal() {
                                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
                                                     {floorApts.map(apt => {
                                                       const UnitIcon = getUnitTypeIcon(apt.unitType);
+                                                      const isUnitExpanded = expandedUnits[apt.id];
                                                       return (
-                                                        <div key={apt.id} className="flex items-center gap-2 p-1.5 rounded-md bg-background border text-xs group/unit" data-testid={`unit-card-${apt.id}`}>
-                                                          <UnitIcon className="w-3.5 h-3.5 text-primary shrink-0" />
-                                                          <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-1.5">
-                                                              <span className="font-medium">{getUnitTypeLabel(apt.unitType)} {apt.number}</span>
-                                                            </div>
-                                                            {apt.ownerName && (
-                                                              <span className="text-muted-foreground truncate block">{apt.ownerName}</span>
-                                                            )}
+                                                        <Collapsible key={apt.id} open={isUnitExpanded} onOpenChange={() => toggleUnit(apt.id)}>
+                                                          <div className="rounded-md bg-background border text-xs" data-testid={`unit-card-${apt.id}`}>
+                                                            <CollapsibleTrigger asChild>
+                                                              <div className="flex items-center gap-2 p-1.5 cursor-pointer group/unit" data-testid={`trigger-unit-${apt.id}`}>
+                                                                <UnitIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                                <div className="flex-1 min-w-0">
+                                                                  <div className="flex items-center gap-1.5">
+                                                                    <span className="font-medium">{getUnitTypeLabel(apt.unitType)} {apt.number}</span>
+                                                                  </div>
+                                                                  {apt.ownerName && (
+                                                                    <span className="text-muted-foreground truncate block">{apt.ownerName}</span>
+                                                                  )}
+                                                                </div>
+                                                                <div className="text-right shrink-0 text-muted-foreground">
+                                                                  {apt.surface && <span className="block text-[10px]">{apt.surface} m²</span>}
+                                                                  {apt.rooms && <span className="block text-[10px]">{apt.rooms} cam.</span>}
+                                                                </div>
+                                                                <Link href={`/unitate/${apt.id}`} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                                                                  <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] invisible group-hover/unit:visible shrink-0" data-testid={`button-open-unit-${apt.id}`}>
+                                                                    <ExternalLink className="w-3 h-3 mr-0.5" />
+                                                                    Deschide
+                                                                  </Button>
+                                                                </Link>
+                                                                {isUnitExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                                                              </div>
+                                                            </CollapsibleTrigger>
+                                                            <CollapsibleContent>
+                                                              <UnitExpandedContent apartmentId={apt.id} />
+                                                            </CollapsibleContent>
                                                           </div>
-                                                          <div className="text-right shrink-0 text-muted-foreground">
-                                                            {apt.surface && <span className="block text-[10px]">{apt.surface} m²</span>}
-                                                            {apt.rooms && <span className="block text-[10px]">{apt.rooms} cam.</span>}
-                                                          </div>
-                                                          <Link href={`/unitate/${apt.id}`}>
-                                                            <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] invisible group-hover/unit:visible shrink-0" data-testid={`button-open-unit-${apt.id}`}>
-                                                              <ExternalLink className="w-3 h-3 mr-0.5" />
-                                                              Deschide
-                                                            </Button>
-                                                          </Link>
-                                                        </div>
+                                                        </Collapsible>
                                                       );
                                                     })}
                                                   </div>
@@ -363,6 +380,15 @@ export default function AssociationPortal() {
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === "contoare" && associationId && (
+            <CommonMetersSection
+              associationId={associationId}
+              buildings={assocBuildings}
+              staircases={assocStaircases}
+              apartments={assocApartments}
+            />
           )}
 
           {activeTab === "financiar" && (
@@ -685,6 +711,436 @@ export default function AssociationPortal() {
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+function UnitExpandedContent({ apartmentId }: { apartmentId: string }) {
+  const { toast } = useToast();
+  const [roomName, setRoomName] = useState("");
+  const [roomSurface, setRoomSurface] = useState("");
+  const [meterType, setMeterType] = useState<string>("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [meterNumber, setMeterNumber] = useState("");
+  const [installDate, setInstallDate] = useState("");
+  const [initialReading, setInitialReading] = useState("");
+
+  const { data: rooms, isLoading: loadingRooms } = useQuery<UnitRoom[]>({
+    queryKey: ["/api/unit-rooms", apartmentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/unit-rooms/${apartmentId}`);
+      if (!res.ok) throw new Error("Failed to fetch rooms");
+      return res.json();
+    },
+  });
+
+  const { data: meters, isLoading: loadingMeters } = useQuery<Meter[]>({
+    queryKey: ["/api/meters", apartmentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/meters/${apartmentId}`);
+      if (!res.ok) throw new Error("Failed to fetch meters");
+      return res.json();
+    },
+  });
+
+  const addRoomMutation = useMutation({
+    mutationFn: async () => {
+      const existingRooms = (rooms || []).map(r => ({ name: r.name, surface: r.surface }));
+      const newRooms = [...existingRooms, { name: roomName.trim(), surface: roomSurface || null }];
+      await apiRequest("POST", "/api/unit-rooms", { apartmentId, rooms: newRooms });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/unit-rooms", apartmentId] });
+      setRoomName("");
+      setRoomSurface("");
+      toast({ title: "Camera adaugata" });
+    },
+    onError: () => { toast({ title: "Eroare la adaugare camera", variant: "destructive" }); },
+  });
+
+  const deleteRoomMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/unit-rooms/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/unit-rooms", apartmentId] });
+      toast({ title: "Camera stearsa" });
+    },
+  });
+
+  const addMeterMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/meters", {
+        apartmentId,
+        scopeType: "apartment",
+        meterType,
+        serialNumber,
+        meterNumber,
+        installDate,
+        initialReading: initialReading || "0",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", apartmentId] });
+      setMeterType("");
+      setSerialNumber("");
+      setMeterNumber("");
+      setInstallDate("");
+      setInitialReading("");
+      toast({ title: "Contor adaugat" });
+    },
+    onError: () => { toast({ title: "Eroare la adaugare contor", variant: "destructive" }); },
+  });
+
+  const deleteMeterMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/meters/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", apartmentId] });
+      toast({ title: "Contor sters" });
+    },
+  });
+
+  return (
+    <div className="border-t px-2 pb-2 pt-1.5 space-y-2">
+      <div className="border-l-2 border-primary/20 pl-2 space-y-1">
+        <div className="flex items-center gap-1">
+          <DoorOpen className="w-3 h-3 text-primary" />
+          <span className="text-[10px] font-semibold">Camere</span>
+          <Badge variant="outline" className="text-[9px] py-0 ml-1">{rooms?.length || 0}</Badge>
+        </div>
+        {loadingRooms ? (
+          <Skeleton className="h-4 w-full" />
+        ) : (
+          <>
+            {rooms && rooms.length > 0 && (
+              <div className="space-y-0.5">
+                {rooms.map(room => (
+                  <div key={room.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5" data-testid={`room-item-${room.id}`}>
+                    <span className="text-muted-foreground">{room.name}{room.surface ? ` — ${room.surface} m²` : ""}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); deleteRoomMutation.mutate(room.id); }}
+                      data-testid={`button-delete-room-${room.id}`}
+                    >
+                      <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-1 mt-1">
+              <Input
+                placeholder="Nume camera"
+                value={roomName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomName(e.target.value)}
+                className="h-6 text-[10px] flex-1"
+                data-testid={`input-room-name-${apartmentId}`}
+              />
+              <Input
+                placeholder="m²"
+                value={roomSurface}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRoomSurface(e.target.value)}
+                className="h-6 text-[10px] w-14"
+                data-testid={`input-room-surface-${apartmentId}`}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 text-[10px] px-1.5"
+                disabled={!roomName.trim() || addRoomMutation.isPending}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); addRoomMutation.mutate(); }}
+                data-testid={`button-add-room-${apartmentId}`}
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="border-l-2 border-primary/20 pl-2 space-y-1">
+        <div className="flex items-center gap-1">
+          <Gauge className="w-3 h-3 text-primary" />
+          <span className="text-[10px] font-semibold">Contoare</span>
+          <Badge variant="outline" className="text-[9px] py-0 ml-1">{meters?.length || 0}</Badge>
+        </div>
+        {loadingMeters ? (
+          <Skeleton className="h-4 w-full" />
+        ) : (
+          <>
+            {meters && meters.length > 0 && (
+              <div className="space-y-0.5">
+                {meters.map(m => (
+                  <div key={m.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5" data-testid={`meter-item-${m.id}`}>
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType}</Badge>
+                      <span className="text-muted-foreground truncate">
+                        <Hash className="w-2.5 h-2.5 inline" />{m.serialNumber}
+                        {m.meterNumber ? ` / ${m.meterNumber}` : ""}
+                      </span>
+                      {m.installDate && (
+                        <span className="text-muted-foreground shrink-0">
+                          <Calendar className="w-2.5 h-2.5 inline" />{m.installDate}
+                        </span>
+                      )}
+                      <span className="text-muted-foreground shrink-0">init: {m.initialReading}</span>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); deleteMeterMutation.mutate(m.id); }}
+                      data-testid={`button-delete-meter-${m.id}`}
+                    >
+                      <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-1 flex-wrap mt-1">
+              <Select value={meterType} onValueChange={setMeterType}>
+                <SelectTrigger className="h-6 text-[10px] w-24" data-testid={`select-meter-type-${apartmentId}`}>
+                  <SelectValue placeholder="Tip" />
+                </SelectTrigger>
+                <SelectContent>
+                  {meterTypeEnum.map(t => (
+                    <SelectItem key={t} value={t} data-testid={`option-meter-type-${t}`}>{METER_TYPE_LABELS[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Serie"
+                value={serialNumber}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSerialNumber(e.target.value)}
+                className="h-6 text-[10px] w-16"
+                data-testid={`input-meter-serial-${apartmentId}`}
+              />
+              <Input
+                placeholder="Nr."
+                value={meterNumber}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMeterNumber(e.target.value)}
+                className="h-6 text-[10px] w-14"
+                data-testid={`input-meter-number-${apartmentId}`}
+              />
+              <Input
+                type="date"
+                value={installDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstallDate(e.target.value)}
+                className="h-6 text-[10px] w-28"
+                data-testid={`input-meter-date-${apartmentId}`}
+              />
+              <Input
+                placeholder="Citire"
+                value={initialReading}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInitialReading(e.target.value)}
+                className="h-6 text-[10px] w-14"
+                data-testid={`input-meter-reading-${apartmentId}`}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 text-[10px] px-1.5"
+                disabled={!meterType || !serialNumber.trim() || !meterNumber.trim() || !installDate || addMeterMutation.isPending}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); addMeterMutation.mutate(); }}
+                data-testid={`button-add-meter-${apartmentId}`}
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CommonMeterAddForm({ scopeType, associationId, buildingId, staircaseId, floor }: {
+  scopeType: string; associationId: string; buildingId?: string; staircaseId?: string; floor?: number;
+}) {
+  const { toast } = useToast();
+  const [meterType, setMeterType] = useState("");
+  const [serialNumber, setSerialNumber] = useState("");
+  const [meterNumber, setMeterNumber] = useState("");
+  const [installDate, setInstallDate] = useState("");
+  const [initialReading, setInitialReading] = useState("");
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/meters", {
+        scopeType,
+        associationId,
+        buildingId: buildingId || null,
+        staircaseId: staircaseId || null,
+        floor: floor !== undefined ? floor : null,
+        apartmentId: null,
+        meterType,
+        serialNumber,
+        meterNumber,
+        installDate,
+        initialReading: initialReading || "0",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/common-meters"] });
+      setMeterType(""); setSerialNumber(""); setMeterNumber(""); setInstallDate(""); setInitialReading("");
+      toast({ title: "Contor comun adaugat" });
+    },
+    onError: () => { toast({ title: "Eroare la adaugare contor", variant: "destructive" }); },
+  });
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-1.5">
+      <Select value={meterType} onValueChange={setMeterType}>
+        <SelectTrigger className="h-6 text-[10px] w-24" data-testid={`select-common-meter-type-${scopeType}`}>
+          <SelectValue placeholder="Tip" />
+        </SelectTrigger>
+        <SelectContent>
+          {meterTypeEnum.map(t => (
+            <SelectItem key={t} value={t}>{METER_TYPE_LABELS[t]}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input placeholder="Serie" value={serialNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSerialNumber(e.target.value)} className="h-6 text-[10px] w-16" data-testid={`input-common-serial-${scopeType}`} />
+      <Input placeholder="Nr." value={meterNumber} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMeterNumber(e.target.value)} className="h-6 text-[10px] w-14" data-testid={`input-common-number-${scopeType}`} />
+      <Input type="date" value={installDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInstallDate(e.target.value)} className="h-6 text-[10px] w-28" data-testid={`input-common-date-${scopeType}`} />
+      <Input placeholder="Citire" value={initialReading} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInitialReading(e.target.value)} className="h-6 text-[10px] w-14" data-testid={`input-common-reading-${scopeType}`} />
+      <Button
+        size="sm" variant="outline" className="h-6 text-[10px] px-1.5"
+        disabled={!meterType || !serialNumber.trim() || !meterNumber.trim() || !installDate || addMutation.isPending}
+        onClick={() => addMutation.mutate()}
+        data-testid={`button-add-common-meter-${scopeType}`}
+      >
+        <Plus className="w-3 h-3" />
+      </Button>
+    </div>
+  );
+}
+
+function CommonMetersList({ meters, label }: { meters: Meter[]; label: string }) {
+  const { toast } = useToast();
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/meters/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/common-meters"] });
+      toast({ title: "Contor sters" });
+    },
+  });
+
+  if (meters.length === 0) return null;
+
+  return (
+    <div className="space-y-0.5">
+      {meters.map(m => (
+        <div key={m.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5" data-testid={`common-meter-${m.id}`}>
+          <div className="flex items-center gap-1 flex-1 min-w-0">
+            <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType}</Badge>
+            <span className="text-muted-foreground truncate">
+              <Hash className="w-2.5 h-2.5 inline" />{m.serialNumber} / {m.meterNumber}
+            </span>
+            {m.installDate && <span className="text-muted-foreground shrink-0"><Calendar className="w-2.5 h-2.5 inline" />{m.installDate}</span>}
+            <span className="text-muted-foreground shrink-0">init: {m.initialReading}</span>
+          </div>
+          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(m.id)} data-testid={`button-delete-common-meter-${m.id}`}>
+            <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CommonMetersSection({ associationId, buildings, staircases, apartments }: {
+  associationId: string;
+  buildings: Building[];
+  staircases: Staircase[];
+  apartments: Apartment[];
+}) {
+  const { data: commonMeters, isLoading } = useQuery<Meter[]>({
+    queryKey: ["/api/common-meters", associationId],
+    queryFn: async () => {
+      const res = await fetch(`/api/common-meters?associationId=${associationId}`);
+      if (!res.ok) throw new Error("Failed to fetch common meters");
+      return res.json();
+    },
+  });
+
+  const assocMeters = commonMeters?.filter(m => m.scopeType === "association") || [];
+  const buildingMeters = (bldId: string) => commonMeters?.filter(m => m.scopeType === "building" && m.buildingId === bldId) || [];
+  const staircaseMeters = (scId: string) => commonMeters?.filter(m => m.scopeType === "staircase" && m.staircaseId === scId) || [];
+  const floorMeters = (scId: string, fl: number) => commonMeters?.filter(m => m.scopeType === "floor" && m.staircaseId === scId && m.floor === fl) || [];
+
+  if (isLoading) {
+    return <div className="space-y-3">{[1, 2].map(i => <Skeleton key={i} className="h-20 rounded-lg" />)}</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <Card data-testid="card-common-meters-association">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-primary" />
+            Contor General Asociatie
+            <Badge variant="outline" className="text-[10px]">{assocMeters.length} contoare</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <CommonMetersList meters={assocMeters} label="Asociatie" />
+          <CommonMeterAddForm scopeType="association" associationId={associationId} />
+        </CardContent>
+      </Card>
+
+      {buildings.map(bld => {
+        const bldM = buildingMeters(bld.id);
+        const bldScs = staircases.filter(s => s.buildingId === bld.id);
+
+        return (
+          <Card key={bld.id} data-testid={`card-common-meters-building-${bld.id}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-primary" />
+                {bld.name}
+                <Badge variant="outline" className="text-[10px]">{bldM.length} contoare bloc</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <CommonMetersList meters={bldM} label={bld.name} />
+              <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
+
+              {bldScs.map(sc => {
+                const scM = staircaseMeters(sc.id);
+                const scApts = apartments.filter(a => a.staircaseId === sc.id);
+                const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+
+                return (
+                  <div key={sc.id} className="border-l-2 border-primary/20 pl-3 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-medium">{sc.name}</span>
+                      <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
+                    </div>
+                    <CommonMetersList meters={scM} label={sc.name} />
+                    <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
+
+                    {floors.map(fl => {
+                      const flM = floorMeters(sc.id, fl);
+                      return (
+                        <div key={fl} className="border-l-2 border-muted pl-3 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <Layers className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
+                            <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
+                          </div>
+                          <CommonMetersList meters={flM} label={`Etaj ${fl}`} />
+                          <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 

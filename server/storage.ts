@@ -91,6 +91,7 @@ export interface IStorage {
   deleteUnitRoomsByApartment(apartmentId: string): Promise<void>;
 
   getMetersByApartment(apartmentId: string): Promise<Meter[]>;
+  getMetersByScope(scope: { associationId?: string; buildingId?: string; staircaseId?: string; floor?: number }): Promise<Meter[]>;
   getMeter(id: string): Promise<Meter | undefined>;
   createMeter(data: InsertMeter): Promise<Meter>;
   updateMeter(id: string, data: Partial<InsertMeter>): Promise<Meter | undefined>;
@@ -398,6 +399,16 @@ export class DatabaseStorage implements IStorage {
 
   async getMetersByApartment(apartmentId: string): Promise<Meter[]> {
     return db.select().from(meters).where(eq(meters.apartmentId, apartmentId)).orderBy(desc(meters.createdAt));
+  }
+
+  async getMetersByScope(scope: { associationId?: string; buildingId?: string; staircaseId?: string; floor?: number }): Promise<Meter[]> {
+    const conditions = [];
+    conditions.push(sql`${meters.scopeType} != 'apartment'`);
+    if (scope.associationId) conditions.push(eq(meters.associationId, scope.associationId));
+    if (scope.buildingId) conditions.push(eq(meters.buildingId, scope.buildingId));
+    if (scope.staircaseId) conditions.push(eq(meters.staircaseId, scope.staircaseId));
+    if (scope.floor !== undefined) conditions.push(eq(meters.floor, scope.floor));
+    return db.select().from(meters).where(and(...conditions)).orderBy(desc(meters.createdAt));
   }
 
   async getMeter(id: string): Promise<Meter | undefined> {

@@ -347,11 +347,15 @@ export async function registerRoutes(
   app.post("/api/meters", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     const parsed = insertMeterSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
-    const apt = await storage.getApartment(parsed.data.apartmentId);
-    if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
-    const staircase = await storage.getStaircase(apt.staircaseId);
-    if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
-      return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+    const scopeType = parsed.data.scopeType || "apartment";
+    if (scopeType === "apartment") {
+      if (!parsed.data.apartmentId) return res.status(400).json({ message: "apartmentId este obligatoriu pentru contoare de apartament" });
+      const apt = await storage.getApartment(parsed.data.apartmentId);
+      if (!apt) return res.status(404).json({ message: "Unitatea nu a fost gasita" });
+      const staircase = await storage.getStaircase(apt.staircaseId);
+      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+        return res.status(403).json({ message: "Nu aveti acces la acest bloc" });
+      }
     }
     const meter = await storage.createMeter(parsed.data);
     res.json(meter);
@@ -360,12 +364,14 @@ export async function registerRoutes(
   app.patch("/api/meters/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     const meter = await storage.getMeter(req.params.id as string);
     if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
-    const apt = await storage.getApartment(meter.apartmentId);
-    if (apt) {
-      const staircase = await storage.getStaircase(apt.staircaseId);
-      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
-        if (!isInApartmentScope(req, apt.id)) {
-          return res.status(403).json({ message: "Nu aveti acces" });
+    if (meter.apartmentId) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+          if (!isInApartmentScope(req, apt.id)) {
+            return res.status(403).json({ message: "Nu aveti acces" });
+          }
         }
       }
     }
@@ -383,12 +389,14 @@ export async function registerRoutes(
   app.delete("/api/meters/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
     const meter = await storage.getMeter(req.params.id as string);
     if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
-    const apt = await storage.getApartment(meter.apartmentId);
-    if (apt) {
-      const staircase = await storage.getStaircase(apt.staircaseId);
-      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
-        if (!isInApartmentScope(req, apt.id)) {
-          return res.status(403).json({ message: "Nu aveti acces" });
+    if (meter.apartmentId) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+          if (!isInApartmentScope(req, apt.id)) {
+            return res.status(403).json({ message: "Nu aveti acces" });
+          }
         }
       }
     }
@@ -396,16 +404,29 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  app.get("/api/common-meters", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { associationId, buildingId, staircaseId, floor } = req.query;
+    if (!associationId) return res.status(400).json({ message: "associationId este obligatoriu" });
+    const scope: any = { associationId: associationId as string };
+    if (buildingId) scope.buildingId = buildingId as string;
+    if (staircaseId) scope.staircaseId = staircaseId as string;
+    if (floor !== undefined && floor !== "") scope.floor = Number(floor);
+    const metersList = await storage.getMetersByScope(scope);
+    res.json(metersList);
+  });
+
   // Meter Readings
   app.get("/api/meter-readings/:meterId", ...auth, async (req: AuthenticatedRequest, res) => {
     const meter = await storage.getMeter(req.params.meterId as string);
     if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
-    const apt = await storage.getApartment(meter.apartmentId);
-    if (apt) {
-      const staircase = await storage.getStaircase(apt.staircaseId);
-      if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
-        if (!isInApartmentScope(req, apt.id)) {
-          return res.status(403).json({ message: "Nu aveti acces" });
+    if (meter.apartmentId) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (!staircase || !isInBuildingScope(req, staircase.buildingId)) {
+          if (!isInApartmentScope(req, apt.id)) {
+            return res.status(403).json({ message: "Nu aveti acces" });
+          }
         }
       }
     }
@@ -418,11 +439,13 @@ export async function registerRoutes(
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const meter = await storage.getMeter(parsed.data.meterId);
     if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
-    const apt = await storage.getApartment(meter.apartmentId);
-    if (apt) {
-      const staircase = await storage.getStaircase(apt.staircaseId);
-      if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
-        return res.status(403).json({ message: "Nu aveti acces" });
+    if (meter.apartmentId) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+          return res.status(403).json({ message: "Nu aveti acces" });
+        }
       }
     }
 
@@ -458,7 +481,7 @@ export async function registerRoutes(
     const reading = await storage.getMeterReading(req.params.id as string);
     if (!reading) return res.status(404).json({ message: "Citirea nu a fost gasita" });
     const meter = await storage.getMeter(reading.meterId);
-    if (meter) {
+    if (meter && meter.apartmentId) {
       const apt = await storage.getApartment(meter.apartmentId);
       if (apt) {
         const staircase = await storage.getStaircase(apt.staircaseId);
