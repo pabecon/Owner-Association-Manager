@@ -16,9 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Plus, Trash2, ChevronDown, ChevronRight, Upload, Calendar, Clock, ExternalLink } from "lucide-react";
-import type { Contract, Federation, Association, ContractStatus, ContractTemplate } from "@shared/schema";
-import { CONTRACT_STATUS_LABELS, CONTRACT_CLIENT_TYPE_LABELS } from "@shared/schema";
+import { FileText, Plus, Trash2, ChevronDown, ChevronRight, Upload, Calendar, Clock, ExternalLink, Building2, Hash } from "lucide-react";
+import type { Contract, Association, ContractStatus, Apartment, Building, Staircase } from "@shared/schema";
+import { CONTRACT_STATUS_LABELS } from "@shared/schema";
 
 interface UnitOfMeasure {
   id: number;
@@ -43,15 +43,23 @@ const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | 
 const contractFormSchema = z.object({
   name: z.string().min(1, "Numele este obligatoriu"),
   description: z.string().optional(),
-  clientType: z.string().min(1, "Tipul clientului este obligatoriu"),
-  clientId: z.string().min(1, "Clientul este obligatoriu"),
+  clientId: z.string().min(1, "Asociatia este obligatorie"),
+  prestatorName: z.string().optional(),
+  prestatorCui: z.string().optional(),
+  prestatorAddress: z.string().optional(),
+  prestatorRegistruComert: z.string().optional(),
+  prestatorRepresentative: z.string().optional(),
+  signingDate: z.string().optional(),
   startDate: z.string().min(1, "Data inceput este obligatorie"),
-  durationValue: z.coerce.number().min(1, "Durata este obligatorie"),
+  durationValue: z.coerce.number().min(1, "Cantitatea este obligatorie"),
   durationUnit: z.string().min(1, "Unitatea de masura este obligatorie"),
   endDate: z.string().min(1, "Data sfarsit este obligatorie"),
-  amount: z.string().min(1, "Importul este obligatoriu"),
+  autoRenewalNoticeDays: z.coerce.number().optional(),
+  pricePerUnit: z.string().min(1, "Pretul per imobil este obligatoriu"),
   currency: z.string().min(1, "Divisa este obligatorie"),
-  templateId: z.string().optional(),
+  invoiceDay: z.coerce.number().optional(),
+  paymentTermDays: z.coerce.number().optional(),
+  jurisdiction: z.string().optional(),
   status: z.string().min(1, "Statusul este obligatoriu"),
 });
 
@@ -71,8 +79,6 @@ function calculateEndDate(startDate: string, durationValue: number, durationUnit
     start.setDate(start.getDate() + durationValue * 7);
   } else if (unitLower.includes("zi") || unitLower.includes("day")) {
     start.setDate(start.getDate() + durationValue);
-  } else if (unitLower.includes("or") || unitLower.includes("hour")) {
-    start.setHours(start.getHours() + durationValue);
   } else {
     start.setMonth(start.getMonth() + durationValue);
   }
@@ -91,12 +97,20 @@ export default function ContractsPage() {
     queryKey: ["/api/contracts"],
   });
 
-  const { data: federations } = useQuery<Federation[]>({
-    queryKey: ["/api/federations"],
-  });
-
   const { data: associations } = useQuery<Association[]>({
     queryKey: ["/api/associations"],
+  });
+
+  const { data: buildings } = useQuery<Building[]>({
+    queryKey: ["/api/buildings"],
+  });
+
+  const { data: staircases } = useQuery<Staircase[]>({
+    queryKey: ["/api/staircases"],
+  });
+
+  const { data: apartments } = useQuery<Apartment[]>({
+    queryKey: ["/api/apartments"],
   });
 
   const { data: currencies } = useQuery<Currency[]>({
@@ -107,36 +121,60 @@ export default function ContractsPage() {
     queryKey: ["/api/liste", "unitate-masura"],
   });
 
-  const { data: templates } = useQuery<ContractTemplate[]>({
-    queryKey: ["/api/contract-templates"],
+  const { data: nextNumber } = useQuery<{ serie: string; numar: string }>({
+    queryKey: ["/api/contracts/next-number"],
   });
 
   const timeUnits = unitsOfMeasure?.filter(
     (u) => u.categorie?.toLowerCase().includes("timp") || u.categorie?.toLowerCase().includes("time")
   ) || [];
 
+  const getAssocUnitCount = (associationId: string): number => {
+    if (!buildings || !staircases || !apartments) return 0;
+    const assocBuildings = buildings.filter(b => b.associationId === associationId);
+    const buildingIds = new Set(assocBuildings.map(b => b.id));
+    const assocStaircases = staircases.filter(s => buildingIds.has(s.buildingId));
+    const staircaseIds = new Set(assocStaircases.map(s => s.id));
+    return apartments.filter(a => staircaseIds.has(a.staircaseId)).length;
+  };
+
   const form = useForm<ContractFormValues>({
     resolver: zodResolver(contractFormSchema),
     defaultValues: {
       name: "",
       description: "",
-      clientType: "",
       clientId: "",
+      prestatorName: "",
+      prestatorCui: "",
+      prestatorAddress: "",
+      prestatorRegistruComert: "",
+      prestatorRepresentative: "",
+      signingDate: "",
       startDate: "",
       durationValue: 1,
       durationUnit: "",
       endDate: "",
-      amount: "",
-      currency: "LEI",
-      templateId: "",
+      autoRenewalNoticeDays: undefined,
+      pricePerUnit: "",
+      currency: "RON",
+      invoiceDay: undefined,
+      paymentTermDays: undefined,
+      jurisdiction: "",
       status: "active",
     },
   });
 
-  const watchClientType = form.watch("clientType");
+  const watchClientId = form.watch("clientId");
   const watchStartDate = form.watch("startDate");
   const watchDurationValue = form.watch("durationValue");
   const watchDurationUnit = form.watch("durationUnit");
+  const watchPricePerUnit = form.watch("pricePerUnit");
+
+  const selectedUnitCount = watchClientId ? getAssocUnitCount(watchClientId) : 0;
+
+  const totalMonthly = watchPricePerUnit && selectedUnitCount > 0
+    ? (parseFloat(watchPricePerUnit) * selectedUnitCount).toFixed(2)
+    : "0.00";
 
   useEffect(() => {
     if (watchStartDate && watchDurationValue && watchDurationUnit) {
@@ -148,25 +186,42 @@ export default function ContractsPage() {
   }, [watchStartDate, watchDurationValue, watchDurationUnit, form]);
 
   useEffect(() => {
-    form.setValue("clientId", "");
-  }, [watchClientType, form]);
-
-  const clientOptions = watchClientType === "federation" ? federations : watchClientType === "association" ? associations : [];
+    if (watchClientId) {
+      const assoc = associations?.find(a => a.id === watchClientId);
+      if (assoc) {
+        form.setValue("name", `Contract Administrare - ${assoc.name}`);
+      }
+    }
+  }, [watchClientId, associations, form]);
 
   const createContract = useMutation({
     mutationFn: async (data: ContractFormValues) => {
+      const unitCount = getAssocUnitCount(data.clientId);
+      const total = (parseFloat(data.pricePerUnit) * unitCount).toFixed(2);
       const body = {
         name: data.name,
         description: data.description || null,
-        clientType: data.clientType,
+        clientType: "association",
         clientId: data.clientId,
+        prestatorName: data.prestatorName || null,
+        prestatorCui: data.prestatorCui || null,
+        prestatorAddress: data.prestatorAddress || null,
+        prestatorRegistruComert: data.prestatorRegistruComert || null,
+        prestatorRepresentative: data.prestatorRepresentative || null,
+        signingDate: data.signingDate || null,
         startDate: data.startDate,
         durationValue: data.durationValue,
         durationUnit: data.durationUnit,
         endDate: data.endDate,
-        amount: data.amount,
+        autoRenewalNoticeDays: data.autoRenewalNoticeDays || null,
+        numberOfUnits: unitCount,
+        pricePerUnit: data.pricePerUnit,
+        totalMonthly: total,
+        amount: total,
         currency: data.currency,
-        templateId: data.templateId || null,
+        invoiceDay: data.invoiceDay || null,
+        paymentTermDays: data.paymentTermDays || null,
+        jurisdiction: data.jurisdiction || null,
         status: data.status,
       };
       const res = await apiRequest("POST", "/api/contracts", body);
@@ -174,6 +229,7 @@ export default function ContractsPage() {
     },
     onSuccess: (newContract: Contract) => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts/next-number"] });
       toast({ title: "Contract creat cu succes" });
       form.reset();
       setDialogOpen(false);
@@ -190,6 +246,7 @@ export default function ContractsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contracts/next-number"] });
       toast({ title: "Contract sters cu succes" });
     },
     onError: (error: Error) => {
@@ -245,13 +302,12 @@ export default function ContractsPage() {
   };
 
   const getClientName = (contract: Contract) => {
-    if (contract.clientType === "federation") {
-      return federations?.find((f) => f.id === contract.clientId)?.name || "Federatie necunoscuta";
-    }
-    if (contract.clientType === "association") {
-      return associations?.find((a) => a.id === contract.clientId)?.name || "Asociatie necunoscuta";
-    }
-    return "Necunoscut";
+    return associations?.find((a) => a.id === contract.clientId)?.name || "Asociatie necunoscuta";
+  };
+
+  const formatDate = (d: string | null | undefined) => {
+    if (!d) return "-";
+    try { return new Date(d).toLocaleDateString("ro-RO"); } catch { return d; }
   };
 
   return (
@@ -267,7 +323,7 @@ export default function ContractsPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-contracts-title">Contracte</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestionarea contractelor cu federatiile si asociatiile</p>
+            <p className="text-muted-foreground text-sm mt-0.5">Gestionarea contractelor de administrare cu asociatiile</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -276,131 +332,102 @@ export default function ContractsPage() {
                 Adauga Contract
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Adauga Contract</DialogTitle>
+                <DialogTitle>Contract de Administrare Condominiu</DialogTitle>
+                {nextNumber && (
+                  <p className="text-sm text-muted-foreground">
+                    Serie: <span className="font-mono font-semibold">{nextNumber.serie}</span> Nr: <span className="font-mono font-semibold">{nextNumber.numar}</span>
+                  </p>
+                )}
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((data) => createContract.mutate(data))} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nume</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Numele contractului" data-testid="input-contract-name" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Descriere</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} placeholder="Descriere (optional)" data-testid="input-contract-description" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">I. Prestator (Administrator)</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="prestatorName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Denumire Prestator</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Numele firmei de administrare" data-testid="input-prestator-name" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="prestatorCui"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CUI</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="CUI prestator" data-testid="input-prestator-cui" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
-                      name="clientType"
+                      name="prestatorAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tip Client</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-client-type">
-                                <SelectValue placeholder="Selectati tipul" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="federation">Federatie</SelectItem>
-                              <SelectItem value="association">Asociatie</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
+                          <FormLabel>Sediu</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Adresa sediului prestator" data-testid="input-prestator-address" />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="prestatorRegistruComert"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nr. Registru Comertului</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="J40/XXXX/YYYY" data-testid="input-prestator-registru" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="prestatorRepresentative"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Reprezentant</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Numele reprezentantului" data-testid="input-prestator-representative" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
 
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">II. Beneficiar (Asociatie)</h3>
                     <FormField
                       control={form.control}
                       name="clientId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Client</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={!watchClientType}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-client">
-                                <SelectValue placeholder={watchClientType ? "Selectati clientul" : "Selectati tipul intai"} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {clientOptions?.map((c) => (
-                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data Inceput</FormLabel>
-                        <FormControl>
-                          <DatePicker value={field.value} onChange={field.onChange} placeholder="Selectati data" data-testid="datepicker-start-date" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="durationValue"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Durata</FormLabel>
-                          <FormControl>
-                            <Input type="number" min={1} {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-duration-value" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="durationUnit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Unitate</FormLabel>
+                          <FormLabel>Asociatie</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-duration-unit">
-                                <SelectValue placeholder="Unitate" />
+                              <SelectTrigger data-testid="select-association">
+                                <SelectValue placeholder="Selectati asociatia" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {timeUnits.map((u) => (
-                                <SelectItem key={u.id} value={u.singular}>{u.singular}</SelectItem>
+                              {associations?.map((a) => (
+                                <SelectItem key={a.id} value={a.id}>{a.name}{a.cui ? ` (${a.cui})` : ""}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -408,53 +435,247 @@ export default function ContractsPage() {
                         </FormItem>
                       )}
                     />
+                    {watchClientId && (() => {
+                      const assoc = associations?.find(a => a.id === watchClientId);
+                      if (!assoc) return null;
+                      return (
+                        <div className="bg-muted/50 rounded-md p-2 text-xs space-y-1">
+                          {assoc.address && <p><span className="text-muted-foreground">Sediu:</span> {assoc.address}</p>}
+                          {assoc.cui && <p><span className="text-muted-foreground">CIF:</span> {assoc.cui}</p>}
+                          {assoc.presidentName && <p><span className="text-muted-foreground">Presedinte:</span> {assoc.presidentName}</p>}
+                          <p><span className="text-muted-foreground">Nr. Imobile:</span> <span className="font-semibold">{selectedUnitCount}</span></p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
-                  <FormField
-                    control={form.control}
-                    name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data Sfarsit</FormLabel>
-                        <FormControl>
-                          <DatePicker value={field.value} onChange={field.onChange} placeholder="Selectati data" data-testid="datepicker-end-date" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">III. Detalii Contract</h3>
                     <FormField
                       control={form.control}
-                      name="amount"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Import</FormLabel>
+                          <FormLabel>Denumire Contract</FormLabel>
                           <FormControl>
-                            <Input type="number" step="0.01" min={0} {...field} placeholder="0.00" data-testid="input-amount" />
+                            <Input {...field} placeholder="Contract de Administrare" data-testid="input-contract-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       control={form.control}
-                      name="currency"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Divisa</FormLabel>
+                          <FormLabel>Obiectul Contractului</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Descrierea serviciilor de administrare..." data-testid="input-contract-description" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">IV. Onorariu si Plata</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="pricePerUnit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pret / Imobil / Luna</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" min={0} {...field} placeholder="0.00" data-testid="input-price-per-unit" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Divisa</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-currency">
+                                  <SelectValue placeholder="Moneda" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {currencies?.map((c) => (
+                                  <SelectItem key={c.id} value={c.tipMoneda}>{c.tipMoneda}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <div>
+                        <label className="text-sm font-medium">Total Lunar</label>
+                        <div className="mt-2 h-9 flex items-center px-3 border rounded-md bg-muted/50 font-mono font-semibold text-sm" data-testid="text-total-monthly">
+                          {totalMonthly} {form.watch("currency")}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{selectedUnitCount} imobile × {watchPricePerUnit || "0"}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="invoiceDay"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Zi Emitere Factura</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={1} max={31} {...field} value={field.value ?? ""} placeholder="Ex: 1" data-testid="input-invoice-day" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="paymentTermDays"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Termen Plata (zile)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={1} {...field} value={field.value ?? ""} placeholder="Ex: 15" data-testid="input-payment-term" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">V. Durata si Date</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="signingDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data Semnare</FormLabel>
+                            <FormControl>
+                              <DatePicker value={field.value || ""} onChange={field.onChange} placeholder="Data semnarii" data-testid="datepicker-signing-date" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="startDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data Inceput</FormLabel>
+                            <FormControl>
+                              <DatePicker value={field.value} onChange={field.onChange} placeholder="Data inceperii" data-testid="datepicker-start-date" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="durationValue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cantitate</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={1} {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-duration-value" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="durationUnit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unitate Masura</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger data-testid="select-duration-unit">
+                                  <SelectValue placeholder="Selectati" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {timeUnits.map((u) => (
+                                  <SelectItem key={u.id} value={u.singular}>{u.singular}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="endDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data Sfarsit (calculata)</FormLabel>
+                            <FormControl>
+                              <DatePicker value={field.value} onChange={field.onChange} placeholder="Se calculeaza automat" data-testid="datepicker-end-date" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="autoRenewalNoticeDays"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preaviz Reziliere (zile)</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={1} {...field} value={field.value ?? ""} placeholder="Ex: 30" data-testid="input-renewal-notice" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="border rounded-lg p-3 space-y-3">
+                    <h3 className="text-sm font-semibold text-primary">VI. Dispozitii Finale</h3>
+                    <FormField
+                      control={form.control}
+                      name="jurisdiction"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Jurisdictie</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Ex: Bucuresti" data-testid="input-jurisdiction" />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-currency">
-                                <SelectValue placeholder="Moneda" />
+                              <SelectTrigger data-testid="select-status">
+                                <SelectValue placeholder="Selectati status" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {currencies?.map((c) => (
-                                <SelectItem key={c.id} value={c.tipMoneda}>{c.tipMoneda}</SelectItem>
-                              ))}
+                              <SelectItem value="draft">Ciorna</SelectItem>
+                              <SelectItem value="active">Activ</SelectItem>
+                              <SelectItem value="expired">Expirat</SelectItem>
+                              <SelectItem value="terminated">Reziliat</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -462,53 +683,6 @@ export default function ContractsPage() {
                       )}
                     />
                   </div>
-
-                  <FormField
-                    control={form.control}
-                    name="templateId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sablon</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-template">
-                              <SelectValue placeholder="Selectati sablon (optional)" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {templates?.map((t) => (
-                              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-status">
-                              <SelectValue placeholder="Selectati status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="draft">Ciorna</SelectItem>
-                            <SelectItem value="active">Activ</SelectItem>
-                            <SelectItem value="expired">Expirat</SelectItem>
-                            <SelectItem value="terminated">Reziliat</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <DialogFooter>
                     <DialogClose asChild>
@@ -557,7 +731,6 @@ export default function ContractsPage() {
                 const isExpanded = expandedIds.has(contract.id);
                 const clientName = getClientName(contract);
                 const statusLabel = CONTRACT_STATUS_LABELS[contract.status as ContractStatus] || contract.status;
-                const clientTypeLabel = CONTRACT_CLIENT_TYPE_LABELS[contract.clientType as keyof typeof CONTRACT_CLIENT_TYPE_LABELS] || contract.clientType;
 
                 return (
                   <Card key={contract.id} data-testid={`card-contract-${contract.id}`}>
@@ -575,11 +748,17 @@ export default function ContractsPage() {
                             <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold truncate" data-testid={`text-contract-name-${contract.id}`}>
-                              {contract.name}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <Hash className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="font-mono text-xs text-muted-foreground">{contract.serie}-{contract.numar}</span>
+                              <p className="text-sm font-semibold truncate" data-testid={`text-contract-name-${contract.id}`}>
+                                {contract.name}
+                              </p>
+                            </div>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {clientTypeLabel}: {clientName}
+                              <Building2 className="w-3 h-3 inline mr-1" />
+                              {clientName}
+                              {contract.numberOfUnits && <span className="ml-2">({contract.numberOfUnits} imobile)</span>}
                             </p>
                           </div>
                         </button>
@@ -588,25 +767,50 @@ export default function ContractsPage() {
                           <Badge variant={STATUS_VARIANTS[contract.status] || "secondary"} data-testid={`badge-status-${contract.id}`}>
                             {statusLabel}
                           </Badge>
-                          <span className="text-sm font-medium" data-testid={`text-amount-${contract.id}`}>
-                            {contract.amount} {contract.currency}
-                          </span>
+                          {contract.totalMonthly && (
+                            <span className="text-sm font-medium" data-testid={`text-total-${contract.id}`}>
+                              {contract.totalMonthly} {contract.currency}/luna
+                            </span>
+                          )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {contract.startDate} - {contract.endDate}
+                          {formatDate(contract.startDate)} - {formatDate(contract.endDate)}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {contract.durationValue} {contract.durationUnit}
                         </span>
+                        {contract.pricePerUnit && (
+                          <span>{contract.pricePerUnit} {contract.currency}/imobil</span>
+                        )}
                       </div>
 
                       {isExpanded && (
-                        <div className="mt-3 pt-3 border-t space-y-2">
+                        <div className="mt-3 pt-3 border-t space-y-3">
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            {contract.prestatorName && (
+                              <div>
+                                <span className="text-muted-foreground">Prestator:</span>
+                                <p className="font-medium">{contract.prestatorName}</p>
+                                {contract.prestatorCui && <p className="text-muted-foreground">CUI: {contract.prestatorCui}</p>}
+                                {contract.prestatorAddress && <p className="text-muted-foreground">Sediu: {contract.prestatorAddress}</p>}
+                                {contract.prestatorRegistruComert && <p className="text-muted-foreground">Reg. Com.: {contract.prestatorRegistruComert}</p>}
+                                {contract.prestatorRepresentative && <p className="text-muted-foreground">Repr.: {contract.prestatorRepresentative}</p>}
+                              </div>
+                            )}
+                            <div>
+                              {contract.signingDate && <p><span className="text-muted-foreground">Data Semnare:</span> {formatDate(contract.signingDate)}</p>}
+                              {contract.invoiceDay && <p><span className="text-muted-foreground">Zi Factura:</span> {contract.invoiceDay}</p>}
+                              {contract.paymentTermDays && <p><span className="text-muted-foreground">Termen Plata:</span> {contract.paymentTermDays} zile</p>}
+                              {contract.autoRenewalNoticeDays && <p><span className="text-muted-foreground">Preaviz:</span> {contract.autoRenewalNoticeDays} zile</p>}
+                              {contract.jurisdiction && <p><span className="text-muted-foreground">Jurisdictie:</span> {contract.jurisdiction}</p>}
+                            </div>
+                          </div>
+
                           {contract.description && (
                             <p className="text-sm text-muted-foreground" data-testid={`text-description-${contract.id}`}>
                               {contract.description}
@@ -649,7 +853,7 @@ export default function ContractsPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Confirmati stergerea</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Sunteti sigur ca doriti sa stergeti contractul "{contract.name}"? Aceasta actiune nu poate fi anulata.
+                                    Sunteti sigur ca doriti sa stergeti contractul "{contract.serie}-{contract.numar} {contract.name}"? Aceasta actiune nu poate fi anulata.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

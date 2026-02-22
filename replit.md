@@ -67,11 +67,19 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Scope**: Roles are scoped to federation, building, or apartment level
 - **Permissions**: Computed from roles in middleware, checked via `requirePermission()` middleware
 
-## Contract Management (Contracte)
-- **Contracts**: name, description, clientType (federation/association), clientId, startDate, endDate, durationValue, durationUnit, amount, currency (default LEI), status (draft/active/expired/terminated), documentPath, documentName, templateId
-- **Contract Templates**: name, description, content templates for contracts
+## Contract Management (Contracte de Administrare Condominiu)
+- **Serie & Numar**: Auto-generated correlative numbering (Serie: AL, Numar: 0001, 0002...). API GET /api/contracts/next-number returns next available number.
+- **Prestator (Administrator)**: prestatorName, prestatorCui, prestatorAddress, prestatorRegistruComert, prestatorRepresentative
+- **Beneficiar**: Always association (clientType=association). Shows association details (address, CIF, president, unit count) auto-populated.
+- **Onorariu**: pricePerUnit (per imobil/luna), numberOfUnits (auto-fetched from association hierarchy), totalMonthly (calculated: pricePerUnit × numberOfUnits), currency (from "Tip Moneda" reference list, default RON)
+- **Facturare**: invoiceDay (day of month), paymentTermDays (payment term in calendar days)
+- **Durata**: signingDate, startDate, durationValue (cantitate), durationUnit (from "Unitate Masura" reference list, time category), endDate (auto-calculated), autoRenewalNoticeDays
+- **Status**: draft/active/expired/terminated
+- **Jurisdictie**: jurisdiction field for dispute resolution location
+- **Document**: File upload stored in object storage at .private/contracts/:id/
+- **Contract Templates**: name, description, documentPath, documentName
 - **Duration units**: loaded from "Unitate Masura" reference list (filtered by time category)
-- **Currency**: loaded from "Tip Moneda" reference list (default LEI)
+- **Currency**: loaded from "Tip Moneda" reference list (default RON)
 - **File upload**: Documents stored in object storage at .private/contracts/:id/ path
 - **Tables**: `contracts` and `contract_templates` with UUID primary keys
 - **API**: GET/POST/PATCH/DELETE /api/contracts, GET/POST/DELETE /api/contract-templates, POST /api/contracts/:id/upload

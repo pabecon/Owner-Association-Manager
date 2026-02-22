@@ -1329,6 +1329,19 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  app.get("/api/contracts/next-number", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const serie = (req.query.serie as string) || "AL";
+    const allContracts = await storage.getContracts();
+    const serieContracts = allContracts.filter(c => c.serie === serie);
+    let maxNum = 0;
+    for (const c of serieContracts) {
+      const n = parseInt(c.numar, 10);
+      if (!isNaN(n) && n > maxNum) maxNum = n;
+    }
+    const nextNum = String(maxNum + 1).padStart(4, "0");
+    res.json({ serie, numar: nextNum });
+  });
+
   app.get("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     const contract = await storage.getContract(req.params.id as string);
     if (!contract) return res.status(404).json({ message: "Contractul nu a fost gasit" });
@@ -1336,7 +1349,35 @@ export async function registerRoutes(
   });
 
   app.post("/api/contracts", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
-    const parsed = insertContractSchema.safeParse(req.body);
+    const body = { ...req.body };
+    if (!body.numar) {
+      const serie = body.serie || "AL";
+      const allContracts = await storage.getContracts();
+      const serieContracts = allContracts.filter((c: any) => c.serie === serie);
+      let maxNum = 0;
+      for (const c of serieContracts) {
+        const n = parseInt(c.numar, 10);
+        if (!isNaN(n) && n > maxNum) maxNum = n;
+      }
+      body.numar = String(maxNum + 1).padStart(4, "0");
+      body.serie = serie;
+    }
+    if (body.clientType === "association" && body.clientId) {
+      const allBuildings = await storage.getBuildings();
+      const assocBuildings = allBuildings.filter((b: any) => b.associationId === body.clientId);
+      const buildingIds = new Set(assocBuildings.map((b: any) => b.id));
+      const allStaircases = await storage.getStaircases();
+      const assocStaircases = allStaircases.filter((s: any) => buildingIds.has(s.buildingId));
+      const staircaseIds = new Set(assocStaircases.map((s: any) => s.id));
+      const allApartments = await storage.getApartments();
+      const unitCount = allApartments.filter((a: any) => staircaseIds.has(a.staircaseId)).length;
+      body.numberOfUnits = unitCount;
+      if (body.pricePerUnit) {
+        body.totalMonthly = (parseFloat(body.pricePerUnit) * unitCount).toFixed(2);
+        body.amount = body.totalMonthly;
+      }
+    }
+    const parsed = insertContractSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const contract = await storage.createContract(parsed.data);
     res.json(contract);
