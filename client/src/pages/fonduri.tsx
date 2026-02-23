@@ -184,37 +184,25 @@ function FundCard({ fund, onDelete }: { fund: Fund; onDelete: (id: string) => vo
     <Card className="overflow-hidden" data-testid={`card-fund-${fund.id}`}>
       <Collapsible open={expanded} onOpenChange={setExpanded}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-3 min-w-0">
-                <div className="mt-0.5">
-                  {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-sm">{fund.name}</CardTitle>
-                    <Badge className={`text-xs ${typeBadgeColor}`}>{typeLabel}</Badge>
-                    {!fund.isActive && <Badge variant="outline" className="text-xs">Inactiv</Badge>}
-                  </div>
-                  {fund.description && <CardDescription className="text-xs mt-0.5">{fund.description}</CardDescription>}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="text-right">
-                  <div className="text-sm font-semibold">{Number(fund.currentBalance || 0).toLocaleString("ro-RO")} RON</div>
-                  <div className="text-xs text-muted-foreground">Sold curent</div>
-                </div>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onDelete(fund.id); }} data-testid={`button-delete-fund-${fund.id}`}>
-                  <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors p-2 px-3">
+            <div className="flex items-center gap-2">
+              {expanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+              <CardTitle className="text-xs">{fund.name}</CardTitle>
+              <Badge className={`text-[10px] ${typeBadgeColor}`}>{typeLabel}</Badge>
+              {!fund.isActive && <Badge variant="outline" className="text-[10px]">Inactiv</Badge>}
+              {fund.description && <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">{fund.description}</span>}
+              {fund.bankAccount && (
+                <span className="text-[10px] text-muted-foreground hidden md:inline-flex items-center gap-0.5">
+                  <Landmark className="w-3 h-3" />{fund.bankName ? `${fund.bankName} — ` : ""}{fund.bankAccount}
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                <span className="text-xs font-semibold">{Number(fund.currentBalance || 0).toLocaleString("ro-RO")} RON</span>
+                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onDelete(fund.id); }} data-testid={`button-delete-fund-${fund.id}`}>
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
                 </Button>
               </div>
             </div>
-            {fund.bankAccount && (
-              <div className="flex items-center gap-1.5 mt-1.5 ml-7">
-                <Landmark className="w-3 h-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">{fund.bankName ? `${fund.bankName} — ` : ""}{fund.bankAccount}</span>
-              </div>
-            )}
           </CardHeader>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -299,11 +287,11 @@ export default function Fonduri() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
+      <div className="p-3 pb-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-funds-title">Fonduri</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestioneaza fondurile asociatiei</p>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestioneaza fondurile asociatiei</span>
           </div>
           <div className="flex items-center gap-2">
             <Select value={effectiveAssocId} onValueChange={(val) => setSelectedAssociation(val)}>

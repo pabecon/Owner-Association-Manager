@@ -813,15 +813,15 @@ export default function ContractsPage() {
         onChange={onFileChange}
         data-testid="input-file-upload"
       />
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
+      <div className="p-3 pb-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-contracts-title">Contracte</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestionarea contractelor de administrare cu asociatiile</p>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestionarea contractelor de administrare</span>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-add-contract">
-            <Plus className="w-4 h-4 mr-2" />
-            Adauga Contract
+          <Button size="sm" className="h-7 text-xs" onClick={() => setCreateDialogOpen(true)} data-testid="button-add-contract">
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Adauga
           </Button>
         </div>
       </div>
@@ -890,146 +890,94 @@ export default function ContractsPage() {
 
                 return (
                   <Card key={contract.id} data-testid={`card-contract-${contract.id}`}>
-                    <CardContent className="p-3">
-                      <div className="flex items-start justify-between gap-3">
+                    <CardContent className="p-2 px-3">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          className="flex items-start gap-2 flex-1 min-w-0 text-left"
+                          className="flex items-center gap-1.5 shrink-0"
                           onClick={() => toggleExpand(contract.id)}
                           data-testid={`button-expand-contract-${contract.id}`}
                         >
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <Hash className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span className="font-mono text-xs text-muted-foreground">{contract.serie}-{contract.numar}</span>
-                              <p className="text-sm font-semibold truncate" data-testid={`text-contract-name-${contract.id}`}>
-                                {contract.name}
-                              </p>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              <Building2 className="w-3 h-3 inline mr-1" />
-                              {clientName}
-                              {contract.numberOfUnits && <span className="ml-2">({contract.numberOfUnits} imobile)</span>}
-                            </p>
-                          </div>
+                          {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
                         </button>
-
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                          <Badge variant={STATUS_VARIANTS[contract.status] || "secondary"} data-testid={`badge-status-${contract.id}`}>
-                            {statusLabel}
-                          </Badge>
-                          {contract.totalMonthly && (
-                            <span className="text-sm font-medium" data-testid={`text-total-${contract.id}`}>
-                              {contract.totalMonthly} {contract.currency}/luna
-                            </span>
-                          )}
+                        <span className="font-mono text-[10px] text-muted-foreground shrink-0" data-testid={`text-contract-serie-${contract.id}`}>{contract.serie}-{contract.numar}</span>
+                        <span className="text-xs font-semibold truncate" data-testid={`text-contract-name-${contract.id}`}>{contract.name}</span>
+                        <span className="text-[10px] text-muted-foreground truncate hidden sm:inline" data-testid={`text-contract-client-${contract.id}`}>
+                          <Building2 className="w-3 h-3 inline mr-0.5" />{clientName}
+                        </span>
+                        {contract.numberOfUnits && <Badge variant="outline" className="text-[10px] shrink-0 hidden sm:inline-flex" data-testid={`text-contract-units-${contract.id}`}>{contract.numberOfUnits} imob.</Badge>}
+                        <div className="flex items-center gap-1.5 ml-auto shrink-0">
+                          <Badge variant={STATUS_VARIANTS[contract.status] || "secondary"} className="text-[10px]" data-testid={`badge-status-${contract.id}`}>{statusLabel}</Badge>
+                          {contract.totalMonthly && <span className="text-xs font-semibold" data-testid={`text-total-${contract.id}`}>{contract.totalMonthly} {contract.currency}/luna</span>}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(contract.startDate)} - {formatDate(contract.endDate)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {contract.durationValue} {contract.durationUnit}
-                        </span>
-                        {contract.pricePerUnit && (
-                          <span>{contract.pricePerUnit} {contract.currency}/imobil</span>
-                        )}
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground flex-wrap ml-5" data-testid={`text-contract-meta-${contract.id}`}>
+                        <span className="flex items-center gap-0.5" data-testid={`text-contract-dates-${contract.id}`}><Calendar className="w-3 h-3" />{formatDate(contract.startDate)} — {formatDate(contract.endDate)}</span>
+                        <span>·</span>
+                        <span>{contract.durationValue} {contract.durationUnit}</span>
+                        {contract.pricePerUnit && <><span>·</span><span>{contract.pricePerUnit} {contract.currency}/imobil</span></>}
+                        {contract.invoiceDay && <><span>·</span><span>Fact. zi {contract.invoiceDay}</span></>}
+                        {contract.paymentTermDays && <><span>·</span><span>Termen {contract.paymentTermDays}z</span></>}
+                        {contract.jurisdiction && <><span>·</span><span>{contract.jurisdiction}</span></>}
                       </div>
 
                       {isExpanded && (
-                        <div className="mt-3 pt-3 border-t space-y-3">
-                          <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="mt-2 pt-2 border-t text-xs space-y-1.5 ml-5">
+                          <div className="flex items-start gap-4 flex-wrap">
                             {contract.prestatorName && (
-                              <div>
-                                <span className="text-muted-foreground">Prestator:</span>
-                                <p className="font-medium">{contract.prestatorName}</p>
-                                {contract.prestatorCui && <p className="text-muted-foreground">CUI: {contract.prestatorCui}</p>}
-                                {contract.prestatorAddress && <p className="text-muted-foreground">Sediu: {contract.prestatorAddress}</p>}
-                                {contract.prestatorRegistruComert && <p className="text-muted-foreground">Reg. Com.: {contract.prestatorRegistruComert}</p>}
-                                {contract.prestatorRepresentative && <p className="text-muted-foreground">Repr.: {contract.prestatorRepresentative}</p>}
-                              </div>
+                              <span>
+                                <span className="text-muted-foreground">Prestator:</span>{" "}
+                                <span className="font-medium">{contract.prestatorName}</span>
+                                {contract.prestatorCui && <span className="text-muted-foreground"> · CUI: {contract.prestatorCui}</span>}
+                                {contract.prestatorRegistruComert && <span className="text-muted-foreground"> · Reg: {contract.prestatorRegistruComert}</span>}
+                              </span>
                             )}
-                            <div>
-                              {contract.signingDate && <p><span className="text-muted-foreground">Data Semnare:</span> {formatDate(contract.signingDate)}</p>}
-                              {contract.invoiceDay && <p><span className="text-muted-foreground">Zi Factura:</span> {contract.invoiceDay}</p>}
-                              {contract.paymentTermDays && <p><span className="text-muted-foreground">Termen Plata:</span> {contract.paymentTermDays} zile</p>}
-                              {contract.autoRenewalNoticeDays && <p><span className="text-muted-foreground">Preaviz:</span> {contract.autoRenewalNoticeDays} zile</p>}
-                              {contract.jurisdiction && <p><span className="text-muted-foreground">Jurisdictie:</span> {contract.jurisdiction}</p>}
-                            </div>
+                            {contract.prestatorAddress && (
+                              <span><span className="text-muted-foreground">Sediu:</span> {contract.prestatorAddress}</span>
+                            )}
+                            {contract.prestatorRepresentative && (
+                              <span><span className="text-muted-foreground">Repr:</span> {contract.prestatorRepresentative}</span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 flex-wrap text-[10px] text-muted-foreground">
+                            {contract.signingDate && <span>Semnat: {formatDate(contract.signingDate)}</span>}
+                            {contract.autoRenewalNoticeDays && <span>Preaviz: {contract.autoRenewalNoticeDays}z</span>}
                           </div>
 
                           {contract.description && (
-                            <p className="text-sm text-muted-foreground" data-testid={`text-description-${contract.id}`}>
-                              {contract.description}
-                            </p>
+                            <p className="text-xs text-muted-foreground" data-testid={`text-description-${contract.id}`}>{contract.description}</p>
                           )}
 
-                          <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap pt-1">
                             {contract.documentName ? (
-                              <span className="flex items-center gap-1 text-sm">
-                                <ExternalLink className="w-3.5 h-3.5" />
-                                <span data-testid={`text-document-${contract.id}`}>{contract.documentName}</span>
-                              </span>
+                              <span className="flex items-center gap-1 text-xs"><ExternalLink className="w-3 h-3" /><span data-testid={`text-document-${contract.id}`}>{contract.documentName}</span></span>
                             ) : (
-                              <span className="text-xs text-muted-foreground">Niciun document atasat</span>
+                              <span className="text-[10px] text-muted-foreground">Fara document</span>
                             )}
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditContract(contract)}
-                              data-testid={`button-edit-contract-${contract.id}`}
-                            >
-                              <Pencil className="w-3.5 h-3.5 mr-1" />
-                              Editeaza
+                            <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => handleEditContract(contract)} data-testid={`button-edit-contract-${contract.id}`}>
+                              <Pencil className="w-3 h-3 mr-1" />Editeaza
                             </Button>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleFileUpload(contract.id)}
-                              disabled={uploadDocument.isPending}
-                              data-testid={`button-upload-${contract.id}`}
-                            >
-                              <Upload className="w-3.5 h-3.5 mr-1" />
-                              {uploadDocument.isPending && uploadingId === contract.id ? "Se incarca..." : "Incarca Document"}
+                            <Button variant="outline" size="sm" className="h-6 text-[10px]" onClick={() => handleFileUpload(contract.id)} disabled={uploadDocument.isPending} data-testid={`button-upload-${contract.id}`}>
+                              <Upload className="w-3 h-3 mr-1" />{uploadDocument.isPending && uploadingId === contract.id ? "..." : "Document"}
                             </Button>
-
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  data-testid={`button-delete-contract-${contract.id}`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 mr-1 text-destructive" />
-                                  Sterge
+                                <Button variant="outline" size="sm" className="h-6 text-[10px]" data-testid={`button-delete-contract-${contract.id}`}>
+                                  <Trash2 className="w-3 h-3 mr-1 text-destructive" />Sterge
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Confirmati stergerea</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Sunteti sigur ca doriti sa stergeti contractul "{contract.serie}-{contract.numar} {contract.name}"? Aceasta actiune nu poate fi anulata.
+                                    Sunteti sigur ca doriti sa stergeti contractul "{contract.serie}-{contract.numar} {contract.name}"?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Anuleaza</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteContract.mutate(contract.id)}
-                                    data-testid={`button-confirm-delete-${contract.id}`}
-                                  >
-                                    Sterge
-                                  </AlertDialogAction>
+                                  <AlertDialogAction onClick={() => deleteContract.mutate(contract.id)} data-testid={`button-confirm-delete-${contract.id}`}>Sterge</AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>

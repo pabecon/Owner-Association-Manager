@@ -76,13 +76,11 @@ function GdprSectionRenderer({ section }: { section: GdprSection }) {
 function GdprIndex() {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-5 h-5 text-muted-foreground shrink-0" />
-          <div>
-            <h1 className="text-lg font-bold" data-testid="text-gdpr-title">GDPR</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Politici de protectie a datelor cu caracter personal</p>
-          </div>
+      <div className="p-3 pb-0">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-muted-foreground shrink-0" />
+          <h1 className="text-lg font-bold" data-testid="text-gdpr-title">GDPR</h1>
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">Politici de protectie a datelor cu caracter personal</span>
         </div>
       </div>
 
@@ -90,16 +88,12 @@ function GdprIndex() {
         <div className="max-w-4xl mx-auto space-y-3">
           {GDPR_DOCUMENTS.map((doc) => (
             <Link key={doc.id} href={`/gdpr/${doc.id}`}>
-              <Card className="p-4 cursor-pointer hover-elevate active-elevate-2" data-testid={`card-gdpr-${doc.id}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-semibold truncate" data-testid={`text-gdpr-title-${doc.id}`}>{doc.title}</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5" data-testid={`text-gdpr-date-${doc.id}`}>Ultima actualizare: {doc.lastUpdated}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              <Card className="p-2 px-3 cursor-pointer hover-elevate active-elevate-2" data-testid={`card-gdpr-${doc.id}`}>
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <h2 className="text-xs font-semibold truncate" data-testid={`text-gdpr-title-${doc.id}`}>{doc.title}</h2>
+                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0" data-testid={`text-gdpr-date-${doc.id}`}>{doc.lastUpdated}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 </div>
               </Card>
             </Link>
@@ -121,20 +115,16 @@ export default function Gdpr() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <h1 className="text-lg font-bold" data-testid="text-gdpr-doc-title">{selectedDoc.title}</h1>
-              <Badge variant="outline" data-testid="badge-gdpr-date">
-                {selectedDoc.lastUpdated}
-              </Badge>
-            </div>
+      <div className="p-3 pb-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold" data-testid="text-gdpr-doc-title">{selectedDoc.title}</h1>
+            <Badge variant="outline" className="text-[10px]" data-testid="badge-gdpr-date">{selectedDoc.lastUpdated}</Badge>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
             <Link href={selectedId === "politica-cookies" ? "/gdpr/politica-prelucrare-date" : "/gdpr/politica-cookies"} data-testid="link-gdpr-other">
-              <ChevronRight className="w-4 h-4 mr-1.5 rotate-180" />
-              {selectedId === "politica-cookies" ? "Politica de Prelucrare Date" : "Politica de Cookies"}
+              <ChevronRight className="w-3.5 h-3.5 mr-1 rotate-180" />
+              {selectedId === "politica-cookies" ? "Prelucrare Date" : "Cookies"}
             </Link>
           </Button>
         </div>

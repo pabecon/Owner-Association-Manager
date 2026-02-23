@@ -188,17 +188,17 @@ export default function ListaUtilizatoriPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
+      <div className="p-3 pb-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-page-title">Lista Utilizatori</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestionarea utilizatorilor platformei</p>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestionarea utilizatorilor platformei</span>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-user">
-                <Plus className="w-4 h-4 mr-2" />
-                Adauga Utilizator
+              <Button size="sm" className="h-7 text-xs" data-testid="button-add-user">
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Adauga
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

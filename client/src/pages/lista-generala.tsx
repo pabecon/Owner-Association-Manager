@@ -53,7 +53,7 @@ interface ListConfig {
 
 function CategoryGroupedView({ items, listKey, config }: { items: Record<string, string>[]; listKey: string; config: ListConfig }) {
   const { toast } = useToast();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(["__all__"]));
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [addUnitOpen, setAddUnitOpen] = useState(false);
   const [addUnitCategory, setAddUnitCategory] = useState("");
@@ -230,22 +230,18 @@ function CategoryGroupedView({ items, listKey, config }: { items: Record<string,
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
+      <div className="p-3 pb-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-list-title">
               {config.label}
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              Unitati de masura grupate pe categorii
-            </p>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Unitati de masura grupate pe categorii</span>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleOpenAddCategory} data-testid="button-add-category">
-              <FolderPlus className="w-4 h-4 mr-2" />
-              Categorie Noua
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleOpenAddCategory} data-testid="button-add-category">
+            <FolderPlus className="w-3.5 h-3.5 mr-1" />
+            Categorie
+          </Button>
         </div>
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -488,58 +484,57 @@ function CategoryGroupedView({ items, listKey, config }: { items: Record<string,
           </Card>
         ) : (
           Object.entries(groupedByCategory).sort(([a], [b]) => a.localeCompare(b)).map(([category, catItems]) => {
-            const isExpanded = expandedCategories.has(category) || expandedCategories.has("__all__");
+            const isExpanded = expandedCategories.has(category);
             return (
               <Card key={category} data-testid={`card-category-${category}`}>
                 <CardContent className="p-0">
-                  <div className="flex items-center justify-between p-3 pb-0">
+                  <div className="flex items-center justify-between px-3 py-1.5">
                     <button
                       type="button"
-                      className="flex items-center gap-2 flex-1 text-left"
+                      className="flex items-center gap-1.5 flex-1 text-left"
                       onClick={() => toggleCategory(category)}
                       data-testid={`button-toggle-category-${category}`}
                     >
-                      {isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
-                      <span className="font-semibold text-sm">{category}</span>
-                      <Badge variant="secondary" className="ml-1 text-[10px]">{catItems.length}</Badge>
+                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                      <span className="font-semibold text-xs">{category}</span>
+                      <Badge variant="secondary" className="text-[10px]">{catItems.length}</Badge>
                     </button>
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => handleOpenAddUnit(category)} data-testid={`button-add-unit-${category}`}>
-                        <Plus className="w-3.5 h-3.5 mr-1" />
-                        Adauga
+                    <div className="flex items-center gap-0.5">
+                      <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => handleOpenAddUnit(category)} data-testid={`button-add-unit-${category}`}>
+                        <Plus className="w-3 h-3 mr-0.5" />Adauga
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleRenameCategory(category)} data-testid={`button-rename-category-${category}`} title="Redenumeste categoria">
-                        <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleRenameCategory(category)} data-testid={`button-rename-category-${category}`} title="Redenumeste categoria">
+                        <Pencil className="w-3 h-3 text-muted-foreground" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => handleDeleteCategory(category)} data-testid={`button-delete-category-${category}`} title="Sterge categoria">
-                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeleteCategory(category)} data-testid={`button-delete-category-${category}`} title="Sterge categoria">
+                        <Trash2 className="w-3 h-3 text-muted-foreground" />
                       </Button>
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="overflow-x-auto pb-1">
-                      <Table>
+                    <div className="overflow-auto max-h-[300px]">
+                      <Table className="compact-table">
                         <TableHeader>
                           <TableRow>
                             {nonCategorieColumns.map(col => (
-                              <TableHead key={col.key} className="py-1 text-xs">{col.label}</TableHead>
+                              <TableHead key={col.key}>{col.label}</TableHead>
                             ))}
-                            <TableHead className="w-20 py-1"></TableHead>
+                            <TableHead className="w-16"></TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {catItems.map((item) => (
                             <TableRow key={item.id} data-testid={`row-unit-${item.id}`}>
                               {nonCategorieColumns.map(col => (
-                                <TableCell key={col.key} className="text-sm py-1">{item[col.key] || ""}</TableCell>
+                                <TableCell key={col.key}>{item[col.key] || ""}</TableCell>
                               ))}
-                              <TableCell className="py-1">
+                              <TableCell>
                                 <div className="flex items-center gap-0.5">
-                                  <Button size="icon" variant="ghost" onClick={() => handleEditClick(item)} data-testid={`button-edit-unit-${item.id}`}>
-                                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleEditClick(item)} data-testid={`button-edit-unit-${item.id}`}>
+                                    <Pencil className="w-3 h-3 text-muted-foreground" />
                                   </Button>
-                                  <Button size="icon" variant="ghost" onClick={() => { setDeleteTarget(item.id); setDeleteDialogOpen(true); }} data-testid={`button-delete-unit-${item.id}`}>
-                                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setDeleteTarget(item.id); setDeleteDialogOpen(true); }} data-testid={`button-delete-unit-${item.id}`}>
+                                    <Trash2 className="w-3 h-3 text-muted-foreground" />
                                   </Button>
                                 </div>
                               </TableCell>
@@ -737,20 +732,18 @@ export default function ListaGenerala() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
+      <div className="p-3 pb-0 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
             <h1 className="text-lg font-bold tracking-tight" data-testid="text-list-title">
               {label}
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              Gestioneaza inregistrarile din lista
-            </p>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestioneaza inregistrarile din lista</span>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenAdd} data-testid="button-add-item">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button size="sm" className="h-7 text-xs" onClick={handleOpenAdd} data-testid="button-add-item">
+                <Plus className="w-3.5 h-3.5 mr-1" />
                 Adauga
               </Button>
             </DialogTrigger>
@@ -930,11 +923,11 @@ export default function ListaGenerala() {
                   <TableHeader>
                     <TableRow>
                       {columns.map((col) => (
-                        <TableHead key={col.key} className="py-1 text-xs" data-testid={`header-${col.key}`}>
+                        <TableHead key={col.key} data-testid={`header-${col.key}`}>
                           {col.label}
                         </TableHead>
                       ))}
-                      <TableHead className="w-16 py-1"></TableHead>
+                      <TableHead className="w-16"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -957,28 +950,18 @@ export default function ListaGenerala() {
                             display = !isNaN(num) ? (num < 1 ? `${(num * 100).toFixed(0)}%` : `${num}%`) : val;
                           }
                           return (
-                            <TableCell key={col.key} className="text-sm py-1">
+                            <TableCell key={col.key}>
                               {display}
                             </TableCell>
                           );
                         })}
-                        <TableCell className="py-1">
+                        <TableCell>
                           <div className="flex items-center gap-0.5">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleEditClick(item)}
-                              data-testid={`button-edit-item-${item.id || index}`}
-                            >
-                              <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleEditClick(item)} data-testid={`button-edit-item-${item.id || index}`}>
+                              <Pencil className="w-3 h-3 text-muted-foreground" />
                             </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDeleteClick(item.id || String(index))}
-                              data-testid={`button-delete-item-${item.id || index}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 text-muted-foreground" />
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleDeleteClick(item.id || String(index))} data-testid={`button-delete-item-${item.id || index}`}>
+                              <Trash2 className="w-3 h-3 text-muted-foreground" />
                             </Button>
                           </div>
                         </TableCell>
