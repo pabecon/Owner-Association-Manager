@@ -89,10 +89,12 @@ export function EditEntityDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [rooms, setRooms] = useState<RoomEntry[]>([]);
 
-  const { data: streetTypesData } = useQuery<string[]>({
+  const { data: streetTypesData } = useQuery<any[]>({
     queryKey: ["/api/liste/tip-drumuri"],
   });
-  const streetTypes = streetTypesData && streetTypesData.length > 0 ? streetTypesData : FALLBACK_STREET_TYPES;
+  const streetTypes: string[] = streetTypesData && streetTypesData.length > 0
+    ? streetTypesData.map((r: any) => typeof r === "string" ? r : (r.tipDrum || r.tip_drum || r.name || "")).filter(Boolean)
+    : FALLBACK_STREET_TYPES;
 
   const aptId = level === "apartment" && entity?.id ? entity.id : null;
   const { data: existingRooms } = useQuery<UnitRoom[]>({

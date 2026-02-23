@@ -121,10 +121,12 @@ export function AddEntityDialog({
     },
   });
 
-  const { data: streetTypesData } = useQuery<string[]>({
+  const { data: streetTypesData } = useQuery<any[]>({
     queryKey: ["/api/liste/tip-drumuri"],
   });
-  const streetTypes = streetTypesData && streetTypesData.length > 0 ? streetTypesData : FALLBACK_STREET_TYPES;
+  const streetTypes: string[] = streetTypesData && streetTypesData.length > 0
+    ? streetTypesData.map((r: any) => typeof r === "string" ? r : (r.tipDrum || r.tip_drum || r.name || "")).filter(Boolean)
+    : FALLBACK_STREET_TYPES;
 
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
