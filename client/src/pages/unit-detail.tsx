@@ -658,28 +658,8 @@ export default function UnitDetail() {
           </div>
         )}
 
-        {activeTab === "camere" && (
-          <div className="space-y-2 max-w-4xl">
-            <h2 className="text-sm font-semibold">Camere</h2>
-            {rooms && rooms.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {rooms.map(room => (
-                  <div key={room.id} className="border rounded-md p-3 text-center" data-testid={`room-card-${room.id}`}>
-                    <p className="text-sm font-medium truncate">{room.name}</p>
-                    {room.surface && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{room.surface} m²</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground text-center">Nicio camera inregistrata</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {activeTab === "camere" && unitId && (
+          <UnitRoomsTab unitId={unitId} rooms={rooms || []} />
         )}
 
         {activeTab === "contoare" && (
@@ -743,6 +723,159 @@ export default function UnitDetail() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: UnitRoom[] }) {
+  const { toast } = useToast();
+  const [editingRooms, setEditingRooms] = useState<{ name: string; surface: string }[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (initialRooms) {
+      setEditingRooms(initialRooms.map(r => ({
+        name: r.name,
+        surface: r.surface?.toString() || "",
+      })));
+    }
+  }, [initialRooms]);
+
+  const surfaceSum = editingRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const validRooms = editingRooms.filter(r => r.name.trim());
+      await apiRequest("POST", "/api/unit-rooms", {
+        apartmentId: unitId,
+        rooms: validRooms.map((r, i) => ({
+          name: r.name,
+          surface: r.surface ? parseFloat(r.surface) : null,
+          sortOrder: i,
+        })),
+      });
+      const totalSurface = validRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+      await apiRequest("PATCH", `/api/apartments/${unitId}`, {
+        surface: totalSurface > 0 ? totalSurface.toFixed(2) : null,
+        rooms: validRooms.length || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/unit-rooms", unitId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/apartments", unitId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/apartments"] });
+      toast({ title: "Camerele au fost salvate" });
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const addRoom = () => {
+    setEditingRooms(prev => [...prev, { name: `Camera ${prev.length + 1}`, surface: "" }]);
+    if (!isEditing) setIsEditing(true);
+  };
+
+  const removeRoom = (idx: number) => {
+    setEditingRooms(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateRoom = (idx: number, field: "name" | "surface", value: string) => {
+    setEditingRooms(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  };
+
+  const handleCancel = () => {
+    setEditingRooms(initialRooms.map(r => ({
+      name: r.name,
+      surface: r.surface?.toString() || "",
+    })));
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="space-y-2 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Camere ({editingRooms.length})</h2>
+        <div className="flex items-center gap-1">
+          {isEditing && (
+            <>
+              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={handleCancel} data-testid="button-cancel-rooms">
+                <X className="w-3 h-3 mr-0.5" />Anuleaza
+              </Button>
+              <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} data-testid="button-save-rooms">
+                <Save className="w-3 h-3 mr-0.5" />{saveMutation.isPending ? "Salveaza..." : "Salveaza"}
+              </Button>
+            </>
+          )}
+          {!isEditing && (
+            <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setIsEditing(true)} data-testid="button-edit-rooms">
+              <Pencil className="w-3 h-3 mr-0.5" />Editeaza
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-3 space-y-2">
+          {editingRooms.length > 0 ? (
+            <>
+              <div className="grid grid-cols-[auto_1fr_120px_auto] gap-2 text-[10px] text-muted-foreground font-medium px-0.5">
+                <span className="w-5">#</span>
+                <span>Nume camera</span>
+                <span>Suprafata (m²)</span>
+                <span className="w-6"></span>
+              </div>
+              {editingRooms.map((room, i) => (
+                <div key={i} className="grid grid-cols-[auto_1fr_120px_auto] gap-2 items-center" data-testid={`room-row-${i}`}>
+                  <span className="text-[10px] text-muted-foreground w-5 text-center">{i + 1}</span>
+                  {isEditing ? (
+                    <>
+                      <Input
+                        value={room.name}
+                        onChange={e => updateRoom(i, "name", e.target.value)}
+                        placeholder={`Camera ${i + 1}`}
+                        className="h-7 text-xs"
+                        data-testid={`input-room-name-${i}`}
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={room.surface}
+                        onChange={e => updateRoom(i, "surface", e.target.value)}
+                        placeholder="m²"
+                        className="h-7 text-xs"
+                        data-testid={`input-room-surface-${i}`}
+                      />
+                      <Button size="icon" variant="ghost" className="w-6 h-6 text-destructive" onClick={() => removeRoom(i)} data-testid={`button-remove-room-${i}`}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs font-medium truncate">{room.name}</span>
+                      <span className="text-xs text-muted-foreground">{room.surface ? `${room.surface} m²` : "-"}</span>
+                      <span className="w-6" />
+                    </>
+                  )}
+                </div>
+              ))}
+              <div className="border-t pt-1.5 mt-1.5 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Suprafata utila totala</span>
+                <span className="text-xs font-semibold" data-testid="text-room-surface-total">{surfaceSum > 0 ? `${surfaceSum.toFixed(2)} m²` : "-"}</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">Nicio camera inregistrata</p>
+          )}
+
+          {(isEditing || editingRooms.length === 0) && (
+            <Button variant="outline" size="sm" className="w-full h-7 text-xs" onClick={addRoom} data-testid="button-add-room">
+              <DoorOpen className="w-3 h-3 mr-1" />Adauga Camera
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

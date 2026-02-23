@@ -35,6 +35,7 @@ interface BatchCreateDialogProps {
   parentName: string;
   staircaseId?: string;
   floorNumber?: number;
+  parentAddress?: string;
 }
 
 const LEVEL_CONFIG: Record<WizardLevel, { title: string; itemLabel: string; pluralLabel: string; countLabel: string }> = {
@@ -64,6 +65,7 @@ export function BatchCreateDialog({
   parentName,
   staircaseId,
   floorNumber,
+  parentAddress,
 }: BatchCreateDialogProps) {
   const { toast } = useToast();
   const { uploadFile, isUploading } = useUpload({
@@ -76,7 +78,6 @@ export function BatchCreateDialog({
   const [count, setCount] = useState("");
   const [items, setItems] = useState<BatchItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [address, setAddress] = useState("");
 
   const config = LEVEL_CONFIG[level];
 
@@ -85,7 +86,6 @@ export function BatchCreateDialog({
     setCount("");
     setItems([]);
     setIsSaving(false);
-    setAddress("");
   }, []);
 
   const handleClose = useCallback(() => {
@@ -162,7 +162,7 @@ export function BatchCreateDialog({
           body = {
             name: item.name,
             associationId: parentId,
-            address: address || null,
+            address: parentAddress || undefined,
           };
         } else if (level === "staircase") {
           endpoint = "/api/staircases";
@@ -255,7 +255,7 @@ export function BatchCreateDialog({
     } finally {
       setIsSaving(false);
     }
-  }, [items, level, parentId, staircaseId, floorNumber, address, uploadFile, handleClose, toast, config]);
+  }, [items, level, parentId, staircaseId, floorNumber, parentAddress, uploadFile, handleClose, toast, config]);
 
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) handleClose(); else onOpenChange(v); }}>
@@ -292,16 +292,9 @@ export function BatchCreateDialog({
 
         {step === "details" && (
           <div className="space-y-3">
-            {level === "building" && (
-              <div>
-                <Label className="text-xs">Adresa comuna (optional)</Label>
-                <Input
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                  placeholder="Adresa blocurilor"
-                  className="text-sm"
-                  data-testid="input-batch-address"
-                />
+            {level === "building" && parentAddress && (
+              <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
+                Adresa: {parentAddress}
               </div>
             )}
 

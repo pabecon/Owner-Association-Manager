@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, FileSpreadsheet } from "lucide-react";
+import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, FileSpreadsheet, Pencil } from "lucide-react";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
@@ -12,6 +12,7 @@ import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
 import { BatchCreateDialog } from "@/components/batch-create-dialog";
 import { ExcelImportDialog } from "@/components/excel-import-dialog";
+import { EditEntityDialog } from "@/components/edit-entity-dialog";
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
@@ -38,9 +39,10 @@ interface TreeNodeProps {
   subtitleLink?: string;
   onAdd?: () => void;
   onPortal?: () => void;
+  onEdit?: () => void;
 }
 
-function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, subtitleLink, onAdd, onPortal }: TreeNodeProps) {
+function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, subtitleLink, onAdd, onPortal, onEdit }: TreeNodeProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = !!children;
   const indentPx = level * 14;
@@ -93,6 +95,17 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
           </>
         )}
         {badge && <Badge variant={badgeVariant} className="text-[9px] py-0 px-1 shrink-0">{badge}</Badge>}
+        {onEdit && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="w-5 h-5 shrink-0 text-muted-foreground hover:text-primary"
+            onClick={e => { e.stopPropagation(); onEdit(); }}
+            data-testid={`button-edit-${label.replace(/\s+/g, "-").toLowerCase()}`}
+          >
+            <Pencil className="w-2.5 h-2.5" />
+          </Button>
+        )}
         {onPortal && (
           <Button
             size="sm"
@@ -149,7 +162,8 @@ export default function HierarchyTree() {
   const { data: staircases, isLoading: ls } = useQuery<Staircase[]>({ queryKey: ["/api/staircases"] });
   const { data: apartments, isLoading: lap } = useQuery<Apartment[]>({ queryKey: ["/api/apartments"] });
   const [addDialog, setAddDialog] = useState<AddDialogState>({ open: false, level: "federation" });
-  const [batchDialog, setBatchDialog] = useState<{ open: boolean; level: "building" | "staircase" | "floor" | "unit"; parentId: string; parentName: string; staircaseId?: string; floorNumber?: number }>({ open: false, level: "building", parentId: "", parentName: "" });
+  const [batchDialog, setBatchDialog] = useState<{ open: boolean; level: "building" | "staircase" | "floor" | "unit"; parentId: string; parentName: string; staircaseId?: string; floorNumber?: number; parentAddress?: string }>({ open: false, level: "building", parentId: "", parentName: "" });
+  const [editDialog, setEditDialog] = useState<{ open: boolean; level: EntityLevel; entity: any }>({ open: false, level: "federation", entity: null });
   const [importOpen, setImportOpen] = useState(false);
 
   const isLoading = lf || la || lb || ls || lap;
@@ -168,8 +182,12 @@ export default function HierarchyTree() {
     setAddDialog({ open: true, level, parentId, parentName });
   };
 
-  const openBatch = (level: "building" | "staircase" | "floor" | "unit", parentId: string, parentName: string, staircaseId?: string, floorNumber?: number) => {
-    setBatchDialog({ open: true, level, parentId, parentName, staircaseId, floorNumber });
+  const openEdit = (level: EntityLevel, entity: any) => {
+    setEditDialog({ open: true, level, entity });
+  };
+
+  const openBatch = (level: "building" | "staircase" | "floor" | "unit", parentId: string, parentName: string, staircaseId?: string, floorNumber?: number, parentAddress?: string) => {
+    setBatchDialog({ open: true, level, parentId, parentName, staircaseId, floorNumber, parentAddress });
   };
 
   const getAssocStats = (assocId: string): StatBadge[] => {
@@ -216,6 +234,7 @@ export default function HierarchyTree() {
         badge={`${bldSts.length} scari`}
         subtitle={bld.address || undefined}
         subtitleLink={bld.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bld.address)}` : undefined}
+        onEdit={() => openEdit("building", bld)}
         onAdd={() => openBatch("staircase", bld.id, bld.name)}
       >
         {bldSts.map(st => {
@@ -234,6 +253,7 @@ export default function HierarchyTree() {
               icon={ArrowUpDown}
               level={3}
               badge={`${stApts.length} unitati`}
+              onEdit={() => openEdit("staircase", st)}
               onAdd={() => openBatch("floor", st.id, st.name, st.id)}
             >
               {sortedFloors.map(floor => {
@@ -313,6 +333,7 @@ export default function HierarchyTree() {
                     level={0}
                     badge={`${fedAssocs.length} asociatii`}
                     defaultOpen={true}
+                    onEdit={() => openEdit("federation", fed)}
                     onAdd={() => openAdd("association", fed.id, fed.name)}
                   >
                     {fedAssocs.map(assoc => {
@@ -325,7 +346,8 @@ export default function HierarchyTree() {
                           level={1}
                           stats={getAssocStats(assoc.id)}
                           subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                          onAdd={() => openBatch("building", assoc.id, assoc.name)}
+                          onEdit={() => openEdit("association", assoc)}
+                          onAdd={() => openBatch("building", assoc.id, assoc.name, undefined, undefined, assoc.address || undefined)}
                           onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                         >
                           {assocBlds.map(bld => renderBuildingSubtree(bld))}
@@ -348,7 +370,8 @@ export default function HierarchyTree() {
                         level={1}
                         stats={getAssocStats(assoc.id)}
                         subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                        onAdd={() => openBatch("building", assoc.id, assoc.name)}
+                        onEdit={() => openEdit("association", assoc)}
+                        onAdd={() => openBatch("building", assoc.id, assoc.name, undefined, undefined, assoc.address || undefined)}
                         onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                       >
                         {assocBlds.map(bld => renderBuildingSubtree(bld))}
@@ -383,9 +406,21 @@ export default function HierarchyTree() {
         parentName={batchDialog.parentName}
         staircaseId={batchDialog.staircaseId}
         floorNumber={batchDialog.floorNumber}
+        parentAddress={batchDialog.parentAddress}
       />
 
       <ExcelImportDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <EditEntityDialog
+        open={editDialog.open}
+        onOpenChange={open => setEditDialog(prev => ({ ...prev, open }))}
+        level={editDialog.level}
+        entity={editDialog.entity}
+        federations={federations}
+        associations={associations}
+        buildings={buildings}
+        staircases={staircases}
+      />
     </div>
   );
 }

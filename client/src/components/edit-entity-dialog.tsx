@@ -208,8 +208,8 @@ export function EditEntityDialog({
           adminEmail: formData.adminEmail || null,
         };
       } else if (level === "building") {
-        if (!formData.name?.trim() || !formData.address?.trim()) {
-          toast({ title: "Numele si adresa sunt obligatorii", variant: "destructive" });
+        if (!formData.name?.trim()) {
+          toast({ title: "Numele este obligatoriu", variant: "destructive" });
           setIsSaving(false);
           return;
         }
@@ -391,7 +391,7 @@ export function EditEntityDialog({
               <Input id="edit-bld-name" value={formData.name || ""} onChange={e => updateField("name", e.target.value)} placeholder="Numele blocului" data-testid="edit-input-name" />
             </div>
             <div>
-              <Label htmlFor="edit-bld-addr">Adresa *</Label>
+              <Label htmlFor="edit-bld-addr">Adresa</Label>
               <Input id="edit-bld-addr" value={formData.address || ""} onChange={e => updateField("address", e.target.value)} placeholder="Adresa" data-testid="edit-input-address" />
             </div>
             <div className="grid grid-cols-2 gap-3">
