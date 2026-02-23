@@ -43,12 +43,12 @@ function GdprSectionRenderer({ section }: { section: GdprSection }) {
 
   if (section.type === "table" && section.tableData) {
     return (
-      <div className="my-3 overflow-x-auto">
+      <div className="my-3 overflow-auto max-h-[400px]">
         <table className="w-full text-xs border-collapse border border-border">
-          <thead>
-            <tr className="bg-muted">
+          <thead className="sticky top-0 z-10 bg-muted">
+            <tr>
               {section.tableData.headers.map((header, i) => (
-                <th key={i} className="border border-border px-2 py-1.5 text-left font-semibold">
+                <th key={i} className="border border-border px-2 py-1.5 text-left font-semibold bg-muted">
                   {header}
                 </th>
               ))}

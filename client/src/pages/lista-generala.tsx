@@ -925,16 +925,16 @@ export default function ListaGenerala() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-auto max-h-[calc(100vh-200px)] sticky-table-container">
+                <Table className="compact-table">
                   <TableHeader>
                     <TableRow>
                       {columns.map((col) => (
-                        <TableHead key={col.key} className="py-1" data-testid={`header-${col.key}`}>
+                        <TableHead key={col.key} className="py-1 text-xs" data-testid={`header-${col.key}`}>
                           {col.label}
                         </TableHead>
                       ))}
-                      <TableHead className="w-20 py-1"></TableHead>
+                      <TableHead className="w-16 py-1"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

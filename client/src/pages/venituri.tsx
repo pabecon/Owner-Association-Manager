@@ -43,38 +43,38 @@ export default function VenituriPage() {
   };
 
   return (
-    <div className="h-full overflow-auto p-6" data-testid="page-venituri">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="h-full overflow-auto p-3" data-testid="page-venituri">
+      <div className="max-w-7xl mx-auto space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold" data-testid="text-venituri-title">Venituri - Facturi Proforma</h1>
-            <p className="text-sm text-muted-foreground mt-1">Facturi proforma generate automat din contractele de administrare</p>
+            <h1 className="text-lg font-bold" data-testid="text-venituri-title">Venituri - Facturi Proforma</h1>
+            <p className="text-xs text-muted-foreground">Facturi proforma generate automat din contractele de administrare</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Total Facturi</div>
-              <div className="text-2xl font-bold" data-testid="text-total-invoices">{invoices?.length || 0}</div>
+            <CardContent className="p-2">
+              <div className="text-xs text-muted-foreground">Total Facturi</div>
+              <div className="text-base font-bold" data-testid="text-total-invoices">{invoices?.length || 0}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Emise</div>
-              <div className="text-2xl font-bold text-amber-600" data-testid="text-emise-count">{totalEmise}</div>
+            <CardContent className="p-2">
+              <div className="text-xs text-muted-foreground">Emise</div>
+              <div className="text-base font-bold text-amber-600" data-testid="text-emise-count">{totalEmise}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Platite</div>
-              <div className="text-2xl font-bold text-green-600" data-testid="text-platite-count">{totalPlatite}</div>
+            <CardContent className="p-2">
+              <div className="text-xs text-muted-foreground">Platite</div>
+              <div className="text-base font-bold text-green-600" data-testid="text-platite-count">{totalPlatite}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">Valoare Totala</div>
-              <div className="text-2xl font-bold" data-testid="text-total-sum">
+            <CardContent className="p-2">
+              <div className="text-xs text-muted-foreground">Valoare Totala</div>
+              <div className="text-base font-bold" data-testid="text-total-sum">
                 {totalSum.toLocaleString("ro-RO", { minimumFractionDigits: 2 })} {invoices?.[0]?.currency || "RON"}
               </div>
             </CardContent>
@@ -82,10 +82,10 @@ export default function VenituriPage() {
         </div>
 
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Receipt className="w-5 h-5" />
+                <Receipt className="w-4 h-4" />
                 Facturi Proforma
               </CardTitle>
               <div className="w-72">
@@ -107,18 +107,18 @@ export default function VenituriPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : !invoices?.length ? (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <FileText className="w-12 h-12 mb-3 opacity-50" />
+              <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+                <FileText className="w-8 h-8 mb-3 opacity-50" />
                 <p className="text-sm">Nu exista facturi proforma</p>
                 <p className="text-xs mt-1">Facturile se genereaza automat la crearea unui contract</p>
               </div>
             ) : (
-              <div className="overflow-auto max-h-[60vh]">
-                <Table>
+              <div className="sticky-table-container overflow-auto max-h-[60vh]">
+                <Table className="compact-table">
                   <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
                       <TableHead className="w-16">Nr.</TableHead>

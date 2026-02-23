@@ -508,20 +508,20 @@ export default function ListaUtilizatoriPage() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="overflow-auto max-h-[calc(100vh-200px)] sticky-table-container">
+                <Table className="compact-table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nume</TableHead>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Rol</TableHead>
-                      <TableHead>Asociatie</TableHead>
-                      <TableHead>Bloc</TableHead>
-                      <TableHead>Scara</TableHead>
-                      <TableHead>Etaj</TableHead>
-                      <TableHead>Unitate</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actiuni</TableHead>
+                      <TableHead className="text-xs">Nume</TableHead>
+                      <TableHead className="text-xs">Username</TableHead>
+                      <TableHead className="text-xs">Rol</TableHead>
+                      <TableHead className="text-xs">Asociatie</TableHead>
+                      <TableHead className="text-xs">Bloc</TableHead>
+                      <TableHead className="text-xs">Scara</TableHead>
+                      <TableHead className="text-xs">Etaj</TableHead>
+                      <TableHead className="text-xs">Unitate</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Actiuni</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

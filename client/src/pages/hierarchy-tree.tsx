@@ -296,30 +296,30 @@ export default function HierarchyTree() {
 
       <div className="flex-1 overflow-y-auto p-3 pt-3">
         <div className="max-w-5xl mx-auto space-y-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalFed}</p>
-              <p className="text-xs text-muted-foreground">Federatii</p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalFed}</p>
+              <p className="text-[10px] text-muted-foreground">Federatii</p>
             </CardContent></Card>
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalAssoc}</p>
-              <p className="text-xs text-muted-foreground">Asociatii</p>
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalAssoc}</p>
+              <p className="text-[10px] text-muted-foreground">Asociatii</p>
             </CardContent></Card>
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalBld}</p>
-              <p className="text-xs text-muted-foreground">Blocuri</p>
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalBld}</p>
+              <p className="text-[10px] text-muted-foreground">Blocuri</p>
             </CardContent></Card>
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalSt}</p>
-              <p className="text-xs text-muted-foreground">Scari</p>
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalSt}</p>
+              <p className="text-[10px] text-muted-foreground">Scari</p>
             </CardContent></Card>
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalAptOnly}</p>
-              <p className="text-xs text-muted-foreground">Apartamente</p>
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalAptOnly}</p>
+              <p className="text-[10px] text-muted-foreground">Apartamente</p>
             </CardContent></Card>
-            <Card><CardContent className="p-3 text-center">
-              <p className="text-xl font-bold">{totalBoxes + totalParking}</p>
-              <p className="text-xs text-muted-foreground">Boxe / Parcare</p>
+            <Card><CardContent className="p-2 text-center">
+              <p className="text-base font-bold leading-tight">{totalBoxes + totalParking}</p>
+              <p className="text-[10px] text-muted-foreground">Boxe / Parcare</p>
             </CardContent></Card>
           </div>
 

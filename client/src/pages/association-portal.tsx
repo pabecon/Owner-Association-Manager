@@ -160,48 +160,48 @@ export default function AssociationPortal() {
             </div>
           </header>
           <main className="flex-1 overflow-y-auto p-3">
-            <div className="max-w-7xl mx-auto space-y-4">
+            <div className="max-w-7xl mx-auto space-y-3">
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <Building2 className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-buildings">{assocBuildings.length}</p>
+              <CardContent className="p-2 text-center">
+                <Building2 className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-buildings">{assocBuildings.length}</p>
                 <p className="text-[10px] text-muted-foreground">Blocuri</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <ArrowUpDown className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-staircases">{assocStaircases.length}</p>
+              <CardContent className="p-2 text-center">
+                <ArrowUpDown className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-staircases">{assocStaircases.length}</p>
                 <p className="text-[10px] text-muted-foreground">Scari</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <Home className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-apartments">{aptCount}</p>
+              <CardContent className="p-2 text-center">
+                <Home className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-apartments">{aptCount}</p>
                 <p className="text-[10px] text-muted-foreground">Apartamente</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <Package className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-boxes">{boxCount}</p>
+              <CardContent className="p-2 text-center">
+                <Package className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-boxes">{boxCount}</p>
                 <p className="text-[10px] text-muted-foreground">Boxe</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <Car className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-parking">{parkingCount}</p>
+              <CardContent className="p-2 text-center">
+                <Car className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-parking">{parkingCount}</p>
                 <p className="text-[10px] text-muted-foreground">Parking</p>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-2.5 text-center">
-                <Wallet className="w-4 h-4 text-primary mx-auto mb-1" />
-                <p className="text-lg font-bold" data-testid="text-portal-funds">{funds?.length || 0}</p>
+              <CardContent className="p-2 text-center">
+                <Wallet className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
+                <p className="text-base font-bold leading-tight" data-testid="text-portal-funds">{funds?.length || 0}</p>
                 <p className="text-[10px] text-muted-foreground">Fonduri</p>
               </CardContent>
             </Card>
@@ -467,45 +467,41 @@ export default function AssociationPortal() {
                 ) : (
                   <Card>
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">Descriere</TableHead>
-                            <TableHead className="text-xs">Categorie</TableHead>
-                            <TableHead className="text-xs">Bloc</TableHead>
-                            <TableHead className="text-xs">Luna/An</TableHead>
-                            <TableHead className="text-xs text-right">Suma</TableHead>
-                            <TableHead className="text-xs w-10"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {assocExpenses.slice(0, 20).map(exp => {
-                            const bld = assocBuildings.find(b => b.id === exp.buildingId);
-                            return (
-                              <TableRow key={exp.id} data-testid={`row-portal-expense-${exp.id}`}>
-                                <TableCell className="text-xs font-medium">{exp.description}</TableCell>
-                                <TableCell>
-                                  <Badge variant="outline" className="text-[10px]">{exp.category}</Badge>
-                                </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{bld?.name || "-"}</TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{exp.month}/{exp.year}</TableCell>
-                                <TableCell className="text-xs text-right font-medium">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
-                                <TableCell>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-6 w-6"
-                                    onClick={() => deleteExpenseMutation.mutate(exp.id)}
-                                    data-testid={`button-delete-expense-${exp.id}`}
-                                  >
-                                    <Trash2 className="w-3 h-3 text-muted-foreground" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                      <div className="sticky-table-container max-h-[400px]">
+                        <Table className="compact-table">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Descriere</TableHead>
+                              <TableHead>Categorie</TableHead>
+                              <TableHead>Bloc</TableHead>
+                              <TableHead>Luna/An</TableHead>
+                              <TableHead className="text-right">Suma</TableHead>
+                              <TableHead className="w-10"></TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {assocExpenses.slice(0, 20).map(exp => {
+                              const bld = assocBuildings.find(b => b.id === exp.buildingId);
+                              return (
+                                <TableRow key={exp.id} data-testid={`row-portal-expense-${exp.id}`}>
+                                  <TableCell className="font-medium">{exp.description}</TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className="text-[10px]">{exp.category}</Badge>
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">{bld?.name || "-"}</TableCell>
+                                  <TableCell className="text-muted-foreground">{exp.month}/{exp.year}</TableCell>
+                                  <TableCell className="text-right font-medium">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
+                                  <TableCell>
+                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteExpenseMutation.mutate(exp.id)} data-testid={`button-delete-expense-${exp.id}`}>
+                                      <Trash2 className="w-3 h-3 text-muted-foreground" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
                       {assocExpenses.length > 20 && (
                         <p className="text-xs text-muted-foreground text-center py-2">
                           Se afiseaza primele 20 din {assocExpenses.length} cheltuieli
@@ -532,61 +528,51 @@ export default function AssociationPortal() {
                 ) : (
                   <Card>
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">Apartament</TableHead>
-                            <TableHead className="text-xs">Luna/An</TableHead>
-                            <TableHead className="text-xs text-right">Suma</TableHead>
-                            <TableHead className="text-xs">Status</TableHead>
-                            <TableHead className="text-xs">Chitanta</TableHead>
-                            <TableHead className="text-xs w-20">Actiuni</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {assocPayments.slice(0, 20).map(pay => {
-                            const apt = apartments?.find(a => a.id === pay.apartmentId);
-                            return (
-                              <TableRow key={pay.id} data-testid={`row-portal-payment-${pay.id}`}>
-                                <TableCell className="text-xs font-medium">
-                                  {apt ? `${getUnitTypeLabel(apt.unitType)} ${apt.number}` : pay.apartmentId}
-                                </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{pay.month}/{pay.year}</TableCell>
-                                <TableCell className="text-xs text-right font-medium">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
-                                <TableCell>
-                                  <Badge variant={pay.status === "paid" ? "default" : "secondary"} className="text-[10px]">
-                                    {pay.status === "paid" ? "Platit" : "In asteptare"}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{pay.receiptNumber || "-"}</TableCell>
-                                <TableCell>
-                                  {pay.status === "pending" ? (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 text-[10px]"
-                                      onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "paid" })}
-                                      data-testid={`button-mark-paid-${pay.id}`}
-                                    >
-                                      Confirma
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 text-[10px]"
-                                      onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "pending" })}
-                                      data-testid={`button-mark-pending-${pay.id}`}
-                                    >
-                                      Anuleaza
-                                    </Button>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                      <div className="sticky-table-container max-h-[400px]">
+                        <Table className="compact-table">
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Apartament</TableHead>
+                              <TableHead>Luna/An</TableHead>
+                              <TableHead className="text-right">Suma</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Chitanta</TableHead>
+                              <TableHead className="w-20">Actiuni</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {assocPayments.slice(0, 20).map(pay => {
+                              const apt = apartments?.find(a => a.id === pay.apartmentId);
+                              return (
+                                <TableRow key={pay.id} data-testid={`row-portal-payment-${pay.id}`}>
+                                  <TableCell className="font-medium">
+                                    {apt ? `${getUnitTypeLabel(apt.unitType)} ${apt.number}` : pay.apartmentId}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">{pay.month}/{pay.year}</TableCell>
+                                  <TableCell className="text-right font-medium">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
+                                  <TableCell>
+                                    <Badge variant={pay.status === "paid" ? "default" : "secondary"} className="text-[10px]">
+                                      {pay.status === "paid" ? "Platit" : "In asteptare"}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">{pay.receiptNumber || "-"}</TableCell>
+                                  <TableCell>
+                                    {pay.status === "pending" ? (
+                                      <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "paid" })} data-testid={`button-mark-paid-${pay.id}`}>
+                                        Confirma
+                                      </Button>
+                                    ) : (
+                                      <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "pending" })} data-testid={`button-mark-pending-${pay.id}`}>
+                                        Anuleaza
+                                      </Button>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
                       {assocPayments.length > 20 && (
                         <p className="text-xs text-muted-foreground text-center py-2">
                           Se afiseaza primele 20 din {assocPayments.length} plati
@@ -1325,13 +1311,13 @@ function FundCard({ fund, isExpanded, onToggle }: { fund: Fund; isExpanded: bool
             {!categories || categories.length === 0 ? (
               <p className="text-xs text-muted-foreground py-2">Nicio categorie definita</p>
             ) : (
-              <Table>
+              <Table className="compact-table">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Categorie</TableHead>
-                    <TableHead className="text-xs text-right">Buget</TableHead>
-                    <TableHead className="text-xs text-right">Realizat</TableHead>
-                    <TableHead className="text-xs text-right">%</TableHead>
+                    <TableHead>Categorie</TableHead>
+                    <TableHead className="text-right">Buget</TableHead>
+                    <TableHead className="text-right">Realizat</TableHead>
+                    <TableHead className="text-right">%</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
