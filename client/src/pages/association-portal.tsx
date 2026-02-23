@@ -159,56 +159,23 @@ export default function AssociationPortal() {
               <UserMenu />
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto p-3">
-            <div className="max-w-7xl mx-auto space-y-3">
+          <main className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
+            <div className="max-w-7xl mx-auto space-y-2">
 
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            <Card>
-              <CardContent className="p-2 text-center">
-                <Building2 className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-buildings">{assocBuildings.length}</p>
-                <p className="text-[10px] text-muted-foreground">Blocuri</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-2 text-center">
-                <ArrowUpDown className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-staircases">{assocStaircases.length}</p>
-                <p className="text-[10px] text-muted-foreground">Scari</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-2 text-center">
-                <Home className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-apartments">{aptCount}</p>
-                <p className="text-[10px] text-muted-foreground">Apartamente</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-2 text-center">
-                <Package className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-boxes">{boxCount}</p>
-                <p className="text-[10px] text-muted-foreground">Boxe</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-2 text-center">
-                <Car className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-parking">{parkingCount}</p>
-                <p className="text-[10px] text-muted-foreground">Parking</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-2 text-center">
-                <Wallet className="w-3.5 h-3.5 text-primary mx-auto mb-0.5" />
-                <p className="text-base font-bold leading-tight" data-testid="text-portal-funds">{funds?.length || 0}</p>
-                <p className="text-[10px] text-muted-foreground">Fonduri</p>
-              </CardContent>
-            </Card>
-          </div>
+      <div className="flex items-center gap-3 text-xs flex-wrap">
+                <span className="text-muted-foreground">Bloc.: <span className="font-semibold text-foreground" data-testid="text-portal-buildings">{assocBuildings.length}</span></span>
+                <span>·</span>
+                <span className="text-muted-foreground">Scari: <span className="font-semibold text-foreground" data-testid="text-portal-staircases">{assocStaircases.length}</span></span>
+                <span>·</span>
+                <span className="text-muted-foreground">Apt.: <span className="font-semibold text-foreground" data-testid="text-portal-apartments">{aptCount}</span></span>
+                {boxCount > 0 && <><span>·</span><span className="text-muted-foreground">Boxe: <span className="font-semibold text-foreground" data-testid="text-portal-boxes">{boxCount}</span></span></>}
+                {parkingCount > 0 && <><span>·</span><span className="text-muted-foreground">Park.: <span className="font-semibold text-foreground" data-testid="text-portal-parking">{parkingCount}</span></span></>}
+                <span>·</span>
+                <span className="text-muted-foreground">Fond.: <span className="font-semibold text-foreground" data-testid="text-portal-funds">{funds?.length || 0}</span></span>
+              </div>
 
           {activeTab === "imobiliar" && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {loading ? (
                 <div className="space-y-3">
                   {[1, 2].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}

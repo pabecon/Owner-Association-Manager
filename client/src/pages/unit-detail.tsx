@@ -221,23 +221,22 @@ export default function UnitDetail() {
 
   return (
     <div className="flex h-full">
-      <div className="w-56 border-r flex flex-col shrink-0 bg-muted/30">
-        <div className="p-3 border-b">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-              <UIcon className="w-4 h-4 text-primary" />
+      <div className="w-48 border-r flex flex-col shrink-0 bg-muted/30">
+        <div className="p-2 border-b">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-primary/10 shrink-0">
+              <UIcon className="w-3.5 h-3.5 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold truncate" data-testid="text-unit-title">{typeLabel} {unit.number}</p>
-              <p className="text-[10px] text-muted-foreground truncate">
+              <p className="text-[12px] font-semibold truncate leading-tight" data-testid="text-unit-title">{typeLabel} {unit.number}</p>
+              <p className="text-[10px] text-muted-foreground truncate leading-none">
                 {building?.name}{staircase ? ` / ${staircase.name}` : ""}
               </p>
             </div>
           </div>
-          <Badge variant="secondary" className="text-[10px]" data-testid="badge-unit-type">{typeLabel}</Badge>
         </div>
 
-        <nav className="flex-1 p-2 space-y-0.5">
+        <nav className="flex-1 p-1.5 space-y-px">
           {TABS.map(tab => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -249,14 +248,14 @@ export default function UnitDetail() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-sm transition-colors ${
+                className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[12px] transition-colors ${
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
                 data-testid={`tab-unit-${tab.key}`}
               >
-                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <Icon className="w-3 h-3 shrink-0" />
                 <span className="truncate">{tab.label}</span>
                 {count !== null && count > 0 && (
                   <Badge variant="secondary" className="text-[9px] ml-auto px-1 py-0">{count}</Badge>
@@ -266,43 +265,43 @@ export default function UnitDetail() {
           })}
         </nav>
 
-        <div className="p-2 border-t space-y-1">
+        <div className="p-1.5 border-t space-y-px">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-7" data-testid="button-back-infografie">
-              <ArrowLeft className="w-3 h-3 mr-1.5" />
+            <Button variant="ghost" size="sm" className="w-full justify-start text-[11px] h-6" data-testid="button-back-infografie">
+              <ArrowLeft className="w-3 h-3 mr-1" />
               Infografie
             </Button>
           </Link>
           {association && (
             <Link href={`/asociatie/${association.id}`}>
-              <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-7" data-testid="button-back-association">
-                <Building2 className="w-3 h-3 mr-1.5" />
-                {association.name}
+              <Button variant="ghost" size="sm" className="w-full justify-start text-[11px] h-6 truncate" data-testid="button-back-association">
+                <Building2 className="w-3 h-3 mr-1 shrink-0" />
+                <span className="truncate">{association.name}</span>
               </Button>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-2">
         {activeTab === "general" && (
-          <div className="space-y-4 max-w-4xl">
+          <div className="space-y-3 max-w-4xl">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Informatii Generale</h2>
+              <h2 className="text-sm font-semibold">Informatii Generale</h2>
               {!isEditing ? (
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} data-testid="button-edit-unit">
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setIsEditing(true)} data-testid="button-edit-unit">
+                  <Pencil className="w-3 h-3 mr-0.5" />
                   Editeaza
                 </Button>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCancel} data-testid="button-cancel-edit">
-                    <X className="w-3.5 h-3.5 mr-1.5" />
-                    Anuleaza
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={handleCancel} data-testid="button-cancel-edit">
+                    <X className="w-3 h-3 mr-0.5" />
+                    Anul.
                   </Button>
-                  <Button size="sm" onClick={form.handleSubmit((data) => updateUnit.mutate(data))} disabled={updateUnit.isPending} data-testid="button-save-unit">
-                    <Save className="w-3.5 h-3.5 mr-1.5" />
-                    {updateUnit.isPending ? "Se salveaza..." : "Salveaza"}
+                  <Button size="sm" className="h-6 px-2 text-[10px]" onClick={form.handleSubmit((data) => updateUnit.mutate(data))} disabled={updateUnit.isPending} data-testid="button-save-unit">
+                    <Save className="w-3 h-3 mr-0.5" />
+                    {updateUnit.isPending ? "Salvare..." : "Salveaza"}
                   </Button>
                 </div>
               )}
@@ -310,16 +309,16 @@ export default function UnitDetail() {
 
             {isEditing ? (
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => updateUnit.mutate(data))} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form onSubmit={form.handleSubmit((data) => updateUnit.mutate(data))} className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <Ruler className="w-4 h-4 text-primary" />
+                      <CardHeader className="pb-2 px-3 pt-3">
+                        <CardTitle className="text-xs flex items-center gap-1.5">
+                          <Ruler className="w-3.5 h-3.5 text-primary" />
                           Date Unitate
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-3">
+                      <CardContent className="space-y-2 px-3 pb-3">
                         <FormField
                           control={form.control}
                           name="unitType"
@@ -428,13 +427,13 @@ export default function UnitDetail() {
                     </Card>
 
                     <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                          <User className="w-4 h-4 text-primary" />
+                      <CardHeader className="pb-2 px-3 pt-3">
+                        <CardTitle className="text-xs flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-primary" />
                           Proprietar
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-3">
+                      <CardContent className="space-y-2 px-3 pb-3">
                         <FormField
                           control={form.control}
                           name="ownerName"
@@ -479,17 +478,17 @@ export default function UnitDetail() {
                   </div>
 
                   <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-primary" />
+                    <CardHeader className="pb-2 px-3 pt-3">
+                      <CardTitle className="text-xs flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
                         Locatie
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
+                    <CardContent className="space-y-1.5 text-xs px-3 pb-3">
                       {association && (
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Asociatia</span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             <span className="font-medium">{association.name}</span>
                             {association.address && (
                               <a
@@ -500,7 +499,7 @@ export default function UnitDetail() {
                                 title="Deschide in Google Maps"
                                 data-testid="link-association-maps"
                               >
-                                <ExternalLink className="w-3.5 h-3.5" />
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             )}
                           </div>
@@ -527,15 +526,15 @@ export default function UnitDetail() {
                 </form>
               </Form>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <Ruler className="w-4 h-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-xs flex items-center gap-1.5">
+                      <Ruler className="w-3.5 h-3.5 text-primary" />
                       Date Unitate
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
+                  <CardContent className="space-y-1.5 text-xs px-3 pb-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Tip</span>
                       <span className="font-medium" data-testid="text-unit-type">{typeLabel}</span>
@@ -576,13 +575,13 @@ export default function UnitDetail() {
                 </Card>
 
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-xs flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-primary" />
                       Proprietar
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
+                  <CardContent className="space-y-1.5 text-xs px-3 pb-3">
                     {unit.ownerName ? (
                       <>
                         <div className="flex items-center gap-2">
@@ -609,17 +608,17 @@ export default function UnitDetail() {
                 </Card>
 
                 <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-primary" />
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-xs flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-primary" />
                       Locatie
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
+                  <CardContent className="space-y-1.5 text-xs px-3 pb-3">
                     {association && (
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Asociatia</span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <span className="font-medium">{association.name}</span>
                           {association.address && (
                             <a
@@ -630,7 +629,7 @@ export default function UnitDetail() {
                               title="Deschide in Google Maps"
                               data-testid="link-association-maps"
                             >
-                              <ExternalLink className="w-3.5 h-3.5" />
+                              <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
                         </div>
@@ -660,8 +659,8 @@ export default function UnitDetail() {
         )}
 
         {activeTab === "camere" && (
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Camere</h2>
+          <div className="space-y-2 max-w-4xl">
+            <h2 className="text-sm font-semibold">Camere</h2>
             {rooms && rooms.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {rooms.map(room => (
@@ -684,8 +683,8 @@ export default function UnitDetail() {
         )}
 
         {activeTab === "contoare" && (
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Contoare</h2>
+          <div className="space-y-2 max-w-4xl">
+            <h2 className="text-sm font-semibold">Contoare</h2>
             {unitMeters.length > 0 ? (
               <div className="space-y-2">
                 {unitMeters.map(meter => (
@@ -723,8 +722,8 @@ export default function UnitDetail() {
         )}
 
         {activeTab === "plati" && (
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Plati</h2>
+          <div className="space-y-2 max-w-4xl">
+            <h2 className="text-sm font-semibold">Plati</h2>
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground text-center">Nicio plata inregistrata</p>
@@ -734,8 +733,8 @@ export default function UnitDetail() {
         )}
 
         {activeTab === "anunturi" && (
-          <div className="space-y-4 max-w-4xl">
-            <h2 className="text-base font-semibold">Anunturi</h2>
+          <div className="space-y-2 max-w-4xl">
+            <h2 className="text-sm font-semibold">Anunturi</h2>
             <Card>
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground text-center">Niciun anunt disponibil</p>
@@ -803,16 +802,16 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl">
-      <h2 className="text-base font-semibold">Documente</h2>
+    <div className="space-y-2 max-w-4xl">
+      <h2 className="text-sm font-semibold">Documente</h2>
       <Card>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center gap-2">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-1.5">
             <Input
-              placeholder="Descriere document (optional)"
+              placeholder="Descriere (optional)"
               value={docDescription}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
-              className="flex-1"
+              className="flex-1 h-7 text-xs"
               data-testid="input-unit-doc-desc"
             />
             <input
@@ -825,12 +824,14 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
             />
             <Button
               variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[11px]"
               disabled={uploadMutation.isPending}
               onClick={() => fileInputRef.current?.click()}
               data-testid="button-upload-unit-doc"
             >
-              <Upload className="w-4 h-4 mr-1" />
-              {uploadMutation.isPending ? "Se incarca..." : "Incarca document"}
+              <Upload className="w-3 h-3 mr-0.5" />
+              {uploadMutation.isPending ? "Incarca..." : "Incarca"}
             </Button>
           </div>
 
