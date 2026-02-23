@@ -1,4 +1,4 @@
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,7 +116,7 @@ export default function Gdpr() {
   const selectedDoc = selectedId ? GDPR_DOCUMENTS.find(d => d.id === selectedId) : null;
 
   if (!selectedDoc) {
-    return <GdprIndex />;
+    return <Redirect to="/gdpr/politica-cookies" />;
   }
 
   return (
@@ -132,9 +132,9 @@ export default function Gdpr() {
             </div>
           </div>
           <Button variant="outline" size="sm" asChild>
-            <Link href="/gdpr" data-testid="link-gdpr-back">
+            <Link href={selectedId === "politica-cookies" ? "/gdpr/politica-prelucrare-date" : "/gdpr/politica-cookies"} data-testid="link-gdpr-other">
               <ChevronRight className="w-4 h-4 mr-1.5 rotate-180" />
-              Inapoi la GDPR
+              {selectedId === "politica-cookies" ? "Politica de Prelucrare Date" : "Politica de Cookies"}
             </Link>
           </Button>
         </div>

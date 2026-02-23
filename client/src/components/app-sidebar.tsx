@@ -41,6 +41,7 @@ export function AppSidebar() {
   const [legislatieOpen, setLegistatieOpen] = useState<boolean | null>(null);
   const [juridicOpen, setJuridicOpen] = useState<boolean | null>(null);
   const [usersOpen, setUsersOpen] = useState<boolean | null>(null);
+  const [gdprOpen, setGdprOpen] = useState<boolean | null>(null);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -63,6 +64,7 @@ export function AppSidebar() {
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
   const isJuridicExpanded = juridicOpen !== null ? juridicOpen : isJuridicActive;
   const isUsersExpanded = usersOpen !== null ? usersOpen : isUsersSection;
+  const isGdprExpanded = gdprOpen !== null ? gdprOpen : isGdprActive;
 
   const initials = [user?.firstName, user?.lastName]
     .filter(Boolean)
@@ -215,14 +217,35 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild data-active={isGdprActive} className={`h-8 text-sm ${isGdprActive ? "bg-sidebar-accent" : ""}`}>
-                  <Link href="/gdpr" data-testid="link-nav-gdpr">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>GDPR</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible open={isGdprExpanded} onOpenChange={(val) => setGdprOpen(val)}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isGdprActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-gdpr">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span className="flex-1">GDPR</span>
+                      {isGdprExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/gdpr/politica-cookies" || location === "/gdpr"} className={location === "/gdpr/politica-cookies" || location === "/gdpr" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/gdpr/politica-cookies" data-testid="link-nav-gdpr-cookies">
+                            <span>Politica de Cookies</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/gdpr/politica-prelucrare-date"} className={location === "/gdpr/politica-prelucrare-date" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/gdpr/politica-prelucrare-date" data-testid="link-nav-gdpr-prelucrare">
+                            <span>Politica de Prelucrare Date</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
