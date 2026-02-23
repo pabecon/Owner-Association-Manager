@@ -20,6 +20,11 @@ import { eq, inArray, desc } from "drizzle-orm";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 async function generateProformaInvoices(contract: Contract) {
+  const existingInvoices = await storage.getProformaInvoicesByContract(contract.id);
+  const existingStatusMap = new Map<number, string>();
+  for (const inv of existingInvoices) {
+    existingStatusMap.set(inv.invoiceNumber, inv.status);
+  }
   await storage.deleteProformaInvoicesByContract(contract.id);
 
   const signingDate = contract.signingDate || contract.startDate;
@@ -50,9 +55,12 @@ async function generateProformaInvoices(contract: Contract) {
     const dueDt = new Date(issueDt);
     dueDt.setDate(dueDt.getDate() + paymentTermDays);
 
+    const invoiceNum = i + 1;
+    const preservedStatus = existingStatusMap.get(invoiceNum);
+
     const invoiceData: InsertProformaInvoice = {
       contractId: contract.id,
-      invoiceNumber: i + 1,
+      invoiceNumber: invoiceNum,
       month,
       year,
       issueDate: issueDt.toISOString().split("T")[0],
@@ -61,7 +69,7 @@ async function generateProformaInvoices(contract: Contract) {
       pricePerUnit: pricePerUnit.toFixed(2),
       totalAmount: totalAmount.toString(),
       currency,
-      status: "emisa",
+      status: preservedStatus || "emisa",
       associationId: contract.clientId || null,
       associationName: assocName || null,
       prestatorName: contract.prestatorName || null,

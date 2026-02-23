@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck, Wallet, Receipt } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,7 @@ export function AppSidebar() {
   const [juridicOpen, setJuridicOpen] = useState<boolean | null>(null);
   const [usersOpen, setUsersOpen] = useState<boolean | null>(null);
   const [gdprOpen, setGdprOpen] = useState<boolean | null>(null);
+  const [financiarOpen, setFinanciarOpen] = useState<boolean | null>(null);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -58,12 +59,14 @@ export function AppSidebar() {
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte") || location.startsWith("/sabloane-contracte");
   const isUsersSection = location === "/matrice-permisiuni" || location === "/lista-utilizatori" || location.startsWith("/utilizator/");
+  const isFinanciarActive = location === "/venituri";
   const isGdprActive = location.startsWith("/gdpr");
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
   const isJuridicExpanded = juridicOpen !== null ? juridicOpen : isJuridicActive;
   const isUsersExpanded = usersOpen !== null ? usersOpen : isUsersSection;
+  const isFinanciarExpanded = financiarOpen !== null ? financiarOpen : isFinanciarActive;
   const isGdprExpanded = gdprOpen !== null ? gdprOpen : isGdprActive;
 
   const initials = [user?.firstName, user?.lastName]
@@ -217,6 +220,30 @@ export function AppSidebar() {
                           <Link href="/matrice-permisiuni" data-testid="link-nav-permissions-matrix">
                             <Grid3X3 className="w-3.5 h-3.5" />
                             <span>Matrice Permisiuni</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              <Collapsible open={isFinanciarExpanded} onOpenChange={(val) => setFinanciarOpen(val)}>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className={`h-8 text-sm ${isFinanciarActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-financiar">
+                      <Wallet className="w-4 h-4" />
+                      <span className="flex-1">Financiar</span>
+                      {isFinanciarExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/venituri"} className={location === "/venituri" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/venituri" data-testid="link-nav-venituri">
+                            <Receipt className="w-3.5 h-3.5" />
+                            <span>Venituri</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
