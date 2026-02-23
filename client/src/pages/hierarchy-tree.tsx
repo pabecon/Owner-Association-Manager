@@ -96,7 +96,7 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
           <Button
             size="sm"
             variant="outline"
-            className="h-5 px-1.5 text-[10px] shrink-0 invisible group-hover:visible"
+            className="h-5 px-1.5 text-[10px] shrink-0"
             onClick={e => { e.stopPropagation(); onPortal(); }}
             data-testid={`button-portal-${label.replace(/\s+/g, "-").toLowerCase()}`}
           >
@@ -108,7 +108,7 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
           <Button
             size="icon"
             variant="ghost"
-            className="w-5 h-5 shrink-0 invisible group-hover:visible"
+            className="w-5 h-5 shrink-0 text-primary"
             onClick={e => { e.stopPropagation(); onAdd(); }}
             data-testid={`button-add-in-${label.replace(/\s+/g, "-").toLowerCase()}`}
           >
