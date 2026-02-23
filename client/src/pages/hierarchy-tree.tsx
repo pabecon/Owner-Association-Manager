@@ -10,6 +10,7 @@ import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
+import { BatchCreateDialog } from "@/components/batch-create-dialog";
 import { ExcelImportDialog } from "@/components/excel-import-dialog";
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -148,6 +149,7 @@ export default function HierarchyTree() {
   const { data: staircases, isLoading: ls } = useQuery<Staircase[]>({ queryKey: ["/api/staircases"] });
   const { data: apartments, isLoading: lap } = useQuery<Apartment[]>({ queryKey: ["/api/apartments"] });
   const [addDialog, setAddDialog] = useState<AddDialogState>({ open: false, level: "federation" });
+  const [batchDialog, setBatchDialog] = useState<{ open: boolean; level: "building" | "staircase" | "floor" | "unit"; parentId: string; parentName: string; staircaseId?: string; floorNumber?: number }>({ open: false, level: "building", parentId: "", parentName: "" });
   const [importOpen, setImportOpen] = useState(false);
 
   const isLoading = lf || la || lb || ls || lap;
@@ -164,6 +166,10 @@ export default function HierarchyTree() {
 
   const openAdd = (level: EntityLevel, parentId?: string, parentName?: string) => {
     setAddDialog({ open: true, level, parentId, parentName });
+  };
+
+  const openBatch = (level: "building" | "staircase" | "floor" | "unit", parentId: string, parentName: string, staircaseId?: string, floorNumber?: number) => {
+    setBatchDialog({ open: true, level, parentId, parentName, staircaseId, floorNumber });
   };
 
   const getAssocStats = (assocId: string): StatBadge[] => {
@@ -210,11 +216,17 @@ export default function HierarchyTree() {
         badge={`${bldSts.length} scari`}
         subtitle={bld.address || undefined}
         subtitleLink={bld.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bld.address)}` : undefined}
-        onAdd={() => openAdd("staircase", bld.id, bld.name)}
+        onAdd={() => openBatch("staircase", bld.id, bld.name)}
       >
         {bldSts.map(st => {
           const stApts = apartments?.filter(a => a.staircaseId === st.id) || [];
-          const stFloors = Array.from(new Set(stApts.map(a => a.floor))).sort((a, b) => b - a);
+          const declaredFloors = st.floors || 0;
+          const allFloorNumbers = new Set<number>();
+          stApts.forEach(a => allFloorNumbers.add(a.floor));
+          for (let i = 0; i <= declaredFloors; i++) {
+            allFloorNumbers.add(i);
+          }
+          const sortedFloors = Array.from(allFloorNumbers).sort((a, b) => b - a);
           return (
             <TreeNode
               key={st.id}
@@ -222,12 +234,19 @@ export default function HierarchyTree() {
               icon={ArrowUpDown}
               level={3}
               badge={`${stApts.length} unitati`}
-              onAdd={() => openAdd("apartment", st.id, st.name)}
+              onAdd={() => openBatch("floor", st.id, st.name, st.id)}
             >
-              {stFloors.map(floor => {
+              {sortedFloors.map(floor => {
                 const floorUnits = stApts.filter(a => a.floor === floor);
                 return (
-                  <TreeNode key={floor} label={getFloorLabel(floor)} icon={Layers} level={4} badge={`${floorUnits.length}`}>
+                  <TreeNode
+                    key={floor}
+                    label={getFloorLabel(floor)}
+                    icon={Layers}
+                    level={4}
+                    badge={`${floorUnits.length}`}
+                    onAdd={() => openBatch("unit", st.id, `${st.name} - ${getFloorLabel(floor)}`, st.id, floor)}
+                  >
                     {floorUnits.map(unit => {
                       const uType = (unit.unitType || "apartment") as UnitType;
                       const UIcon = UNIT_TYPE_ICONS[uType] || Home;
@@ -273,15 +292,6 @@ export default function HierarchyTree() {
             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("association")} data-testid="button-add-association">
               <Plus className="w-3 h-3 mr-0.5" />Asoc
             </Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("building")} data-testid="button-add-building">
-              <Plus className="w-3 h-3 mr-0.5" />Bloc
-            </Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("staircase")} data-testid="button-add-staircase">
-              <Plus className="w-3 h-3 mr-0.5" />Scara
-            </Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
-              <Plus className="w-3 h-3 mr-0.5" />Unit
-            </Button>
             <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
               <FileSpreadsheet className="w-3 h-3 mr-0.5" />Excel
             </Button>
@@ -315,7 +325,7 @@ export default function HierarchyTree() {
                           level={1}
                           stats={getAssocStats(assoc.id)}
                           subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                          onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                          onAdd={() => openBatch("building", assoc.id, assoc.name)}
                           onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                         >
                           {assocBlds.map(bld => renderBuildingSubtree(bld))}
@@ -338,7 +348,7 @@ export default function HierarchyTree() {
                         level={1}
                         stats={getAssocStats(assoc.id)}
                         subtitle={assoc.cui ? `CUI: ${assoc.cui}` : undefined}
-                        onAdd={() => openAdd("building", assoc.id, assoc.name)}
+                        onAdd={() => openBatch("building", assoc.id, assoc.name)}
                         onPortal={() => navigate(`/asociatie/${assoc.id}`)}
                       >
                         {assocBlds.map(bld => renderBuildingSubtree(bld))}
@@ -363,6 +373,16 @@ export default function HierarchyTree() {
         associations={associations}
         buildings={buildings}
         staircases={staircases}
+      />
+
+      <BatchCreateDialog
+        open={batchDialog.open}
+        onOpenChange={open => setBatchDialog(prev => ({ ...prev, open }))}
+        level={batchDialog.level}
+        parentId={batchDialog.parentId}
+        parentName={batchDialog.parentName}
+        staircaseId={batchDialog.staircaseId}
+        floorNumber={batchDialog.floorNumber}
       />
 
       <ExcelImportDialog open={importOpen} onOpenChange={setImportOpen} />

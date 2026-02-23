@@ -31,7 +31,7 @@ The application is built with a modern web stack, featuring a React, TypeScript,
 - **Excel Import:** A wizard-based system for importing association and property hierarchy data from Excel files.
 
 **Feature Specifications:**
-- **Hierarchy Tree (Infografie):** Displays federations, associations, buildings, staircases, floors, and units with expandable nodes, summary statistics, and direct CRUD actions.
+- **Hierarchy Tree (Infografie):** Displays federations, associations, buildings, staircases, floors, and units with expandable nodes, summary statistics, and direct CRUD actions. Add buttons ("+") and portal links ("Deschide") are always visible (not hover-only). Uses batch wizard dialogs for creating buildings, staircases, floors, and units: first asks "how many?", then shows naming/configuration form for each item with file upload support. Floors are virtual (derived from staircase.floors count + apartment floor numbers); floor documents stored with entityType="staircase" + floorNumber. Unit creation is simplified (just type + number); detailed info is completed on the unit detail page.
 - **Association Portal (`/asociatie/:id`):** Provides a dedicated management interface for a specific association, segmented into Imobiliar, Financiar, Contact, and Anunturi sections.
 - **Unit Detail Page (`/unitate/:id`):** Displays comprehensive information for individual units including owner details, location, rooms, and meter readings.
 - **Permissions Matrix (`/matrice-permisiuni`):** An editable table mapping roles to permissions with 4 access levels and support for custom roles.
