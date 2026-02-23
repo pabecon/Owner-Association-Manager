@@ -20,6 +20,7 @@ import PermissionsMatrix from "@/pages/permissions-matrix";
 import ListaUtilizatoriPage from "@/pages/lista-utilizatori";
 import UtilizatorDetail from "@/pages/utilizator-detail";
 import Gdpr from "@/pages/gdpr";
+import { CookieConsent } from "@/components/cookie-consent";
 
 function SuperAdminRouter() {
   return (
@@ -103,6 +104,7 @@ function App() {
         <TooltipProvider>
           <AppRouter />
           <Toaster />
+          <CookieConsent />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
