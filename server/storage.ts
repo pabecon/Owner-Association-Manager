@@ -16,9 +16,10 @@ import {
   type FundCategory, type InsertFundCategory,
   type Contract, type InsertContract,
   type ContractTemplate, type InsertContractTemplate,
+  type ProformaInvoice, type InsertProformaInvoice,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
-  meters, meterReadings, funds, fundCategories, contracts, contractTemplates,
+  meters, meterReadings, funds, fundCategories, contracts, contractTemplates, proformaInvoices,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
@@ -134,6 +135,11 @@ export interface IStorage {
   getContractTemplate(id: string): Promise<ContractTemplate | undefined>;
   createContractTemplate(data: InsertContractTemplate): Promise<ContractTemplate>;
   deleteContractTemplate(id: string): Promise<void>;
+
+  getProformaInvoices(): Promise<ProformaInvoice[]>;
+  getProformaInvoicesByContract(contractId: string): Promise<ProformaInvoice[]>;
+  createProformaInvoice(data: InsertProformaInvoice): Promise<ProformaInvoice>;
+  deleteProformaInvoicesByContract(contractId: string): Promise<void>;
 
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
@@ -598,6 +604,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteContractTemplate(id: string): Promise<void> {
     await db.delete(contractTemplates).where(eq(contractTemplates.id, id));
+  }
+
+  async getProformaInvoices(): Promise<ProformaInvoice[]> {
+    return db.select().from(proformaInvoices).orderBy(desc(proformaInvoices.issueDate));
+  }
+
+  async getProformaInvoicesByContract(contractId: string): Promise<ProformaInvoice[]> {
+    return db.select().from(proformaInvoices).where(eq(proformaInvoices.contractId, contractId)).orderBy(proformaInvoices.invoiceNumber);
+  }
+
+  async createProformaInvoice(data: InsertProformaInvoice): Promise<ProformaInvoice> {
+    const [invoice] = await db.insert(proformaInvoices).values(data).returning();
+    return invoice;
+  }
+
+  async deleteProformaInvoicesByContract(contractId: string): Promise<void> {
+    await db.delete(proformaInvoices).where(eq(proformaInvoices.contractId, contractId));
   }
 }
 

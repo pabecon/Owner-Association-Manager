@@ -298,6 +298,31 @@ export const contractTemplates = pgTable("contract_templates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const proformaInvoices = pgTable("proforma_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contractId: varchar("contract_id").notNull(),
+  invoiceNumber: integer("invoice_number").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  issueDate: date("issue_date").notNull(),
+  dueDate: date("due_date"),
+  numberOfUnits: integer("number_of_units"),
+  pricePerUnit: numeric("price_per_unit", { precision: 12, scale: 2 }),
+  totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("RON"),
+  status: text("status").notNull().default("emisa"),
+  associationId: varchar("association_id"),
+  associationName: text("association_name"),
+  prestatorName: text("prestator_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const PROFORMA_STATUS_LABELS: Record<string, string> = {
+  emisa: "Emisa",
+  platita: "Platita",
+  anulata: "Anulata",
+};
+
 export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true });
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
@@ -305,6 +330,10 @@ export type Contract = typeof contracts.$inferSelect;
 export const insertContractTemplateSchema = createInsertSchema(contractTemplates).omit({ id: true, createdAt: true });
 export type InsertContractTemplate = z.infer<typeof insertContractTemplateSchema>;
 export type ContractTemplate = typeof contractTemplates.$inferSelect;
+
+export const insertProformaInvoiceSchema = createInsertSchema(proformaInvoices).omit({ id: true, createdAt: true });
+export type InsertProformaInvoice = z.infer<typeof insertProformaInvoiceSchema>;
+export type ProformaInvoice = typeof proformaInvoices.$inferSelect;
 
 export const insertFederationSchema = createInsertSchema(federations).omit({ id: true, createdAt: true });
 export const insertAssociationSchema = createInsertSchema(associations).omit({ id: true, createdAt: true });

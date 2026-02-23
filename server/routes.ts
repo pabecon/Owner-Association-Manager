@@ -12,11 +12,63 @@ import {
   insertContractSchema, insertContractTemplateSchema,
   insertPlatformUserSchema, insertUserActivityLogSchema,
   ROLE_HIERARCHY, type UserRole,
+  type Contract, type InsertProformaInvoice,
 } from "@shared/schema";
 import { users, appSettings, platformUsers, userActivityLog, associations, buildings, staircases, apartments } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, desc } from "drizzle-orm";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+
+async function generateProformaInvoices(contract: Contract) {
+  await storage.deleteProformaInvoicesByContract(contract.id);
+
+  const signingDate = contract.signingDate || contract.startDate;
+  if (!signingDate) return;
+
+  const startDt = new Date(signingDate);
+  const numberOfUnits = contract.numberOfUnits || 0;
+  const pricePerUnit = contract.pricePerUnit ? parseFloat(contract.pricePerUnit) : 0;
+  const totalAmount = contract.totalMonthly ? contract.totalMonthly : (pricePerUnit * numberOfUnits).toFixed(2);
+  const currency = contract.currency || "RON";
+  const invoiceDay = contract.invoiceDay || 1;
+  const paymentTermDays = contract.paymentTermDays || 15;
+
+  let assocName = "";
+  if (contract.clientId) {
+    const allAssocs = await storage.getAssociations();
+    const assoc = allAssocs.find((a: any) => a.id === contract.clientId);
+    if (assoc) assocName = assoc.name;
+  }
+
+  for (let i = 0; i < 12; i++) {
+    const invoiceMonth = new Date(startDt);
+    invoiceMonth.setMonth(invoiceMonth.getMonth() + i);
+    const month = invoiceMonth.getMonth() + 1;
+    const year = invoiceMonth.getFullYear();
+
+    const issueDt = new Date(year, month - 1, Math.min(invoiceDay, 28));
+    const dueDt = new Date(issueDt);
+    dueDt.setDate(dueDt.getDate() + paymentTermDays);
+
+    const invoiceData: InsertProformaInvoice = {
+      contractId: contract.id,
+      invoiceNumber: i + 1,
+      month,
+      year,
+      issueDate: issueDt.toISOString().split("T")[0],
+      dueDate: dueDt.toISOString().split("T")[0],
+      numberOfUnits: numberOfUnits,
+      pricePerUnit: pricePerUnit.toFixed(2),
+      totalAmount: totalAmount.toString(),
+      currency,
+      status: "emisa",
+      associationId: contract.clientId || null,
+      associationName: assocName || null,
+      prestatorName: contract.prestatorName || null,
+    };
+    await storage.createProformaInvoice(invoiceData);
+  }
+}
 
 function isInBuildingScope(req: AuthenticatedRequest, buildingId: string): boolean {
   if (req.permissions?.viewAllBuildings) return true;
@@ -1380,6 +1432,11 @@ export async function registerRoutes(
     const parsed = insertContractSchema.safeParse(body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const contract = await storage.createContract(parsed.data);
+    try {
+      await generateProformaInvoices(contract);
+    } catch (e) {
+      console.error("Error generating proforma invoices:", e);
+    }
     res.json(contract);
   });
 
@@ -1407,14 +1464,32 @@ export async function registerRoutes(
     const parsed = insertContractSchema.partial().safeParse(body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const updated = await storage.updateContract(req.params.id as string, parsed.data);
+    if (updated) {
+      try {
+        await generateProformaInvoices(updated);
+      } catch (e) {
+        console.error("Error regenerating proforma invoices:", e);
+      }
+    }
     res.json(updated);
   });
 
   app.delete("/api/contracts/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     const existing = await storage.getContract(req.params.id as string);
     if (!existing) return res.status(404).json({ message: "Contractul nu a fost gasit" });
+    await storage.deleteProformaInvoicesByContract(req.params.id as string);
     await storage.deleteContract(req.params.id as string);
     res.json({ success: true });
+  });
+
+  app.get("/api/proforma-invoices", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const contractId = req.query.contractId as string | undefined;
+    if (contractId) {
+      const invoices = await storage.getProformaInvoicesByContract(contractId);
+      return res.json(invoices);
+    }
+    const invoices = await storage.getProformaInvoices();
+    res.json(invoices);
   });
 
   // Contract Templates

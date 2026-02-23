@@ -33,6 +33,11 @@ interface Currency {
   tipMoneda: string;
 }
 
+interface Country {
+  id: string;
+  tara: string;
+}
+
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   draft: "secondary",
   active: "default",
@@ -101,6 +106,7 @@ function ContractFormDialog({
   staircases,
   apartments,
   currencies,
+  countries,
   timeUnits,
   nextNumber,
 }: {
@@ -112,6 +118,7 @@ function ContractFormDialog({
   staircases?: Staircase[];
   apartments?: Apartment[];
   currencies?: Currency[];
+  countries?: Country[];
   timeUnits: UnitOfMeasure[];
   nextNumber?: { serie: string; numar: string };
 }) {
@@ -148,7 +155,7 @@ function ContractFormDialog({
       currency: editContract?.currency || "RON",
       invoiceDay: editContract?.invoiceDay || undefined,
       paymentTermDays: editContract?.paymentTermDays || undefined,
-      jurisdiction: editContract?.jurisdiction || "",
+      jurisdiction: editContract?.jurisdiction || "România",
       status: editContract?.status || "active",
     },
   });
@@ -174,7 +181,7 @@ function ContractFormDialog({
         currency: editContract.currency || "RON",
         invoiceDay: editContract.invoiceDay || undefined,
         paymentTermDays: editContract.paymentTermDays || undefined,
-        jurisdiction: editContract.jurisdiction || "",
+        jurisdiction: editContract.jurisdiction || "România",
         status: editContract.status || "active",
       });
     } else {
@@ -197,7 +204,7 @@ function ContractFormDialog({
         currency: "RON",
         invoiceDay: undefined,
         paymentTermDays: undefined,
-        jurisdiction: "",
+        jurisdiction: "România",
         status: "active",
       });
     }
@@ -438,7 +445,7 @@ function ContractFormDialog({
 
             <div className="border rounded-lg p-3 space-y-3">
               <h3 className="text-sm font-semibold text-primary">IV. Onorariu si Plata</h3>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <FormField
                   control={form.control}
                   name="pricePerUnit"
@@ -452,6 +459,13 @@ function ContractFormDialog({
                     </FormItem>
                   )}
                 />
+                <div>
+                  <label className="text-sm font-medium">Nr. Unitati</label>
+                  <div className="mt-2 h-9 flex items-center px-3 border rounded-md bg-muted/50 font-mono font-semibold text-sm" data-testid="text-number-of-units">
+                    {selectedUnitCount}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">calculat din asociatie</p>
+                </div>
                 <FormField
                   control={form.control}
                   name="currency"
@@ -479,7 +493,7 @@ function ContractFormDialog({
                   <div className="mt-2 h-9 flex items-center px-3 border rounded-md bg-muted/50 font-mono font-semibold text-sm" data-testid="text-total-monthly">
                     {totalMonthly} {form.watch("currency")}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{selectedUnitCount} imobile × {watchPricePerUnit || "0"}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{selectedUnitCount} × {watchPricePerUnit || "0"} {form.watch("currency")}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -610,10 +624,19 @@ function ContractFormDialog({
                 name="jurisdiction"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jurisdictie</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Ex: Bucuresti" data-testid="input-jurisdiction" />
-                    </FormControl>
+                    <FormLabel>Jurisdictie (Tara)</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "România"}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-jurisdiction">
+                          <SelectValue placeholder="Selectati tara" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {countries?.map((c) => (
+                          <SelectItem key={c.id} value={c.tara}>{c.tara}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
@@ -688,6 +711,10 @@ export default function ContractsPage() {
 
   const { data: currencies } = useQuery<Currency[]>({
     queryKey: ["/api/liste", "tip-moneda"],
+  });
+
+  const { data: countries } = useQuery<Country[]>({
+    queryKey: ["/api/liste", "tari"],
   });
 
   const { data: unitsOfMeasure } = useQuery<UnitOfMeasure[]>({
@@ -807,6 +834,7 @@ export default function ContractsPage() {
         staircases={staircases}
         apartments={apartments}
         currencies={currencies}
+        countries={countries}
         timeUnits={timeUnits}
         nextNumber={nextNumber}
       />
@@ -823,6 +851,7 @@ export default function ContractsPage() {
         staircases={staircases}
         apartments={apartments}
         currencies={currencies}
+        countries={countries}
         timeUnits={timeUnits}
       />
 
