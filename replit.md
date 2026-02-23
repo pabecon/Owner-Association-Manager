@@ -36,6 +36,7 @@ The application is built with a modern web stack, featuring a React, TypeScript,
 - **Unit Detail Page (`/unitate/:id`):** Displays comprehensive information for individual units including owner details, location, rooms, and meter readings.
 - **Permissions Matrix (`/matrice-permisiuni`):** An editable table mapping roles to permissions with 4 access levels and support for custom roles.
 - **Contract Management (`/contracte`):** Allows creating, editing, and viewing condominium administration contracts, including file uploads to object storage.
+- **Facturi (`/facturi`):** Invoice management with manual invoice creation and auto-generated invoices from contracts. Invoice statuses: estimada (estimated), proforma (sent to client), factura_final (final invoice sent), platita (paid), anulata (cancelled). Each invoice has concept field, inline status change, preview/print capability. Replaces old "Venituri" page.
 - **User List & Detail (`/lista-utilizatori`, `/utilizator/:id`):** Tools for managing platform users, assigning roles, and tracking user activity.
 
 ## External Dependencies

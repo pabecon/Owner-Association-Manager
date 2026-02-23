@@ -42,69 +42,65 @@ interface TreeNodeProps {
 function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondary", stats, level, defaultOpen = false, isLeaf = false, subtitle, subtitleLink, onAdd, onPortal }: TreeNodeProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasChildren = !!children;
-  const indentPx = level * 24;
+  const indentPx = level * 14;
 
   return (
     <div>
       <div
-        className={`flex items-center gap-2 py-1.5 px-2 rounded-md group ${hasChildren && !isLeaf ? "cursor-pointer hover-elevate" : ""}`}
-        style={{ paddingLeft: `${indentPx + 8}px` }}
+        className={`flex items-center gap-1 py-0.5 px-1 rounded group ${hasChildren && !isLeaf ? "cursor-pointer hover:bg-muted/50" : ""}`}
+        style={{ paddingLeft: `${indentPx + 4}px` }}
         onClick={hasChildren && !isLeaf ? () => setOpen(!open) : undefined}
         data-testid={`tree-node-${label.replace(/\s+/g, "-").toLowerCase()}`}
       >
         {hasChildren && !isLeaf ? (
-          open ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          open ? <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
         ) : (
-          <div className="w-3.5 shrink-0" />
+          <div className="w-3 shrink-0" />
         )}
-        <div className={`flex items-center justify-center w-6 h-6 rounded shrink-0 ${isLeaf ? "bg-muted" : "bg-primary/10"}`}>
-          <Icon className={`w-3.5 h-3.5 ${isLeaf ? "text-muted-foreground" : "text-primary"}`} />
+        <div className={`flex items-center justify-center w-5 h-5 rounded shrink-0 ${isLeaf ? "bg-muted" : "bg-primary/10"}`}>
+          <Icon className={`w-3 h-3 ${isLeaf ? "text-muted-foreground" : "text-primary"}`} />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
-            {subtitle && (
-              subtitleLink ? (
-                <a
-                  href={subtitleLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-muted-foreground hidden sm:inline hover:text-primary transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                  title="Deschide in Google Maps"
-                  data-testid="link-address-maps"
-                >
-                  {subtitle}
-                </a>
-              ) : (
-                <span className="text-xs text-muted-foreground hidden sm:inline">{subtitle}</span>
-              )
-            )}
-          </div>
-          {stats && stats.length > 0 && (
-            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-              {stats.map((s, i) => {
-                const SIcon = s.icon;
-                return (
-                  <Badge key={i} variant={s.variant || "outline"} className="text-[9px] py-0 gap-0.5">
-                    {SIcon && <SIcon className="w-2.5 h-2.5" />}
-                    {s.label}
-                  </Badge>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        {badge && <Badge variant={badgeVariant} className="text-[10px] shrink-0">{badge}</Badge>}
+        <span className={`text-[12px] ${isLeaf ? "text-muted-foreground" : "font-medium"} truncate`}>{label}</span>
+        {subtitle && (
+          subtitleLink ? (
+            <a
+              href={subtitleLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-muted-foreground hidden sm:inline hover:text-primary transition-colors truncate"
+              onClick={(e) => e.stopPropagation()}
+              title="Deschide in Google Maps"
+              data-testid="link-address-maps"
+            >
+              {subtitle}
+            </a>
+          ) : (
+            <span className="text-[11px] text-muted-foreground hidden sm:inline truncate">{subtitle}</span>
+          )
+        )}
+        {stats && stats.length > 0 && (
+          <>
+            {stats.map((s, i) => {
+              const SIcon = s.icon;
+              return (
+                <Badge key={i} variant={s.variant || "outline"} className="text-[9px] py-0 px-1 gap-0.5 shrink-0">
+                  {SIcon && <SIcon className="w-2.5 h-2.5" />}
+                  {s.label}
+                </Badge>
+              );
+            })}
+          </>
+        )}
+        {badge && <Badge variant={badgeVariant} className="text-[9px] py-0 px-1 shrink-0">{badge}</Badge>}
         {onPortal && (
           <Button
             size="sm"
             variant="outline"
-            className="shrink-0 invisible group-hover:visible"
+            className="h-5 px-1.5 text-[10px] shrink-0 invisible group-hover:visible"
             onClick={e => { e.stopPropagation(); onPortal(); }}
             data-testid={`button-portal-${label.replace(/\s+/g, "-").toLowerCase()}`}
           >
-            <ExternalLink className="w-3 h-3 mr-1" />
+            <ExternalLink className="w-2.5 h-2.5 mr-0.5" />
             Deschide
           </Button>
         )}
@@ -112,16 +108,16 @@ function TreeNode({ label, icon: Icon, children, badge, badgeVariant = "secondar
           <Button
             size="icon"
             variant="ghost"
-            className="w-6 h-6 shrink-0 invisible group-hover:visible"
+            className="w-5 h-5 shrink-0 invisible group-hover:visible"
             onClick={e => { e.stopPropagation(); onAdd(); }}
             data-testid={`button-add-in-${label.replace(/\s+/g, "-").toLowerCase()}`}
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3 h-3" />
           </Button>
         )}
       </div>
       {open && hasChildren && (
-        <div className="border-l border-border ml-4" style={{ marginLeft: `${indentPx + 20}px` }}>
+        <div className="border-l border-border/50" style={{ marginLeft: `${indentPx + 12}px` }}>
           {children}
         </div>
       )}

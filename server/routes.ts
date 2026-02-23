@@ -69,10 +69,12 @@ async function generateProformaInvoices(contract: Contract) {
       pricePerUnit: pricePerUnit.toFixed(2),
       totalAmount: totalAmount.toString(),
       currency,
-      status: preservedStatus || "emisa",
+      status: preservedStatus || "estimada",
       associationId: contract.clientId || null,
       associationName: assocName || null,
       prestatorName: contract.prestatorName || null,
+      concept: "Prestare servicii in administrarea asociatiei de proprietari",
+      isManual: false,
     };
     await storage.createProformaInvoice(invoiceData);
   }
@@ -1498,6 +1500,46 @@ export async function registerRoutes(
     }
     const invoices = await storage.getProformaInvoices();
     res.json(invoices);
+  });
+
+  app.get("/api/proforma-invoices/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const invoice = await storage.getProformaInvoice(req.params.id as string);
+    if (!invoice) return res.status(404).json({ message: "Factura nu a fost gasita" });
+    res.json(invoice);
+  });
+
+  app.post("/api/proforma-invoices", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const nextNum = await storage.getNextInvoiceNumber();
+      const data = {
+        ...req.body,
+        invoiceNumber: req.body.invoiceNumber || nextNum,
+        isManual: true,
+      };
+      const invoice = await storage.createProformaInvoice(data);
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Eroare la crearea facturii" });
+    }
+  });
+
+  app.patch("/api/proforma-invoices/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const invoice = await storage.updateProformaInvoice(req.params.id as string, req.body);
+      res.json(invoice);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Eroare la actualizarea facturii" });
+    }
+  });
+
+  app.delete("/api/proforma-invoices/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteProformaInvoice(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  app.get("/api/next-invoice-number", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const nextNum = await storage.getNextInvoiceNumber();
+    res.json({ nextNumber: nextNum });
   });
 
   // Contract Templates

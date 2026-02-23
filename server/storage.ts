@@ -137,9 +137,13 @@ export interface IStorage {
   deleteContractTemplate(id: string): Promise<void>;
 
   getProformaInvoices(): Promise<ProformaInvoice[]>;
+  getProformaInvoice(id: string): Promise<ProformaInvoice | undefined>;
   getProformaInvoicesByContract(contractId: string): Promise<ProformaInvoice[]>;
   createProformaInvoice(data: InsertProformaInvoice): Promise<ProformaInvoice>;
+  updateProformaInvoice(id: string, data: Partial<InsertProformaInvoice>): Promise<ProformaInvoice>;
+  deleteProformaInvoice(id: string): Promise<void>;
   deleteProformaInvoicesByContract(contractId: string): Promise<void>;
+  getNextInvoiceNumber(): Promise<number>;
 
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
@@ -619,8 +623,27 @@ export class DatabaseStorage implements IStorage {
     return invoice;
   }
 
+  async getProformaInvoice(id: string): Promise<ProformaInvoice | undefined> {
+    const [invoice] = await db.select().from(proformaInvoices).where(eq(proformaInvoices.id, id));
+    return invoice;
+  }
+
+  async updateProformaInvoice(id: string, data: Partial<InsertProformaInvoice>): Promise<ProformaInvoice> {
+    const [invoice] = await db.update(proformaInvoices).set(data).where(eq(proformaInvoices.id, id)).returning();
+    return invoice;
+  }
+
+  async deleteProformaInvoice(id: string): Promise<void> {
+    await db.delete(proformaInvoices).where(eq(proformaInvoices.id, id));
+  }
+
   async deleteProformaInvoicesByContract(contractId: string): Promise<void> {
     await db.delete(proformaInvoices).where(eq(proformaInvoices.contractId, contractId));
+  }
+
+  async getNextInvoiceNumber(): Promise<number> {
+    const result = await db.select({ maxNum: sql<number>`COALESCE(MAX(invoice_number), 0)` }).from(proformaInvoices);
+    return (result[0]?.maxNum || 0) + 1;
   }
 }
 

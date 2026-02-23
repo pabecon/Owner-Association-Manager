@@ -300,28 +300,34 @@ export const contractTemplates = pgTable("contract_templates", {
 
 export const proformaInvoices = pgTable("proforma_invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  contractId: varchar("contract_id").notNull(),
+  contractId: varchar("contract_id"),
   invoiceNumber: integer("invoice_number").notNull(),
-  month: integer("month").notNull(),
-  year: integer("year").notNull(),
+  month: integer("month"),
+  year: integer("year"),
   issueDate: date("issue_date").notNull(),
   dueDate: date("due_date"),
   numberOfUnits: integer("number_of_units"),
   pricePerUnit: numeric("price_per_unit", { precision: 12, scale: 2 }),
   totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("RON"),
-  status: text("status").notNull().default("emisa"),
+  status: text("status").notNull().default("estimada"),
   associationId: varchar("association_id"),
   associationName: text("association_name"),
   prestatorName: text("prestator_name"),
+  concept: text("concept"),
+  isManual: boolean("is_manual").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const PROFORMA_STATUS_LABELS: Record<string, string> = {
-  emisa: "Emisa",
+export const INVOICE_STATUS_LABELS: Record<string, string> = {
+  estimada: "Estimada",
+  proforma: "Proforma",
+  factura_final: "Factura Final",
   platita: "Platita",
   anulata: "Anulata",
 };
+
+export const PROFORMA_STATUS_LABELS = INVOICE_STATUS_LABELS;
 
 export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true });
 export type InsertContract = z.infer<typeof insertContractSchema>;
