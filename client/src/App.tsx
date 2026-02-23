@@ -20,6 +20,7 @@ import PermissionsMatrix from "@/pages/permissions-matrix";
 import ListaUtilizatoriPage from "@/pages/lista-utilizatori";
 import UtilizatorDetail from "@/pages/utilizator-detail";
 import Gdpr from "@/pages/gdpr";
+import ContractTemplatesPage from "@/pages/contract-templates";
 import { CookieConsent } from "@/components/cookie-consent";
 
 function SuperAdminRouter() {
@@ -32,6 +33,7 @@ function SuperAdminRouter() {
       <Route path="/utilizatori" component={UsersPage} />
       <Route path="/matrice-permisiuni" component={PermissionsMatrix} />
       <Route path="/contracte" component={ContractsPage} />
+      <Route path="/sabloane-contracte" component={ContractTemplatesPage} />
       <Route path="/lista-utilizatori" component={ListaUtilizatoriPage} />
       <Route path="/utilizator/:id" component={UtilizatorDetail} />
       <Route path="/gdpr/:docId" component={Gdpr} />

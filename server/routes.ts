@@ -897,7 +897,7 @@ export async function registerRoutes(
         if (!entityType || !entityId) return res.status(400).json({ message: "entityType si entityId sunt obligatorii" });
         try {
           const { Client } = await import("@replit/object-storage");
-          const client = new Client();
+          const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
           const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
           const path = `.private/documents/${entityType}/${entityId}/${Date.now()}_${safeName}`;
           await client.uploadFromBytes(path, file.buffer);
@@ -928,7 +928,7 @@ export async function registerRoutes(
       const doc = await storage.getDocument(req.params.id as string);
       if (!doc) return res.status(404).json({ message: "Documentul nu a fost gasit" });
       const { Client } = await import("@replit/object-storage");
-      const client = new Client();
+      const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
       const { ok, value: buffer } = await client.downloadAsBytes(doc.objectPath);
       if (!ok) return res.status(404).json({ message: "Fisierul nu a fost gasit in storage" });
       res.set({
@@ -949,7 +949,7 @@ export async function registerRoutes(
       if (doc) {
         try {
           const { Client } = await import("@replit/object-storage");
-          const client = new Client();
+          const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
           await client.delete(doc.objectPath);
         } catch (e) {}
       }
@@ -1423,6 +1423,62 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  // Contract template file upload (must be before parameterized routes)
+  app.post("/api/contract-templates/upload", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const multer = (await import("multer")).default;
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+      upload.single("file")(req, res, async (err: any) => {
+        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+        const name = (req as any).body?.name || file.originalname;
+        const description = (req as any).body?.description || "";
+        const { Client } = await import("@replit/object-storage");
+        const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+        const templateId = crypto.randomUUID();
+        const path = `.private/contract-templates/${templateId}/${file.originalname}`;
+        await client.uploadFromBytes(path, file.buffer);
+        const template = await storage.createContractTemplate({
+          name,
+          description,
+          documentPath: path,
+          documentName: file.originalname,
+        });
+        res.json(template);
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
+  // Contract template download
+  app.get("/api/contract-templates/:id/download", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const template = await storage.getContractTemplate(req.params.id as string);
+    if (!template) return res.status(404).json({ message: "Sablonul nu a fost gasit" });
+    try {
+      const { Client } = await import("@replit/object-storage");
+      const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+      const result = await client.downloadAsBytes(template.documentPath);
+      if (!result.ok) return res.status(404).json({ message: "Fisierul nu a fost gasit" });
+      const ext = template.documentName.split(".").pop()?.toLowerCase() || "";
+      const mimeTypes: Record<string, string> = {
+        pdf: "application/pdf",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        xls: "application/vnd.ms-excel",
+        odt: "application/vnd.oasis.opendocument.text",
+        txt: "text/plain",
+      };
+      res.setHeader("Content-Type", mimeTypes[ext] || "application/octet-stream");
+      res.setHeader("Content-Disposition", `attachment; filename="${template.documentName}"`);
+      res.send(Buffer.from(result.value));
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare la descarcarea fisierului" });
+    }
+  });
+
   app.post("/api/contract-templates", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     const parsed = insertContractTemplateSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
@@ -1433,6 +1489,13 @@ export async function registerRoutes(
   app.delete("/api/contract-templates/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     const existing = await storage.getContractTemplate(req.params.id as string);
     if (!existing) return res.status(404).json({ message: "Sablonul nu a fost gasit" });
+    if (existing.documentPath) {
+      try {
+        const { Client } = await import("@replit/object-storage");
+        const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+        await client.delete(existing.documentPath);
+      } catch {}
+    }
     await storage.deleteContractTemplate(req.params.id as string);
     res.json({ success: true });
   });
@@ -1449,7 +1512,7 @@ export async function registerRoutes(
         const file = (req as any).file;
         if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
         const { Client } = await import("@replit/object-storage");
-        const client = new Client();
+        const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
         const path = `.private/contracts/${contract.id}/${file.originalname}`;
         await client.uploadFromBytes(path, file.buffer);
         const updated = await storage.updateContract(contract.id, {

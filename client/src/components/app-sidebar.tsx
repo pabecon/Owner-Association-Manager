@@ -56,7 +56,7 @@ export function AppSidebar() {
   const isInfografieActive = location === "/";
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
-  const isJuridicActive = location.startsWith("/contracte");
+  const isJuridicActive = location.startsWith("/contracte") || location.startsWith("/sabloane-contracte");
   const isUsersSection = location === "/matrice-permisiuni" || location === "/lista-utilizatori" || location.startsWith("/utilizator/");
   const isGdprActive = location.startsWith("/gdpr");
 
@@ -177,6 +177,14 @@ export function AppSidebar() {
                           <Link href="/contracte" data-testid="link-nav-contracte">
                             <FileText className="w-3.5 h-3.5" />
                             <span>Contracte</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild data-active={location === "/sabloane-contracte"} className={location === "/sabloane-contracte" ? "bg-sidebar-accent" : ""}>
+                          <Link href="/sabloane-contracte" data-testid="link-nav-templates">
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>Sabloane</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
