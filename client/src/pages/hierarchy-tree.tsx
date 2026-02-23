@@ -13,6 +13,7 @@ import { AddEntityDialog } from "@/components/add-entity-dialog";
 import { BatchCreateDialog } from "@/components/batch-create-dialog";
 import { ExcelImportDialog } from "@/components/excel-import-dialog";
 import { EditEntityDialog } from "@/components/edit-entity-dialog";
+import { AssociationWizard } from "@/components/association-wizard";
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
@@ -165,6 +166,8 @@ export default function HierarchyTree() {
   const [batchDialog, setBatchDialog] = useState<{ open: boolean; level: "building" | "staircase" | "floor" | "unit"; parentId: string; parentName: string; staircaseId?: string; floorNumber?: number; parentAddress?: string }>({ open: false, level: "building", parentId: "", parentName: "" });
   const [editDialog, setEditDialog] = useState<{ open: boolean; level: EntityLevel; entity: any }>({ open: false, level: "federation", entity: null });
   const [importOpen, setImportOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardFedId, setWizardFedId] = useState<string | undefined>();
 
   const isLoading = lf || la || lb || ls || lap;
 
@@ -309,7 +312,7 @@ export default function HierarchyTree() {
             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("federation")} data-testid="button-add-federation">
               <Plus className="w-3 h-3 mr-0.5" />Fed
             </Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("association")} data-testid="button-add-association">
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => { setWizardFedId(undefined); setWizardOpen(true); }} data-testid="button-add-association">
               <Plus className="w-3 h-3 mr-0.5" />Asoc
             </Button>
             <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
@@ -334,7 +337,7 @@ export default function HierarchyTree() {
                     badge={`${fedAssocs.length} asociatii`}
                     defaultOpen={true}
                     onEdit={() => openEdit("federation", fed)}
-                    onAdd={() => openAdd("association", fed.id, fed.name)}
+                    onAdd={() => { setWizardFedId(fed.id); setWizardOpen(true); }}
                   >
                     {fedAssocs.map(assoc => {
                       const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
@@ -410,6 +413,13 @@ export default function HierarchyTree() {
       />
 
       <ExcelImportDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <AssociationWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        federationId={wizardFedId}
+        federations={federations}
+      />
 
       <EditEntityDialog
         open={editDialog.open}

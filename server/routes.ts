@@ -198,6 +198,81 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
+  // Association Wizard - create full hierarchy in one transaction
+  app.post("/api/association-wizard", ...auth, requirePermission("manageBuildings"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const { association: assocData, buildings: buildingsData } = req.body;
+      if (!assocData || typeof assocData !== "object" || !assocData.name?.trim()) {
+        return res.status(400).json({ message: "Numele asociatiei este obligatoriu" });
+      }
+      const fedId = assocData.federationId || null;
+      if (fedId && !isInFederationScope(req, fedId)) {
+        return res.status(403).json({ message: "Nu aveti acces la aceasta federatie" });
+      }
+      if (!Array.isArray(buildingsData)) {
+        return res.status(400).json({ message: "Lista de blocuri este obligatorie" });
+      }
+      for (const bld of buildingsData) {
+        if (!bld.name?.trim()) return res.status(400).json({ message: "Fiecare bloc trebuie sa aiba un nume" });
+        if (bld.staircases && Array.isArray(bld.staircases)) {
+          for (const st of bld.staircases) {
+            if (!st.name?.trim()) return res.status(400).json({ message: "Fiecare scara trebuie sa aiba un nume" });
+          }
+        }
+      }
+
+      const result = await db.transaction(async (tx) => {
+        const [assoc] = await tx.insert(associations).values({
+          name: assocData.name.trim(),
+          address: assocData.address?.trim() || null,
+          cui: assocData.cui?.trim() || null,
+          federationId: fedId,
+        }).returning();
+
+        let totalBuildings = 0;
+        let totalUnits = 0;
+
+        for (const bldData of buildingsData) {
+          const [bld] = await tx.insert(buildings).values({
+            associationId: assoc.id,
+            name: bldData.name.trim(),
+            address: assocData.address?.trim() || null,
+          }).returning();
+          totalBuildings++;
+
+          if (bldData.staircases && Array.isArray(bldData.staircases)) {
+            for (const stData of bldData.staircases) {
+              const floorCount = parseInt(stData.floors) || 0;
+              const [st] = await tx.insert(staircases).values({
+                buildingId: bld.id,
+                name: stData.name.trim(),
+                floors: floorCount,
+              }).returning();
+
+              if (stData.units && Array.isArray(stData.units)) {
+                for (const unitData of stData.units) {
+                  await tx.insert(apartments).values({
+                    staircaseId: st.id,
+                    unitType: unitData.unitType || "apartment",
+                    number: String(unitData.number || "1"),
+                    floor: parseInt(unitData.floor) || 0,
+                  });
+                  totalUnits++;
+                }
+              }
+            }
+          }
+        }
+        return { association: assoc, totalBuildings, totalUnits };
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Association wizard error:", error);
+      res.status(500).json({ message: error.message || "Eroare la crearea ierarhiei" });
+    }
+  });
+
   // Buildings
   app.get("/api/buildings", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllBuildings) {
