@@ -11,8 +11,8 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Language**: Romanian UI
 
 ## Project Structure
-- `client/src/pages/` - HierarchyTree (home/infografie), AssociationPortal (per-association management), Contracts, Roluri, PermissionsMatrix, UnitDetail (sidebar layout)
-- `client/src/components/` - AppSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
+- `client/src/pages/` - HierarchyTree (home/infografie), AssociationPortal (per-association management), Contracts, Roluri, PermissionsMatrix, UnitDetail (sidebar layout), ListaUtilizatori & UtilizatorDetail (own layout)
+- `client/src/components/` - AppSidebar, UsersSidebar, AssociationSidebar, UserMenu, ThemeProvider, ThemeToggle, UI components
 - `client/src/hooks/use-auth.ts` - Auth hook providing user state and permissions
 - `server/middleware.ts` - Auth middleware with role-based permission checks
 - `server/routes.ts` - Express API routes with scope validation
@@ -87,8 +87,8 @@ A Romanian Homeowners Association (HOA) management application with multi-level 
 - **Sidebar**: Under "Juridic" collapsible section
 
 ## Platform User Management
-- **Lista Utilizatori** (`/lista-utilizatori`): Table showing all platform users with: name, username, role (Proprietar/Chirias), association, building, staircase, floor, unit, active status. Search/filter input. "Adauga Utilizator" dialog to create new users with cascading location selects.
-- **Utilizator Detail** (`/utilizator/:id`): Edit page for individual user. Shows/edits: firstName, lastName, username, password (visible), email, phone, userRole, isActive toggle, cascading location selects (association→building→staircase→apartment). Info card with createdBy, createdAt, deactivatedAt. Activity history timeline showing all changes with dates and who made them.
+- **Lista Utilizatori** (`/lista-utilizatori`): Has its OWN independent layout (UsersLayout) with UsersSidebar, separate from SuperAdmin layout. Table showing all platform users with: name, username, role (Proprietar/Chirias), association, building, staircase, floor, unit, active status. Search/filter input. "Adauga Utilizator" dialog to create new users with cascading location selects. UsersSidebar has "Lista Utilizatori" nav link and "Super Administrator" back link.
+- **Utilizator Detail** (`/utilizator/:id`): Uses same UsersLayout. Edit page for individual user. Shows/edits: firstName, lastName, username, password (visible), email, phone, userRole, isActive toggle, cascading location selects (association→building→staircase→apartment). Info card with createdBy, createdAt, deactivatedAt. Activity history timeline showing all changes with dates and who made them.
 - **Tables**: `platform_users` (id, firstName, lastName, username, password, email, phone, userRole, associationId, buildingId, staircaseId, apartmentId, isActive, createdBy, createdAt, deactivatedAt) and `user_activity_log` (id, platformUserId, action, details, performedBy, createdAt)
 - **API**: GET/POST /api/platform-users, GET/PATCH/DELETE /api/platform-users/:id, GET /api/platform-users/:id/activities
 - **Activity tracking**: All changes (create, edit, activate/deactivate) are automatically logged with timestamps and performer info
