@@ -375,26 +375,25 @@ export default function PermissionsMatrix() {
             })}
           </div>
 
-          <Card>
-            <CardHeader className="pb-2">
+          <Card className="flex flex-col min-h-0 max-h-[60vh]">
+            <CardHeader className="pb-2 shrink-0">
               <CardTitle className="text-base">Tabel Complet Permisiuni</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm" data-testid="table-permissions-matrix">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2 font-medium text-muted-foreground min-w-[250px]">Actiune / Raport</th>
-                      {allRoles.map((role) => (
-                        <th key={role} className="text-center p-2 font-medium min-w-[100px]" data-testid={`th-role-${role}`}>
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs">{roleLabels[role] || role}</span>
-                            <Badge variant="outline" className="text-[10px]">N{roleHierarchy[role] ?? 0}</Badge>
-                          </div>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
+            <CardContent className="p-0 overflow-auto min-h-0 flex-1">
+              <table className="w-full text-sm" data-testid="table-permissions-matrix">
+                <thead className="sticky top-0 z-10 bg-background">
+                  <tr className="border-b">
+                    <th className="text-left p-2 font-medium text-muted-foreground min-w-[250px] bg-background">Actiune / Raport</th>
+                    {allRoles.map((role) => (
+                      <th key={role} className="text-center p-2 font-medium min-w-[100px] bg-background" data-testid={`th-role-${role}`}>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-xs">{roleLabels[role] || role}</span>
+                          <Badge variant="outline" className="text-[10px]">N{roleHierarchy[role] ?? 0}</Badge>
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
                   {categories.map((category) => {
                     const entries = groupedPermissions[category] || [];
                     const categoryLabel = entries[0]?.categoryLabel || category;
@@ -428,7 +427,6 @@ export default function PermissionsMatrix() {
                     );
                   })}
                 </table>
-              </div>
             </CardContent>
           </Card>
 
