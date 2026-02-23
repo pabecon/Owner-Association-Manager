@@ -178,7 +178,63 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground text-sm;
+  }
+
+  h1 { @apply text-lg font-bold; }
+  h2 { @apply text-base font-semibold; }
+  h3 { @apply text-sm font-semibold; }
+
+  .compact-card [data-slot="card"] {
+    @apply p-2;
+  }
+}
+
+@layer components {
+  .page-compact {
+    @apply h-full overflow-auto p-3;
+  }
+  .page-compact > .page-inner {
+    @apply max-w-7xl mx-auto space-y-3;
+  }
+  .page-header {
+    @apply flex items-center justify-between gap-2 mb-2;
+  }
+  .page-title {
+    @apply text-lg font-bold leading-tight;
+  }
+  .page-subtitle {
+    @apply text-xs text-muted-foreground;
+  }
+  .compact-table th {
+    @apply py-1.5 px-2 text-xs font-medium;
+  }
+  .compact-table td {
+    @apply py-1 px-2 text-xs;
+  }
+  .compact-table tr {
+    @apply border-b;
+  }
+  .compact-stats {
+    @apply grid gap-2;
+  }
+  .compact-stats .stat-card {
+    @apply p-2;
+  }
+  .compact-stats .stat-label {
+    @apply text-[11px] text-muted-foreground leading-tight;
+  }
+  .compact-stats .stat-value {
+    @apply text-base font-bold leading-tight;
+  }
+  .sticky-table-container {
+    @apply overflow-auto;
+  }
+  .sticky-table-container thead {
+    @apply sticky top-0 z-10 bg-background;
+  }
+  .sticky-table-container thead th {
+    @apply bg-background;
   }
 }
 
