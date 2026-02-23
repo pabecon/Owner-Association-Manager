@@ -295,74 +295,69 @@ export default function PermissionsMatrix() {
 
   return (
     <div className="flex flex-col h-full" data-testid="page-permissions-matrix">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <Shield className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-bold" data-testid="text-permissions-title">Matrice Permisiuni</h1>
-          <div className="ml-auto flex items-center gap-2 flex-wrap">
+      <div className="px-3 pt-2 pb-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-sm font-bold" data-testid="text-permissions-title">Matrice Permisiuni</h1>
+          <div className="ml-auto flex items-center gap-1 flex-wrap">
             <Button
               variant="outline"
+              className="h-6 px-2 text-[10px]"
               onClick={() => setAddRoleDialog(true)}
               data-testid="button-add-role"
             >
-              <Plus className="w-4 h-4 mr-1" />
-              Adauga Rol
+              <Plus className="w-3 h-3 mr-0.5" />
+              Rol
             </Button>
             <Button
+              className="h-6 px-2 text-[10px]"
               onClick={() => saveMatrixMutation.mutate()}
               disabled={!hasChanges || saveMatrixMutation.isPending}
               data-testid="button-save-changes"
             >
               {saveMatrixMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                <Loader2 className="w-3 h-3 mr-0.5 animate-spin" />
               ) : (
-                <Save className="w-4 h-4 mr-1" />
+                <Save className="w-3 h-3 mr-0.5" />
               )}
-              Salveaza Modificari
+              Salveaza
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
-        <div className="max-w-7xl mx-auto space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
+        <div className="max-w-7xl mx-auto space-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
             {allRoles.map((role) => (
               <Card key={role} data-testid={`card-role-${role}`}>
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs" data-testid={`badge-role-level-${role}`}>
-                      Nivel {roleHierarchy[role] ?? 0}
+                <CardContent className="p-2 space-y-1">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <Badge variant="secondary" className="text-[9px] px-1 py-0" data-testid={`badge-role-level-${role}`}>
+                      N{roleHierarchy[role] ?? 0}
                     </Badge>
+                    <span className="text-[11px] font-semibold truncate flex-1" data-testid={`text-role-name-${role}`}>
+                      {roleLabels[role] || role}
+                    </span>
                     <Button
                       size="icon"
                       variant="ghost"
+                      className="w-5 h-5"
                       onClick={() => setEditRoleDialog(role)}
                       data-testid={`button-edit-role-${role}`}
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="w-2.5 h-2.5" />
                     </Button>
                   </div>
-                  <h3 className="text-sm font-semibold" data-testid={`text-role-name-${role}`}>
-                    {roleLabels[role] || role}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">{roleDescriptions[role] || ""}</p>
-                  <div className="pt-1 border-t space-y-1">
-                    <div className="text-[11px]">
-                      <span className="text-muted-foreground">Creat de: </span>
-                      <span className="font-medium">{roleCreatedBy[role] || "-"}</span>
-                    </div>
-                    <div className="text-[11px]">
-                      <span className="text-muted-foreground">Domeniu: </span>
-                      <span className="font-medium">{roleScopeLabels[role] || "-"}</span>
-                    </div>
+                  <p className="text-[10px] text-muted-foreground leading-tight truncate">{roleDescriptions[role] || ""}</p>
+                  <div className="text-[9px] text-muted-foreground">
+                    {roleCreatedBy[role] || "-"} · {roleScopeLabels[role] || "-"}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+          <div className="flex items-center gap-2 text-[10px] text-muted-foreground flex-wrap">
             <span className="font-medium text-foreground">Legenda:</span>
             {Object.entries(ACCESS_LABELS).map(([key, config]) => {
               const Icon = config.icon;

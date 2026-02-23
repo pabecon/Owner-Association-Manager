@@ -188,16 +188,16 @@ export default function ListaUtilizatoriPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-2">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-page-title">Lista Utilizatori</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-page-title">Lista Utilizatori</h1>
             <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestionarea utilizatorilor platformei</span>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="h-7 text-xs" data-testid="button-add-user">
-                <Plus className="w-3.5 h-3.5 mr-1" />
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-user">
+                <Plus className="w-3 h-3 mr-0.5" />
                 Adauga
               </Button>
             </DialogTrigger>
@@ -457,19 +457,19 @@ export default function ListaUtilizatoriPage() {
           </Dialog>
         </div>
 
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Cauta dupa nume sau username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-7 h-7 text-xs"
             data-testid="input-search-users"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <Card>
             <CardContent className="p-3">
@@ -508,7 +508,7 @@ export default function ListaUtilizatoriPage() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-auto max-h-[calc(100vh-200px)] sticky-table-container">
+              <div className="overflow-auto max-h-[calc(100vh-120px)] sticky-table-container">
                 <Table className="compact-table">
                   <TableHeader>
                     <TableRow>

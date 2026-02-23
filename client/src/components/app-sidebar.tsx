@@ -56,9 +56,14 @@ const LIST_CATEGORIES: { label: string; icon: typeof Wallet; keys: string[] }[] 
     keys: ["serie-ci"],
   },
   {
-    label: "Masuri & Tipuri",
+    label: "Unitati de Masura",
     icon: Ruler,
-    keys: ["unitate-masura", "tip-camera"],
+    keys: ["unitate-masura"],
+  },
+  {
+    label: "Imobiliar",
+    icon: Building2,
+    keys: ["tip-camera"],
   },
 ];
 

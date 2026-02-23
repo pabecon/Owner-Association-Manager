@@ -107,12 +107,12 @@ export default function ContractTemplatesPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
+      <div className="px-3 pt-2 pb-1 space-y-3">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-muted-foreground shrink-0" />
             <div>
-              <h1 className="text-lg font-bold" data-testid="text-templates-title">Sabloane Contracte</h1>
+              <h1 className="text-sm font-bold" data-testid="text-templates-title">Sabloane Contracte</h1>
               <p className="text-sm text-muted-foreground mt-0.5">Sabloane de documente pentru contractele de administrare</p>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function ContractTemplatesPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full" />)}

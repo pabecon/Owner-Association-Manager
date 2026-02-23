@@ -76,15 +76,15 @@ function GdprSectionRenderer({ section }: { section: GdprSection }) {
 function GdprIndex() {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0">
+      <div className="px-3 pt-2 pb-1">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-muted-foreground shrink-0" />
-          <h1 className="text-lg font-bold" data-testid="text-gdpr-title">GDPR</h1>
+          <h1 className="text-sm font-bold" data-testid="text-gdpr-title">GDPR</h1>
           <span className="text-[10px] text-muted-foreground hidden sm:inline">Politici de protectie a datelor cu caracter personal</span>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         <div className="max-w-4xl mx-auto space-y-3">
           {GDPR_DOCUMENTS.map((doc) => (
             <Link key={doc.id} href={`/gdpr/${doc.id}`}>
@@ -115,10 +115,10 @@ export default function Gdpr() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0">
+      <div className="px-3 pt-2 pb-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold" data-testid="text-gdpr-doc-title">{selectedDoc.title}</h1>
+            <h1 className="text-sm font-bold" data-testid="text-gdpr-doc-title">{selectedDoc.title}</h1>
             <Badge variant="outline" className="text-[10px]" data-testid="badge-gdpr-date">{selectedDoc.lastUpdated}</Badge>
           </div>
           <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
@@ -130,7 +130,7 @@ export default function Gdpr() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         <div className="max-w-4xl mx-auto">
           <Card className="p-4" data-testid="card-gdpr-content">
             {selectedDoc.sections.map((section, i) => (

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -187,13 +187,10 @@ export default function HierarchyTree() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="p-3 pb-0 space-y-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight">Infografie Ierarhie</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Vizualizare arborescenta completa</p>
-          </div>
+        <div className="px-3 pt-2 pb-1">
+          <h1 className="text-sm font-bold tracking-tight">Infografie Ierarhie</h1>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 pt-3">
+        <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
           <Card><CardContent className="p-3 space-y-3">
             {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-8 w-full" />)}
           </CardContent></Card>
@@ -261,69 +258,41 @@ export default function HierarchyTree() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-tree-title">Infografie Ierarhie</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Vizualizare arborescenta completa a structurii</p>
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-tree-title">Infografie Ierarhie</h1>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">
+              {totalFed} fed · {totalAssoc} asoc · {totalBld} bloc · {totalSt} scari · {totalAptOnly} apt · {totalBoxes + totalParking} boxe/park
+            </span>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button size="sm" variant="outline" onClick={() => openAdd("federation")} data-testid="button-add-federation">
-              <Plus className="w-4 h-4 mr-1.5" />Federatie
+          <div className="flex items-center gap-1 flex-wrap">
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("federation")} data-testid="button-add-federation">
+              <Plus className="w-3 h-3 mr-0.5" />Fed
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openAdd("association")} data-testid="button-add-association">
-              <Plus className="w-4 h-4 mr-1.5" />Asociatie
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("association")} data-testid="button-add-association">
+              <Plus className="w-3 h-3 mr-0.5" />Asoc
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openAdd("building")} data-testid="button-add-building">
-              <Plus className="w-4 h-4 mr-1.5" />Bloc
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("building")} data-testid="button-add-building">
+              <Plus className="w-3 h-3 mr-0.5" />Bloc
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openAdd("staircase")} data-testid="button-add-staircase">
-              <Plus className="w-4 h-4 mr-1.5" />Scara
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("staircase")} data-testid="button-add-staircase">
+              <Plus className="w-3 h-3 mr-0.5" />Scara
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
-              <Plus className="w-4 h-4 mr-1.5" />Unitate
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("apartment")} data-testid="button-add-apartment">
+              <Plus className="w-3 h-3 mr-0.5" />Unit
             </Button>
-            <Button size="sm" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
-              <FileSpreadsheet className="w-4 h-4 mr-1.5" />Import Excel
+            <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
+              <FileSpreadsheet className="w-3 h-3 mr-0.5" />Excel
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
-        <div className="max-w-5xl mx-auto space-y-3">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalFed}</p>
-              <p className="text-[10px] text-muted-foreground">Federatii</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalAssoc}</p>
-              <p className="text-[10px] text-muted-foreground">Asociatii</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalBld}</p>
-              <p className="text-[10px] text-muted-foreground">Blocuri</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalSt}</p>
-              <p className="text-[10px] text-muted-foreground">Scari</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalAptOnly}</p>
-              <p className="text-[10px] text-muted-foreground">Apartamente</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-2 text-center">
-              <p className="text-base font-bold leading-tight">{totalBoxes + totalParking}</p>
-              <p className="text-[10px] text-muted-foreground">Boxe / Parcare</p>
-            </CardContent></Card>
-          </div>
-
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
+        <div className="max-w-5xl mx-auto">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Structura Completa</CardTitle>
-            </CardHeader>
-            <CardContent className="py-2 px-1 sm:px-4">
+            <CardContent className="py-1 px-1 sm:px-3">
               {federations?.map(fed => {
                 const fedAssocs = associations?.filter(a => a.federationId === fed.id) || [];
                 return (

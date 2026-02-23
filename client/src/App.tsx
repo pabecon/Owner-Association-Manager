@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { UsersSidebar } from "@/components/users-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
@@ -34,6 +33,8 @@ function SuperAdminRouter() {
       <Route path="/legislatie" component={Legislatie} />
       <Route path="/utilizatori" component={UsersPage} />
       <Route path="/matrice-permisiuni" component={PermissionsMatrix} />
+      <Route path="/lista-utilizatori" component={ListaUtilizatoriPage} />
+      <Route path="/utilizator/:id" component={UtilizatorDetail} />
       <Route path="/contracte" component={ContractsPage} />
       <Route path="/sabloane-contracte" component={ContractTemplatesPage} />
       <Route path="/facturi" component={FacturiPage} />
@@ -88,50 +89,11 @@ function UnitLayout() {
   );
 }
 
-function UsersRouter() {
-  return (
-    <Switch>
-      <Route path="/lista-utilizatori" component={ListaUtilizatoriPage} />
-      <Route path="/utilizator/:id" component={UtilizatorDetail} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function UsersLayout() {
-  const style = {
-    "--sidebar-width": "16rem",
-    "--sidebar-width-icon": "3rem",
-  };
-
-  return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <UsersSidebar />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between gap-2 p-2 border-b sticky top-0 z-50 bg-background">
-            <SidebarTrigger data-testid="button-users-sidebar-toggle" />
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <UserMenu />
-            </div>
-          </header>
-          <main className="flex-1 overflow-hidden">
-            <UsersRouter />
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-}
-
 function AppRouter() {
   return (
     <Switch>
       <Route path="/asociatie/:id" component={AssociationPortal} />
       <Route path="/unitate/:id" component={UnitLayout} />
-      <Route path="/lista-utilizatori" component={UsersLayout} />
-      <Route path="/utilizator/:id" component={UsersLayout} />
       <Route>
         <SuperAdminLayout />
       </Route>

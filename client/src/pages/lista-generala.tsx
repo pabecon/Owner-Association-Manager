@@ -230,26 +230,26 @@ function CategoryGroupedView({ items, listKey, config }: { items: Record<string,
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-2">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-list-title">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-list-title">
               {config.label}
             </h1>
             <span className="text-[10px] text-muted-foreground hidden sm:inline">Unitati de masura grupate pe categorii</span>
           </div>
-          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleOpenAddCategory} data-testid="button-add-category">
-            <FolderPlus className="w-3.5 h-3.5 mr-1" />
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={handleOpenAddCategory} data-testid="button-add-category">
+            <FolderPlus className="w-3 h-3 mr-0.5" />
             Categorie
           </Button>
         </div>
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Cauta unitati..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-7 h-7 text-xs"
             data-testid="input-search-list"
           />
         </div>
@@ -732,18 +732,18 @@ export default function ListaGenerala() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-2">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-list-title">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-list-title">
               {label}
             </h1>
             <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestioneaza inregistrarile din lista</span>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="h-7 text-xs" onClick={handleOpenAdd} data-testid="button-add-item">
-                <Plus className="w-3.5 h-3.5 mr-1" />
+              <Button size="sm" className="h-6 px-2 text-[10px]" onClick={handleOpenAdd} data-testid="button-add-item">
+                <Plus className="w-3 h-3 mr-0.5" />
                 Adauga
               </Button>
             </DialogTrigger>
@@ -803,17 +803,15 @@ export default function ListaGenerala() {
           </Dialog>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Cauta..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-              data-testid="input-search-list"
-            />
-          </div>
+        <div className="relative max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Cauta..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-7 h-7 text-xs"
+            data-testid="input-search-list"
+          />
         </div>
       </div>
 
@@ -902,7 +900,7 @@ export default function ListaGenerala() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">
@@ -918,7 +916,7 @@ export default function ListaGenerala() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-auto max-h-[calc(100vh-200px)] sticky-table-container">
+              <div className="overflow-auto max-h-[calc(100vh-120px)] sticky-table-container">
                 <Table className="compact-table">
                   <TableHeader>
                     <TableRow>

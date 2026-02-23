@@ -813,14 +813,14 @@ export default function ContractsPage() {
         onChange={onFileChange}
         data-testid="input-file-upload"
       />
-      <div className="p-3 pb-0">
+      <div className="px-3 pt-2 pb-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-contracts-title">Contracte</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-contracts-title">Contracte</h1>
             <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestionarea contractelor de administrare</span>
           </div>
-          <Button size="sm" className="h-7 text-xs" onClick={() => setCreateDialogOpen(true)} data-testid="button-add-contract">
-            <Plus className="w-3.5 h-3.5 mr-1" />
+          <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => setCreateDialogOpen(true)} data-testid="button-add-contract">
+            <Plus className="w-3 h-3 mr-0.5" />
             Adauga
           </Button>
         </div>
@@ -855,7 +855,7 @@ export default function ContractsPage() {
         timeUnits={timeUnits}
       />
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         <div className="max-w-5xl mx-auto">
           {isLoading ? (
             <div className="space-y-2">

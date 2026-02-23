@@ -263,16 +263,16 @@ export default function FacturiPage() {
 
   return (
     <div className="flex flex-col h-full" data-testid="page-facturi">
-      <div className="p-3 pb-0 space-y-2">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold" data-testid="text-facturi-title">Facturi</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold" data-testid="text-facturi-title">Facturi</h1>
             <span className="text-[10px] text-muted-foreground hidden sm:inline">Facturi manuale si auto-generate din contracte</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-56">
               <Select value={selectedContract} onValueChange={setSelectedContract}>
-                <SelectTrigger className="h-7 text-xs" data-testid="select-contract-filter">
+                <SelectTrigger className="h-6 text-[10px]" data-testid="select-contract-filter">
                   <SelectValue placeholder="Filtreaza dupa contract" />
                 </SelectTrigger>
                 <SelectContent>
@@ -287,8 +287,8 @@ export default function FacturiPage() {
             </div>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" data-testid="button-add-invoice">
-                  <Plus className="w-3.5 h-3.5 mr-1" />
+                <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-invoice">
+                  <Plus className="w-3 h-3 mr-0.5" />
                   Adauga factura
                 </Button>
               </DialogTrigger>
@@ -399,7 +399,7 @@ export default function FacturiPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {previewInvoice ? (
           <div>
             <Button size="sm" variant="outline" className="mb-2" onClick={() => setPreviewInvoice(null)} data-testid="button-back-from-preview">

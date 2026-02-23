@@ -305,7 +305,7 @@ export default function UtilizatorDetail() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-5xl">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-user-name">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-user-name">
               {user.lastName} {user.firstName}
             </h1>
             <Badge variant="secondary" data-testid="badge-user-role">{roleLabel}</Badge>
