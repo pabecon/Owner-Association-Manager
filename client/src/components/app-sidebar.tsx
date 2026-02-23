@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck, Wallet, Receipt } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck, Wallet, Receipt, Landmark, Calculator, MapPin, CreditCard, Ruler } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -34,15 +34,53 @@ interface ListConfig {
   label: string;
 }
 
+const LIST_CATEGORIES: { label: string; icon: typeof Wallet; keys: string[] }[] = [
+  {
+    label: "Financiare",
+    icon: Wallet,
+    keys: ["banca", "banci-conturi", "conexiune-bancare", "conturi-toshl", "tip-moneda", "curs-valutar-bnr"],
+  },
+  {
+    label: "Fiscale",
+    icon: Calculator,
+    keys: ["atribute-fiscale", "cota-tva", "tva-partener-anaf", "tip-factura"],
+  },
+  {
+    label: "Geografice",
+    icon: MapPin,
+    keys: ["tari", "oras-judet", "sector-bucuresti", "prefix-telefon", "tip-drumuri"],
+  },
+  {
+    label: "Identificare",
+    icon: CreditCard,
+    keys: ["serie-ci"],
+  },
+  {
+    label: "Masuri & Tipuri",
+    icon: Ruler,
+    keys: ["unitate-masura", "tip-camera"],
+  },
+];
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
   const [listsOpen, setListsOpen] = useState<boolean | null>(null);
+  const [listSubCats, setListSubCats] = useState<Set<string>>(new Set());
   const [legislatieOpen, setLegistatieOpen] = useState<boolean | null>(null);
   const [juridicOpen, setJuridicOpen] = useState<boolean | null>(null);
   const [usersOpen, setUsersOpen] = useState<boolean | null>(null);
   const [gdprOpen, setGdprOpen] = useState<boolean | null>(null);
   const [financiarOpen, setFinanciarOpen] = useState<boolean | null>(null);
+
+  const toggleListSubCat = (cat: string) => {
+    setListSubCats(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -51,6 +89,13 @@ export function AppSidebar() {
   const { data: listConfigs } = useQuery<ListConfig[]>({
     queryKey: ["/api/liste-config"],
   });
+
+  const allCategorizedKeys = LIST_CATEGORIES.flatMap(c => c.keys);
+  const uncategorizedConfigs = listConfigs?.filter(c => !allCategorizedKeys.includes(c.key)) || [];
+
+  const activeListCategory = LIST_CATEGORIES.find(cat =>
+    cat.keys.some(k => location === `/liste-generale/${k}`)
+  )?.label || (uncategorizedConfigs.some(c => location === `/liste-generale/${c.key}`) ? "__altele__" : undefined);
 
   const highestRole = roleInfo?.highestRole;
 
@@ -113,18 +158,76 @@ export function AppSidebar() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {listConfigs?.map((config) => {
-                        const isSubActive = location === `/liste-generale/${config.key}`;
+                      {LIST_CATEGORIES.map((cat) => {
+                        const Icon = cat.icon;
+                        const isCatExpanded = listSubCats.has(cat.label) || activeListCategory === cat.label;
+                        const catConfigs = listConfigs?.filter(c => cat.keys.includes(c.key)) || [];
+                        if (catConfigs.length === 0) return null;
                         return (
-                          <SidebarMenuSubItem key={config.key}>
-                            <SidebarMenuSubButton asChild data-active={isSubActive} className={isSubActive ? "bg-sidebar-accent" : ""}>
-                              <Link href={`/liste-generale/${config.key}`} data-testid={`link-list-${config.key}`}>
-                                <span className="truncate">{config.label}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
+                          <SidebarMenuSubItem key={cat.label}>
+                            <button
+                              type="button"
+                              className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === cat.label ? "text-sidebar-accent-foreground" : ""}`}
+                              onClick={() => toggleListSubCat(cat.label)}
+                              data-testid={`button-list-cat-${cat.label}`}
+                            >
+                              <Icon className="w-3 h-3 shrink-0" />
+                              <span className="flex-1 text-left truncate">{cat.label}</span>
+                              {isCatExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                            </button>
+                            {isCatExpanded && (
+                              <ul className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-0.5 flex flex-col gap-0">
+                                {catConfigs.map((config) => {
+                                  const isSubActive = location === `/liste-generale/${config.key}`;
+                                  return (
+                                    <li key={config.key}>
+                                      <Link
+                                        href={`/liste-generale/${config.key}`}
+                                        className={`block px-2 py-0.5 rounded text-[11px] truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
+                                        data-testid={`link-list-${config.key}`}
+                                      >
+                                        {config.label}
+                                      </Link>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
                           </SidebarMenuSubItem>
                         );
                       })}
+                      {uncategorizedConfigs.length > 0 && (
+                        <SidebarMenuSubItem>
+                          <button
+                            type="button"
+                            className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === "__altele__" ? "text-sidebar-accent-foreground" : ""}`}
+                            onClick={() => toggleListSubCat("__altele__")}
+                            data-testid="button-list-cat-altele"
+                          >
+                            <List className="w-3 h-3 shrink-0" />
+                            <span className="flex-1 text-left truncate">Altele</span>
+                            {(listSubCats.has("__altele__") || activeListCategory === "__altele__") ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                          </button>
+                          {(listSubCats.has("__altele__") || activeListCategory === "__altele__") && (
+                            <ul className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-0.5 flex flex-col gap-0">
+                              {uncategorizedConfigs.map((config) => {
+                                const isSubActive = location === `/liste-generale/${config.key}`;
+                                return (
+                                  <li key={config.key}>
+                                    <Link
+                                      href={`/liste-generale/${config.key}`}
+                                      className={`block px-2 py-0.5 rounded text-[11px] truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
+                                      data-testid={`link-list-${config.key}`}
+                                    >
+                                      {config.label}
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </SidebarMenuSubItem>
+                      )}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>

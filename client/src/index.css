@@ -207,10 +207,10 @@
     @apply text-xs text-muted-foreground;
   }
   .compact-table th {
-    @apply py-1.5 px-2 text-xs font-medium;
+    @apply py-0.5 px-2 text-[11px] font-medium;
   }
   .compact-table td {
-    @apply py-1 px-2 text-xs;
+    @apply py-0.5 px-2 text-[11px] leading-tight;
   }
   .compact-table tr {
     @apply border-b;
