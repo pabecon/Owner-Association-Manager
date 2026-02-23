@@ -389,52 +389,16 @@ export default function AssociationPortal() {
           )}
 
           {activeTab === "financiar" && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Receipt className="w-4 h-4 text-primary" />
-                      <span className="text-xs text-muted-foreground">Total Cheltuieli</span>
-                    </div>
-                    <p className="text-lg font-bold" data-testid="text-portal-total-expenses">{totalExpenses.toLocaleString("ro-RO")} RON</p>
-                    <p className="text-[10px] text-muted-foreground">{assocExpenses.length} inregistrari</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CreditCard className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-muted-foreground">Total Incasat</span>
-                    </div>
-                    <p className="text-lg font-bold text-green-600" data-testid="text-portal-total-paid">{totalPaid.toLocaleString("ro-RO")} RON</p>
-                    <p className="text-[10px] text-muted-foreground">{assocPayments.filter(p => p.status === "paid").length} plati</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CreditCard className="w-4 h-4 text-orange-500" />
-                      <span className="text-xs text-muted-foreground">In Asteptare</span>
-                    </div>
-                    <p className="text-lg font-bold text-orange-500" data-testid="text-portal-pending">{pendingPayments}</p>
-                    <p className="text-[10px] text-muted-foreground">plati neachitate</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Banknote className="w-4 h-4 text-primary" />
-                      <span className="text-xs text-muted-foreground">Rata Incasare</span>
-                    </div>
-                    <p className="text-lg font-bold" data-testid="text-portal-collection-rate">{collectionRate}%</p>
-                    <div className="w-full bg-muted rounded-full h-1.5 mt-1">
-                      <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${collectionRate}%` }} />
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-xs flex-wrap">
+                <span className="text-muted-foreground">Chelt.: <span className="font-semibold text-foreground" data-testid="text-portal-total-expenses">{totalExpenses.toLocaleString("ro-RO")} RON</span> <span className="text-[10px]">({assocExpenses.length})</span></span>
+                <span>·</span>
+                <span className="text-muted-foreground">Incas.: <span className="font-semibold text-green-600" data-testid="text-portal-total-paid">{totalPaid.toLocaleString("ro-RO")} RON</span></span>
+                <span>·</span>
+                <span className="text-muted-foreground">Astept.: <span className="font-semibold text-orange-500" data-testid="text-portal-pending">{pendingPayments}</span></span>
+                <span>·</span>
+                <span className="text-muted-foreground">Rata: <span className="font-semibold text-foreground" data-testid="text-portal-collection-rate">{collectionRate}%</span></span>
               </div>
-
               {/* Fonduri */}
               {funds && funds.length > 0 && (
                 <div className="space-y-2">
@@ -472,11 +436,11 @@ export default function AssociationPortal() {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Descriere</TableHead>
-                              <TableHead>Categorie</TableHead>
+                              <TableHead>Cat.</TableHead>
                               <TableHead>Bloc</TableHead>
-                              <TableHead>Luna/An</TableHead>
+                              <TableHead>Per.</TableHead>
                               <TableHead className="text-right">Suma</TableHead>
-                              <TableHead className="w-10"></TableHead>
+                              <TableHead className="w-8"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -484,15 +448,15 @@ export default function AssociationPortal() {
                               const bld = assocBuildings.find(b => b.id === exp.buildingId);
                               return (
                                 <TableRow key={exp.id} data-testid={`row-portal-expense-${exp.id}`}>
-                                  <TableCell className="font-medium">{exp.description}</TableCell>
+                                  <TableCell className="font-medium max-w-[180px] truncate" title={exp.description}>{exp.description}</TableCell>
                                   <TableCell>
-                                    <Badge variant="outline" className="text-[10px]">{exp.category}</Badge>
+                                    <Badge variant="outline" className="text-[9px] px-1 py-0">{exp.category}</Badge>
                                   </TableCell>
-                                  <TableCell className="text-muted-foreground">{bld?.name || "-"}</TableCell>
-                                  <TableCell className="text-muted-foreground">{exp.month}/{exp.year}</TableCell>
-                                  <TableCell className="text-right font-medium">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
+                                  <TableCell className="text-muted-foreground whitespace-nowrap">{bld?.name || "-"}</TableCell>
+                                  <TableCell className="text-muted-foreground whitespace-nowrap">{exp.month}/{exp.year}</TableCell>
+                                  <TableCell className="text-right font-medium whitespace-nowrap">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
                                   <TableCell>
-                                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteExpenseMutation.mutate(exp.id)} data-testid={`button-delete-expense-${exp.id}`}>
+                                    <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => deleteExpenseMutation.mutate(exp.id)} data-testid={`button-delete-expense-${exp.id}`}>
                                       <Trash2 className="w-3 h-3 text-muted-foreground" />
                                     </Button>
                                   </TableCell>
@@ -532,12 +496,12 @@ export default function AssociationPortal() {
                         <Table className="compact-table">
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Apartament</TableHead>
-                              <TableHead>Luna/An</TableHead>
+                              <TableHead>Apt.</TableHead>
+                              <TableHead>Per.</TableHead>
                               <TableHead className="text-right">Suma</TableHead>
                               <TableHead>Status</TableHead>
-                              <TableHead>Chitanta</TableHead>
-                              <TableHead className="w-20">Actiuni</TableHead>
+                              <TableHead>Chit.</TableHead>
+                              <TableHead className="w-16"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -545,25 +509,25 @@ export default function AssociationPortal() {
                               const apt = apartments?.find(a => a.id === pay.apartmentId);
                               return (
                                 <TableRow key={pay.id} data-testid={`row-portal-payment-${pay.id}`}>
-                                  <TableCell className="font-medium">
+                                  <TableCell className="font-medium whitespace-nowrap">
                                     {apt ? `${getUnitTypeLabel(apt.unitType)} ${apt.number}` : pay.apartmentId}
                                   </TableCell>
-                                  <TableCell className="text-muted-foreground">{pay.month}/{pay.year}</TableCell>
-                                  <TableCell className="text-right font-medium">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
+                                  <TableCell className="text-muted-foreground whitespace-nowrap">{pay.month}/{pay.year}</TableCell>
+                                  <TableCell className="text-right font-medium whitespace-nowrap">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
                                   <TableCell>
-                                    <Badge variant={pay.status === "paid" ? "default" : "secondary"} className="text-[10px]">
-                                      {pay.status === "paid" ? "Platit" : "In asteptare"}
+                                    <Badge variant={pay.status === "paid" ? "default" : "secondary"} className="text-[9px] px-1 py-0">
+                                      {pay.status === "paid" ? "Platit" : "Astept."}
                                     </Badge>
                                   </TableCell>
                                   <TableCell className="text-muted-foreground">{pay.receiptNumber || "-"}</TableCell>
                                   <TableCell>
                                     {pay.status === "pending" ? (
-                                      <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "paid" })} data-testid={`button-mark-paid-${pay.id}`}>
-                                        Confirma
+                                      <Button size="sm" variant="outline" className="h-5 px-1.5 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "paid" })} data-testid={`button-mark-paid-${pay.id}`}>
+                                        Conf.
                                       </Button>
                                     ) : (
-                                      <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "pending" })} data-testid={`button-mark-pending-${pay.id}`}>
-                                        Anuleaza
+                                      <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[10px]" onClick={() => updatePaymentMutation.mutate({ id: pay.id, status: "pending" })} data-testid={`button-mark-pending-${pay.id}`}>
+                                        Anul.
                                       </Button>
                                     )}
                                   </TableCell>

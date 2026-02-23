@@ -54,16 +54,13 @@ const adminSections = [
 export default function Administratie() {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center gap-2">
           <ClipboardList className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-bold" data-testid="text-administratie-title">Administrație</h1>
+          <h1 className="text-sm font-bold" data-testid="text-administratie-title">Administrație</h1>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Centrul de administrare al asociației de proprietari. Accesați rapid secțiunile principale.
-        </p>
       </div>
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {adminSections.map((section) => (
             <Link key={section.url} href={section.url}>

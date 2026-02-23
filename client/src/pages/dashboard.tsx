@@ -180,14 +180,11 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div>
-          <h1 className="text-lg font-bold tracking-tight" data-testid="text-dashboard-title">Panou Super Admin</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Vizualizare generala a tuturor federatiilor si asociatiilor</p>
-        </div>
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <h1 className="text-sm font-bold tracking-tight" data-testid="text-dashboard-title">Panou Super Admin</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card>

@@ -73,17 +73,17 @@ export default function Federations() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-federations-title">Federatii</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestioneaza federatiile de asociatii</p>
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-federations-title">Federatii</h1>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">{filtered.length} federatii</span>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-federation">
-                <Plus className="w-4 h-4 mr-2" />
-                Adauga Federatie
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-federation">
+                <Plus className="w-3 h-3 mr-0.5" />
+                Adauga
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
@@ -117,19 +117,19 @@ export default function Federations() {
           </Dialog>
         </div>
 
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="relative max-w-[200px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Cauta federatii..."
+            placeholder="Cauta..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-7 h-7 text-xs"
             data-testid="input-search-federations"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <Card>
             <CardContent className="p-0">
@@ -149,35 +149,27 @@ export default function Federations() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="sticky-table-container overflow-auto max-h-[calc(100vh-120px)]">
+                <Table className="compact-table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="py-1">Nume</TableHead>
-                      <TableHead className="py-1">Descriere</TableHead>
-                      <TableHead className="py-1">Data Creare</TableHead>
-                      <TableHead className="w-12 py-1"></TableHead>
+                      <TableHead>Nume</TableHead>
+                      <TableHead>Descriere</TableHead>
+                      <TableHead>Creat</TableHead>
+                      <TableHead className="w-8"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((fed) => (
                       <TableRow key={fed.id} data-testid={`row-federation-${fed.id}`}>
-                        <TableCell className="font-medium py-1">{fed.name}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm max-w-xs truncate py-1">{fed.description || "-"}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm py-1">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {fed.createdAt ? new Date(fed.createdAt).toLocaleDateString("ro-RO") : "-"}
-                          </div>
+                        <TableCell className="font-medium">{fed.name}</TableCell>
+                        <TableCell className="text-muted-foreground max-w-[250px] truncate" title={fed.description || undefined}>{fed.description || "-"}</TableCell>
+                        <TableCell className="text-muted-foreground whitespace-nowrap">
+                          {fed.createdAt ? new Date(fed.createdAt).toLocaleDateString("ro-RO") : "-"}
                         </TableCell>
-                        <TableCell className="py-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => deleteMutation.mutate(fed.id)}
-                            data-testid={`button-delete-federation-${fed.id}`}
-                          >
-                            <Trash2 className="w-4 h-4 text-muted-foreground" />
+                        <TableCell>
+                          <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => deleteMutation.mutate(fed.id)} data-testid={`button-delete-federation-${fed.id}`}>
+                            <Trash2 className="w-3 h-3 text-muted-foreground" />
                           </Button>
                         </TableCell>
                       </TableRow>

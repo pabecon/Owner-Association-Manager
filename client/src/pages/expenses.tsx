@@ -99,17 +99,17 @@ export default function Expenses() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-expenses-title">Cheltuieli</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Inregistreaza si urmareste cheltuielile</p>
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-expenses-title">Cheltuieli</h1>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">Total: <span className="font-semibold text-foreground">{totalAmount.toLocaleString("ro-RO")} RON</span></span>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-expense">
-                <Plus className="w-4 h-4 mr-2" />
-                Adauga Cheltuiala
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-expense">
+                <Plus className="w-3 h-3 mr-0.5" />
+                Adauga
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -222,24 +222,19 @@ export default function Expenses() {
           </Dialog>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Cauta cheltuieli..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-              data-testid="input-search-expenses"
-            />
-          </div>
-          <Badge variant="secondary" className="text-sm">
-            Total: {totalAmount.toLocaleString("ro-RO")} RON
-          </Badge>
+        <div className="relative max-w-[200px]">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Cauta..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-7 h-7 text-xs"
+            data-testid="input-search-expenses"
+          />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <Card>
             <CardContent className="p-0">
@@ -259,38 +254,33 @@ export default function Expenses() {
         ) : (
           <Card>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
+              <div className="sticky-table-container overflow-auto max-h-[calc(100vh-120px)]">
+                <Table className="compact-table">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="py-1">Descriere</TableHead>
-                      <TableHead className="py-1">Categorie</TableHead>
-                      <TableHead className="py-1">Perioada</TableHead>
-                      <TableHead className="py-1">Repartizare</TableHead>
-                      <TableHead className="text-right py-1">Suma</TableHead>
-                      <TableHead className="w-12 py-1"></TableHead>
+                      <TableHead>Descriere</TableHead>
+                      <TableHead>Cat.</TableHead>
+                      <TableHead>Per.</TableHead>
+                      <TableHead>Repart.</TableHead>
+                      <TableHead className="text-right">Suma</TableHead>
+                      <TableHead className="w-8"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((exp) => (
                       <TableRow key={exp.id} data-testid={`row-expense-table-${exp.id}`}>
-                        <TableCell className="font-medium text-sm py-1">{exp.description}</TableCell>
-                        <TableCell className="py-1">
-                          <Badge variant="outline" className="text-xs">{exp.category}</Badge>
+                        <TableCell className="font-medium max-w-[200px] truncate" title={exp.description}>{exp.description}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[9px] px-1 py-0">{exp.category}</Badge>
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-sm py-1">{exp.month} {exp.year}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm capitalize py-1">
-                          {exp.splitMethod === "equal" ? "Egal" : exp.splitMethod === "surface" ? "Suprafata" : "Persoane"}
+                        <TableCell className="text-muted-foreground whitespace-nowrap">{exp.month}/{exp.year}</TableCell>
+                        <TableCell className="text-muted-foreground capitalize">
+                          {exp.splitMethod === "equal" ? "Egal" : exp.splitMethod === "surface" ? "Suprf." : "Pers."}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-sm py-1">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
-                        <TableCell className="py-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => deleteMutation.mutate(exp.id)}
-                            data-testid={`button-delete-expense-${exp.id}`}
-                          >
-                            <Trash2 className="w-4 h-4 text-muted-foreground" />
+                        <TableCell className="text-right font-medium whitespace-nowrap">{Number(exp.amount).toLocaleString("ro-RO")} RON</TableCell>
+                        <TableCell>
+                          <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => deleteMutation.mutate(exp.id)} data-testid={`button-delete-expense-${exp.id}`}>
+                            <Trash2 className="w-3 h-3 text-muted-foreground" />
                           </Button>
                         </TableCell>
                       </TableRow>

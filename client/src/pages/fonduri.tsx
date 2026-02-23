@@ -287,12 +287,9 @@ export default function Fonduri() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-2">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-funds-title">Fonduri</h1>
-            <span className="text-[10px] text-muted-foreground hidden sm:inline">Gestioneaza fondurile asociatiei</span>
-          </div>
+          <h1 className="text-sm font-bold tracking-tight" data-testid="text-funds-title">Fonduri</h1>
           <div className="flex items-center gap-2">
             <Select value={effectiveAssocId} onValueChange={(val) => setSelectedAssociation(val)}>
               <SelectTrigger className="w-[220px] h-8 text-xs" data-testid="select-association-filter">
@@ -306,8 +303,8 @@ export default function Fonduri() {
             </Select>
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" disabled={!effectiveAssocId} data-testid="button-add-fund">
-                  <Plus className="w-4 h-4 mr-1" />
+                <Button size="sm" className="h-6 px-2 text-[10px]" disabled={!effectiveAssocId} data-testid="button-add-fund">
+                  <Plus className="w-3 h-3 mr-0.5" />
                   Fond Nou
                 </Button>
               </DialogTrigger>
@@ -395,7 +392,7 @@ export default function Fonduri() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1 space-y-3">
         {!effectiveAssocId ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-8">

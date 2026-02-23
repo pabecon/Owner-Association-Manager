@@ -68,16 +68,15 @@ export default function Announcements() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-announcements-title">Anunturi</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Comunica informatii importante proprietarilor</p>
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-announcements-title">Anunturi</h1>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-announcement">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-announcement">
+                <Plus className="w-3 h-3 mr-0.5" />
                 Anunt Nou
               </Button>
             </DialogTrigger>
@@ -149,7 +148,7 @@ export default function Announcements() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map(i => (

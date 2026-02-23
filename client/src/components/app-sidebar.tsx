@@ -144,7 +144,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild data-active={isInfografieActive} className={`h-8 text-sm ${isInfografieActive ? "bg-sidebar-accent" : ""}`}>
+                <SidebarMenuButton asChild data-active={isInfografieActive} className={`h-7 text-[12px] ${isInfografieActive ? "bg-sidebar-accent" : ""}`}>
                   <Link href="/" data-testid="link-nav-infografie">
                     <GitBranch className="w-4 h-4" />
                     <span>Infografie</span>
@@ -155,7 +155,7 @@ export function AppSidebar() {
               <Collapsible open={isListsExpanded} onOpenChange={(val) => setListsOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isListeActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-liste-generale">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isListeActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-liste-generale">
                       <List className="w-4 h-4" />
                       <span className="flex-1">Liste Generale</span>
                       {isListsExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -172,13 +172,13 @@ export function AppSidebar() {
                           <SidebarMenuSubItem key={cat.label}>
                             <button
                               type="button"
-                              className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === cat.label ? "text-sidebar-accent-foreground" : ""}`}
+                              className={`flex items-center gap-1 w-full px-2 py-0.5 rounded-md text-[11px] leading-none font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === cat.label ? "text-sidebar-accent-foreground" : ""}`}
                               onClick={() => toggleListSubCat(cat.label)}
                               data-testid={`button-list-cat-${cat.label}`}
                             >
                               <Icon className="w-3 h-3 shrink-0" />
                               <span className="flex-1 text-left truncate">{cat.label}</span>
-                              {isCatExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                              {isCatExpanded ? <ChevronDown className="w-2.5 h-2.5 shrink-0" /> : <ChevronRight className="w-2.5 h-2.5 shrink-0" />}
                             </button>
                             {isCatExpanded && (
                               <ul className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-0.5 flex flex-col gap-0">
@@ -188,7 +188,7 @@ export function AppSidebar() {
                                     <li key={config.key}>
                                       <Link
                                         href={`/liste-generale/${config.key}`}
-                                        className={`block px-2 py-0.5 rounded text-[11px] truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
+                                        className={`block px-2 py-px rounded text-[11px] leading-none truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
                                         data-testid={`link-list-${config.key}`}
                                       >
                                         {config.label}
@@ -205,13 +205,13 @@ export function AppSidebar() {
                         <SidebarMenuSubItem>
                           <button
                             type="button"
-                            className={`flex items-center gap-1.5 w-full px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === "__altele__" ? "text-sidebar-accent-foreground" : ""}`}
+                            className={`flex items-center gap-1 w-full px-2 py-0.5 rounded-md text-[11px] leading-none font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeListCategory === "__altele__" ? "text-sidebar-accent-foreground" : ""}`}
                             onClick={() => toggleListSubCat("__altele__")}
                             data-testid="button-list-cat-altele"
                           >
                             <List className="w-3 h-3 shrink-0" />
                             <span className="flex-1 text-left truncate">Altele</span>
-                            {(listSubCats.has("__altele__") || activeListCategory === "__altele__") ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+                            {(listSubCats.has("__altele__") || activeListCategory === "__altele__") ? <ChevronDown className="w-2.5 h-2.5 shrink-0" /> : <ChevronRight className="w-2.5 h-2.5 shrink-0" />}
                           </button>
                           {(listSubCats.has("__altele__") || activeListCategory === "__altele__") && (
                             <ul className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-0.5 flex flex-col gap-0">
@@ -221,7 +221,7 @@ export function AppSidebar() {
                                   <li key={config.key}>
                                     <Link
                                       href={`/liste-generale/${config.key}`}
-                                      className={`block px-2 py-0.5 rounded text-[11px] truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
+                                      className={`block px-2 py-px rounded text-[11px] leading-none truncate hover:bg-sidebar-accent ${isSubActive ? "bg-sidebar-accent font-medium" : "text-muted-foreground"}`}
                                       data-testid={`link-list-${config.key}`}
                                     >
                                       {config.label}
@@ -241,7 +241,7 @@ export function AppSidebar() {
               <Collapsible open={isLegislatieExpanded} onOpenChange={(val) => setLegistatieOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isLegistatieActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-legislatie">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isLegistatieActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-legislatie">
                       <Scale className="w-4 h-4" />
                       <span className="flex-1">Legislatie</span>
                       {isLegislatieExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -275,7 +275,7 @@ export function AppSidebar() {
               <Collapsible open={isJuridicExpanded} onOpenChange={(val) => setJuridicOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isJuridicActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-juridic">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isJuridicActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-juridic">
                       <Gavel className="w-4 h-4" />
                       <span className="flex-1">Juridic</span>
                       {isJuridicExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -307,7 +307,7 @@ export function AppSidebar() {
               <Collapsible open={isUsersExpanded} onOpenChange={(val) => setUsersOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isUsersSection ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-utilizatori">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isUsersSection ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-utilizatori">
                       <Users className="w-4 h-4" />
                       <span className="flex-1">Utilizatori</span>
                       {isUsersExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -339,7 +339,7 @@ export function AppSidebar() {
               <Collapsible open={isFinanciarExpanded} onOpenChange={(val) => setFinanciarOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isFinanciarActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-financiar">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isFinanciarActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-financiar">
                       <Wallet className="w-4 h-4" />
                       <span className="flex-1">Financiar</span>
                       {isFinanciarExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -363,7 +363,7 @@ export function AppSidebar() {
               <Collapsible open={isGdprExpanded} onOpenChange={(val) => setGdprOpen(val)}>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className={`h-8 text-sm ${isGdprActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-gdpr">
+                    <SidebarMenuButton className={`h-7 text-[12px] ${isGdprActive ? "bg-sidebar-accent" : ""}`} data-testid="link-nav-gdpr">
                       <ShieldCheck className="w-4 h-4" />
                       <span className="flex-1">GDPR</span>
                       {isGdprExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}

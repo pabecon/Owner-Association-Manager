@@ -96,17 +96,20 @@ export default function Payments() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-payments-title">Plati</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Urmareste platile proprietarilor</p>
+      <div className="px-3 pt-2 pb-1 space-y-1">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-payments-title">Plati</h1>
+            <span className="text-[10px] text-muted-foreground hidden sm:inline">
+              Astept.: <span className="font-semibold text-amber-600">{totalPending.toLocaleString("ro-RO")} RON</span>
+              {" · "}Achit.: <span className="font-semibold text-green-600">{totalPaid.toLocaleString("ro-RO")} RON</span>
+            </span>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-payment">
-                <Plus className="w-4 h-4 mr-2" />
-                Inregistreaza Plata
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-payment">
+                <Plus className="w-3 h-3 mr-0.5" />
+                Inreg. Plata
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -200,134 +203,94 @@ export default function Payments() {
           </Dialog>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative max-w-sm flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <div className="relative max-w-[200px]">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Cauta dupa apartament..."
+              placeholder="Cauta apt..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-7 h-7 text-xs"
               data-testid="input-search-payments"
             />
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Filter className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-1">
             {["all", "pending", "paid"].map(s => (
               <Button
                 key={s}
                 size="sm"
                 variant={statusFilter === s ? "default" : "outline"}
+                className="h-6 px-2 text-[10px]"
                 onClick={() => setStatusFilter(s)}
                 data-testid={`button-filter-${s}`}
               >
-                {s === "all" ? "Toate" : s === "pending" ? "In asteptare" : "Achitate"}
+                {s === "all" ? "Toate" : s === "pending" ? "Astept." : "Achit."}
               </Button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Card>
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-amber-500/10 dark:bg-amber-400/10">
-                  <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">In Asteptare</p>
-                  <p className="text-lg font-bold">{totalPending.toLocaleString("ro-RO")} RON</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-md bg-emerald-500/10 dark:bg-emerald-400/10">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Achitate</p>
-                  <p className="text-lg font-bold">{totalPaid.toLocaleString("ro-RO")} RON</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {isLoading ? (
-            <Card>
-              <CardContent className="p-0">
-                <div className="space-y-2 p-3">
-                  {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-                </div>
-              </CardContent>
-            </Card>
-          ) : filtered.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <CreditCard className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                <p className="text-muted-foreground font-medium">Nicio plata gasita</p>
-                <p className="text-sm text-muted-foreground mt-0.5">Inregistreaza prima plata pentru a incepe</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="py-1">Apartament</TableHead>
-                        <TableHead className="py-1">Perioada</TableHead>
-                        <TableHead className="py-1">Nr. Chitanta</TableHead>
-                        <TableHead className="py-1">Status</TableHead>
-                        <TableHead className="text-right py-1">Suma</TableHead>
-                        <TableHead className="w-28 py-1"></TableHead>
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-0">
+              <div className="space-y-2 p-3">
+                {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-8 w-full" />)}
+              </div>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-6 text-muted-foreground">
+              <CreditCard className="w-8 h-8 mb-3 opacity-50" />
+              <p className="text-sm">Nicio plata gasita</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="sticky-table-container overflow-auto max-h-[calc(100vh-120px)]">
+                <Table className="compact-table">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Apt.</TableHead>
+                      <TableHead>Per.</TableHead>
+                      <TableHead>Chitanta</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Suma</TableHead>
+                      <TableHead className="w-16"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((pay) => (
+                      <TableRow key={pay.id} data-testid={`row-payment-${pay.id}`}>
+                        <TableCell className="font-medium whitespace-nowrap">{getApartmentLabel(pay.apartmentId)}</TableCell>
+                        <TableCell className="text-muted-foreground whitespace-nowrap">{pay.month}/{pay.year}</TableCell>
+                        <TableCell className="text-muted-foreground">{pay.receiptNumber || "-"}</TableCell>
+                        <TableCell>
+                          {pay.status === "paid" ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">Achit.</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800">Astept.</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-medium whitespace-nowrap">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
+                        <TableCell>
+                          {pay.status === "pending" && (
+                            <Button size="sm" variant="outline" className="h-5 px-1.5 text-[10px]" onClick={() => markPaidMutation.mutate(pay.id)} disabled={markPaidMutation.isPending} data-testid={`button-mark-paid-${pay.id}`}>
+                              Confirma
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.map((pay) => (
-                        <TableRow key={pay.id} data-testid={`row-payment-${pay.id}`}>
-                          <TableCell className="font-medium text-sm py-1">{getApartmentLabel(pay.apartmentId)}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm py-1">{pay.month} {pay.year}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm py-1">{pay.receiptNumber || "-"}</TableCell>
-                          <TableCell className="py-1">
-                            {pay.status === "paid" ? (
-                              <Badge variant="outline" className="text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Achitata
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 text-xs">
-                                <Clock className="w-3 h-3 mr-1" />
-                                In asteptare
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-sm py-1">{Number(pay.amount).toLocaleString("ro-RO")} RON</TableCell>
-                          <TableCell className="py-1">
-                            {pay.status === "pending" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => markPaidMutation.mutate(pay.id)}
-                                disabled={markPaidMutation.isPending}
-                                data-testid={`button-mark-paid-${pay.id}`}
-                              >
-                                Confirma
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

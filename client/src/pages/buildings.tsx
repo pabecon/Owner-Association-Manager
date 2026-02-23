@@ -87,16 +87,15 @@ export default function Buildings() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-3 pb-0 space-y-3">
+      <div className="px-3 pt-2 pb-1 space-y-1">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold tracking-tight" data-testid="text-buildings-title">Blocuri</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Gestioneaza blocurile din asociatii</p>
+            <h1 className="text-sm font-bold tracking-tight" data-testid="text-buildings-title">Blocuri</h1>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-add-building">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button size="sm" className="h-6 px-2 text-[10px]" data-testid="button-add-building">
+                <Plus className="w-3 h-3 mr-0.5" />
                 Adauga Bloc
               </Button>
             </DialogTrigger>
@@ -165,18 +164,18 @@ export default function Buildings() {
         </div>
 
         <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
             placeholder="Cauta dupa nume, adresa sau asociatie..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-7 h-7 text-xs"
             data-testid="input-search-buildings"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 pt-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[1, 2, 3, 4].map(i => (
