@@ -19,6 +19,7 @@ import ContractsPage from "@/pages/contracts";
 import PermissionsMatrix from "@/pages/permissions-matrix";
 import ListaUtilizatoriPage from "@/pages/lista-utilizatori";
 import UtilizatorDetail from "@/pages/utilizator-detail";
+import Gdpr from "@/pages/gdpr";
 
 function SuperAdminRouter() {
   return (
@@ -32,6 +33,8 @@ function SuperAdminRouter() {
       <Route path="/contracte" component={ContractsPage} />
       <Route path="/lista-utilizatori" component={ListaUtilizatoriPage} />
       <Route path="/utilizator/:id" component={UtilizatorDetail} />
+      <Route path="/gdpr/:docId" component={Gdpr} />
+      <Route path="/gdpr" component={Gdpr} />
       <Route component={NotFound} />
     </Switch>
   );

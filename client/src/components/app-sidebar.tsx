@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3 } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +57,7 @@ export function AppSidebar() {
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte");
   const isUsersSection = location === "/matrice-permisiuni" || location === "/lista-utilizatori" || location.startsWith("/utilizator/");
+  const isGdprActive = location.startsWith("/gdpr");
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
   const isLegislatieExpanded = legislatieOpen !== null ? legislatieOpen : isLegistatieActive;
@@ -213,6 +214,15 @@ export function AppSidebar() {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild data-active={isGdprActive} className={`h-8 text-sm ${isGdprActive ? "bg-sidebar-accent" : ""}`}>
+                  <Link href="/gdpr" data-testid="link-nav-gdpr">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>GDPR</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
