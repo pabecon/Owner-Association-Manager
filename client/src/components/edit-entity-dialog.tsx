@@ -13,6 +13,32 @@ import type { Federation, Association, Building, Staircase, Apartment, UnitRoom 
 import { UNIT_TYPE_LABELS } from "@shared/schema";
 import { Loader2, Plus, Trash2, Building2, ArrowUpDown, Users, Network } from "lucide-react";
 
+const FALLBACK_STREET_TYPES = [
+  "Strada", "Bulevardul", "Aleea", "Calea", "Drumul", "Fundatura",
+  "Intrarea", "Pasajul", "Piata", "Soseaua", "Splaiul", "Prelungirea",
+];
+
+const BUCHAREST_CITIES = ["bucuresti", "bucharest", "bucurești"];
+
+function isBucharestCity(city: string) {
+  return BUCHAREST_CITIES.includes(city.toLowerCase().trim());
+}
+
+function composeAddress(formData: Record<string, string>): string {
+  const parts: string[] = [];
+  if (formData.streetType && formData.streetName) {
+    parts.push(`${formData.streetType} ${formData.streetName}`);
+  } else if (formData.streetName) {
+    parts.push(formData.streetName);
+  }
+  if (formData.streetNumber) parts.push(`nr. ${formData.streetNumber}`);
+  if (formData.city) parts.push(formData.city);
+  if (formData.sector) parts.push(`Sector ${formData.sector}`);
+  if (formData.county && !isBucharestCity(formData.city || "")) parts.push(`jud. ${formData.county}`);
+  if (formData.postalCode && !isBucharestCity(formData.city || "")) parts.push(`cod ${formData.postalCode}`);
+  return parts.join(", ");
+}
+
 type EntityLevel = "federation" | "association" | "building" | "staircase" | "apartment";
 
 interface EditEntityDialogProps {
@@ -63,6 +89,11 @@ export function EditEntityDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [rooms, setRooms] = useState<RoomEntry[]>([]);
 
+  const { data: streetTypesData } = useQuery<string[]>({
+    queryKey: ["/api/liste/tip-drumuri"],
+  });
+  const streetTypes = streetTypesData && streetTypesData.length > 0 ? streetTypesData : FALLBACK_STREET_TYPES;
+
   const aptId = level === "apartment" && entity?.id ? entity.id : null;
   const { data: existingRooms } = useQuery<UnitRoom[]>({
     queryKey: ["/api/unit-rooms", aptId],
@@ -89,6 +120,13 @@ export function EditEntityDialog({
         data.name = entity.name || "";
         data.description = entity.description || "";
         data.address = entity.address || "";
+        data.streetType = entity.streetType || "";
+        data.streetName = entity.streetName || "";
+        data.streetNumber = entity.streetNumber || "";
+        data.postalCode = entity.postalCode || "";
+        data.city = entity.city || "";
+        data.county = entity.county || "";
+        data.sector = entity.sector || "";
         data.phone = entity.phone || "";
         data.email = entity.email || "";
         data.presidentName = entity.presidentName || "";
@@ -97,6 +135,13 @@ export function EditEntityDialog({
         data.description = entity.description || "";
         data.cui = entity.cui || "";
         data.address = entity.address || "";
+        data.streetType = entity.streetType || "";
+        data.streetName = entity.streetName || "";
+        data.streetNumber = entity.streetNumber || "";
+        data.postalCode = entity.postalCode || "";
+        data.city = entity.city || "";
+        data.county = entity.county || "";
+        data.sector = entity.sector || "";
         data.federationId = entity.federationId || "";
         data.presidentName = entity.presidentName || "";
         data.presidentPhone = entity.presidentPhone || "";
@@ -113,6 +158,7 @@ export function EditEntityDialog({
         data.name = entity.name || "";
         data.floors = entity.floors?.toString() || "";
         data.apartmentsPerFloor = entity.apartmentsPerFloor?.toString() || "";
+        data.elevators = entity.elevators?.toString() || "";
       } else if (level === "apartment") {
         data.unitType = entity.unitType || "apartment";
         data.number = entity.number || "";
@@ -183,7 +229,14 @@ export function EditEntityDialog({
         body = {
           name: formData.name,
           description: formData.description || null,
-          address: formData.address || null,
+          address: composeAddress(formData) || formData.address || null,
+          streetType: formData.streetType || null,
+          streetName: formData.streetName || null,
+          streetNumber: formData.streetNumber || null,
+          postalCode: formData.postalCode || null,
+          city: formData.city || null,
+          county: formData.county || null,
+          sector: formData.sector || null,
           phone: formData.phone || null,
           email: formData.email || null,
           presidentName: formData.presidentName || null,
@@ -198,7 +251,14 @@ export function EditEntityDialog({
           name: formData.name,
           description: formData.description || null,
           cui: formData.cui || null,
-          address: formData.address || null,
+          address: composeAddress(formData) || formData.address || null,
+          streetType: formData.streetType || null,
+          streetName: formData.streetName || null,
+          streetNumber: formData.streetNumber || null,
+          postalCode: formData.postalCode || null,
+          city: formData.city || null,
+          county: formData.county || null,
+          sector: formData.sector || null,
           federationId: formData.federationId || null,
           presidentName: formData.presidentName || null,
           presidentPhone: formData.presidentPhone || null,
@@ -229,6 +289,7 @@ export function EditEntityDialog({
           name: formData.name,
           floors: formData.floors ? Number(formData.floors) : null,
           apartmentsPerFloor: formData.apartmentsPerFloor ? Number(formData.apartmentsPerFloor) : null,
+          elevators: formData.elevators ? Number(formData.elevators) : 0,
         };
       } else if (level === "apartment") {
         if (!formData.number?.trim()) {
@@ -292,15 +353,75 @@ export function EditEntityDialog({
               <Label htmlFor="edit-fed-desc">Descriere</Label>
               <Textarea id="edit-fed-desc" value={formData.description || ""} onChange={e => updateField("description", e.target.value)} placeholder="Descriere" data-testid="edit-input-description" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="edit-fed-addr">Adresa</Label>
-                <Input id="edit-fed-addr" value={formData.address || ""} onChange={e => updateField("address", e.target.value)} placeholder="Adresa" data-testid="edit-input-address" />
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Adresa</Label>
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
+                  <Select value={formData.streetType || "__none__"} onValueChange={v => updateField("streetType", v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-7 text-xs" data-testid="select-entity-street-type">
+                      <SelectValue placeholder="Selecteaza..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
+                      {streetTypes.map((st: string) => (
+                        <SelectItem key={st} value={st}>{st}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-6">
+                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
+                  <Input value={formData.streetName || ""} onChange={e => updateField("streetName", e.target.value)} placeholder="ex: Mihai Eminescu" className="h-7 text-xs" data-testid="input-entity-street-name" />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
+                  <Input value={formData.streetNumber || ""} onChange={e => updateField("streetNumber", e.target.value)} placeholder="10" className="h-7 text-xs" data-testid="input-entity-street-number" />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="edit-fed-phone">Telefon</Label>
-                <Input id="edit-fed-phone" value={formData.phone || ""} onChange={e => updateField("phone", e.target.value)} placeholder="Telefon" data-testid="edit-input-phone" />
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
+                  <Input value={formData.city || ""} onChange={e => { updateField("city", e.target.value); if (isBucharestCity(e.target.value)) { updateField("county", "Bucuresti"); updateField("postalCode", ""); } else { updateField("sector", ""); } }} placeholder="ex: Bucuresti" className="h-7 text-xs" data-testid="input-entity-city" />
+                </div>
+                {isBucharestCity(formData.city || "") ? (
+                  <div className="col-span-4">
+                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
+                    <Select value={formData.sector || "__none__"} onValueChange={v => updateField("sector", v === "__none__" ? "" : v)}>
+                      <SelectTrigger className="h-7 text-xs" data-testid="select-entity-sector">
+                        <SelectValue placeholder="Sector..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- Sector --</SelectItem>
+                        {["1", "2", "3", "4", "5", "6"].map(s => (
+                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
+                      <Input value={formData.county || ""} onChange={e => updateField("county", e.target.value)} placeholder="ex: Ilfov" className="h-7 text-xs" data-testid="input-entity-county" />
+                    </div>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
+                      <Input value={formData.postalCode || ""} onChange={e => updateField("postalCode", e.target.value)} placeholder="ex: 012345" className="h-7 text-xs" data-testid="input-entity-postal-code" />
+                    </div>
+                  </>
+                )}
+                {isBucharestCity(formData.city || "") && <div className="col-span-4" />}
               </div>
+              {composeAddress(formData) && (
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                  {composeAddress(formData)}
+                </div>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="edit-fed-phone">Telefon</Label>
+              <Input id="edit-fed-phone" value={formData.phone || ""} onChange={e => updateField("phone", e.target.value)} placeholder="Telefon" data-testid="edit-input-phone" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -338,15 +459,75 @@ export function EditEntityDialog({
                 </Select>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="edit-assoc-cui">CUI</Label>
-                <Input id="edit-assoc-cui" value={formData.cui || ""} onChange={e => updateField("cui", e.target.value)} placeholder="CUI" data-testid="edit-input-cui" />
+            <div>
+              <Label htmlFor="edit-assoc-cui">CUI</Label>
+              <Input id="edit-assoc-cui" value={formData.cui || ""} onChange={e => updateField("cui", e.target.value)} placeholder="CUI" data-testid="edit-input-cui" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Adresa</Label>
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
+                  <Select value={formData.streetType || "__none__"} onValueChange={v => updateField("streetType", v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-7 text-xs" data-testid="select-entity-street-type">
+                      <SelectValue placeholder="Selecteaza..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
+                      {streetTypes.map((st: string) => (
+                        <SelectItem key={st} value={st}>{st}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-6">
+                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
+                  <Input value={formData.streetName || ""} onChange={e => updateField("streetName", e.target.value)} placeholder="ex: Mihai Eminescu" className="h-7 text-xs" data-testid="input-entity-street-name" />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
+                  <Input value={formData.streetNumber || ""} onChange={e => updateField("streetNumber", e.target.value)} placeholder="10" className="h-7 text-xs" data-testid="input-entity-street-number" />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="edit-assoc-addr">Adresa</Label>
-                <Input id="edit-assoc-addr" value={formData.address || ""} onChange={e => updateField("address", e.target.value)} placeholder="Adresa" data-testid="edit-input-address" />
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
+                  <Input value={formData.city || ""} onChange={e => { updateField("city", e.target.value); if (isBucharestCity(e.target.value)) { updateField("county", "Bucuresti"); updateField("postalCode", ""); } else { updateField("sector", ""); } }} placeholder="ex: Bucuresti" className="h-7 text-xs" data-testid="input-entity-city" />
+                </div>
+                {isBucharestCity(formData.city || "") ? (
+                  <div className="col-span-4">
+                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
+                    <Select value={formData.sector || "__none__"} onValueChange={v => updateField("sector", v === "__none__" ? "" : v)}>
+                      <SelectTrigger className="h-7 text-xs" data-testid="select-entity-sector">
+                        <SelectValue placeholder="Sector..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- Sector --</SelectItem>
+                        {["1", "2", "3", "4", "5", "6"].map(s => (
+                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
+                      <Input value={formData.county || ""} onChange={e => updateField("county", e.target.value)} placeholder="ex: Ilfov" className="h-7 text-xs" data-testid="input-entity-county" />
+                    </div>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
+                      <Input value={formData.postalCode || ""} onChange={e => updateField("postalCode", e.target.value)} placeholder="ex: 012345" className="h-7 text-xs" data-testid="input-entity-postal-code" />
+                    </div>
+                  </>
+                )}
+                {isBucharestCity(formData.city || "") && <div className="col-span-4" />}
               </div>
+              {composeAddress(formData) && (
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                  {composeAddress(formData)}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="edit-assoc-desc">Descriere</Label>
@@ -414,7 +595,7 @@ export function EditEntityDialog({
               <Label htmlFor="edit-st-name">Nume *</Label>
               <Input id="edit-st-name" value={formData.name || ""} onChange={e => updateField("name", e.target.value)} placeholder="Ex: Scara A" data-testid="edit-input-name" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="edit-st-floors">Etaje</Label>
                 <Input id="edit-st-floors" type="number" value={formData.floors || ""} onChange={e => updateField("floors", e.target.value)} placeholder="Nr. etaje" data-testid="edit-input-floors" />
@@ -422,6 +603,10 @@ export function EditEntityDialog({
               <div>
                 <Label htmlFor="edit-st-apf">Apartamente/Etaj</Label>
                 <Input id="edit-st-apf" type="number" value={formData.apartmentsPerFloor || ""} onChange={e => updateField("apartmentsPerFloor", e.target.value)} placeholder="Nr." data-testid="edit-input-apts-floor" />
+              </div>
+              <div>
+                <Label htmlFor="edit-st-elevators">Ascensoare</Label>
+                <Input id="edit-st-elevators" type="number" value={formData.elevators || ""} onChange={e => updateField("elevators", e.target.value)} placeholder="0" data-testid="edit-input-elevators" />
               </div>
             </div>
           </div>

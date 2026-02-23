@@ -225,6 +225,13 @@ export async function registerRoutes(
         const [assoc] = await tx.insert(associations).values({
           name: assocData.name.trim(),
           address: assocData.address?.trim() || null,
+          streetType: assocData.streetType || null,
+          streetName: assocData.streetName?.trim() || null,
+          streetNumber: assocData.streetNumber?.trim() || null,
+          postalCode: assocData.postalCode?.trim() || null,
+          city: assocData.city?.trim() || null,
+          county: assocData.county?.trim() || null,
+          sector: assocData.sector || null,
           cui: assocData.cui?.trim() || null,
           federationId: fedId,
         }).returning();
@@ -243,10 +250,12 @@ export async function registerRoutes(
           if (bldData.staircases && Array.isArray(bldData.staircases)) {
             for (const stData of bldData.staircases) {
               const floorCount = parseInt(stData.floors) || 0;
+              const elevatorCount = parseInt(stData.elevators) || 0;
               const [st] = await tx.insert(staircases).values({
                 buildingId: bld.id,
                 name: stData.name.trim(),
                 floors: floorCount,
+                elevators: elevatorCount,
               }).returning();
 
               if (stData.units && Array.isArray(stData.units)) {

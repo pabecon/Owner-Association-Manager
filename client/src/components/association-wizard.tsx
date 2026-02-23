@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,11 @@ import {
   ChevronRight, ChevronLeft, Building2, ArrowUpDown, Layers, Home, Plus, Trash2, Loader2, Check
 } from "lucide-react";
 
+const FALLBACK_STREET_TYPES = [
+  "Strada", "Bulevardul", "Aleea", "Calea", "Drumul", "Fundatura",
+  "Intrarea", "Pasajul", "Piata", "Soseaua", "Splaiul", "Prelungirea",
+];
+
 interface WizardUnit {
   number: string;
   unitType: string;
@@ -23,12 +29,23 @@ interface WizardUnit {
 interface WizardStaircase {
   name: string;
   floors: number;
+  elevators: number;
   units: WizardUnit[];
 }
 
 interface WizardBuilding {
   name: string;
   staircases: WizardStaircase[];
+}
+
+interface AddressFields {
+  streetType: string;
+  streetName: string;
+  streetNumber: string;
+  postalCode: string;
+  city: string;
+  county: string;
+  sector: string;
 }
 
 interface AssociationWizardProps {
@@ -50,22 +67,54 @@ const STEP_LABELS: Record<WizardStep, string> = {
   summary: "Sumar",
 };
 
+const BUCHAREST_CITIES = ["bucuresti", "bucharest", "bucurești"];
+
+function isBucharest(city: string) {
+  return BUCHAREST_CITIES.includes(city.toLowerCase().trim());
+}
+
+function formatAddress(addr: AddressFields): string {
+  const parts: string[] = [];
+  if (addr.streetType && addr.streetName) {
+    parts.push(`${addr.streetType} ${addr.streetName}`);
+  } else if (addr.streetName) {
+    parts.push(addr.streetName);
+  }
+  if (addr.streetNumber) parts.push(`nr. ${addr.streetNumber}`);
+  if (addr.city) parts.push(addr.city);
+  if (addr.sector) parts.push(`Sector ${addr.sector}`);
+  if (addr.county && !isBucharest(addr.city)) parts.push(`jud. ${addr.county}`);
+  if (addr.postalCode && !isBucharest(addr.city)) parts.push(`cod ${addr.postalCode}`);
+  return parts.join(", ");
+}
+
 export function AssociationWizard({ open, onOpenChange, federationId, federations }: AssociationWizardProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<WizardStep>("association");
   const [isSaving, setIsSaving] = useState(false);
 
   const [assocName, setAssocName] = useState("");
-  const [assocAddress, setAssocAddress] = useState("");
   const [assocCui, setAssocCui] = useState("");
   const [assocFedId, setAssocFedId] = useState(federationId || "");
+  const [addr, setAddr] = useState<AddressFields>({
+    streetType: "", streetName: "", streetNumber: "",
+    postalCode: "", city: "", county: "", sector: "",
+  });
 
   const [buildingCount, setBuildingCount] = useState("");
   const [buildings, setBuildings] = useState<WizardBuilding[]>([]);
-
   const [currentBldIdx, setCurrentBldIdx] = useState(0);
 
   const stepIdx = STEPS.indexOf(step);
+
+  const { data: streetTypesData } = useQuery<any[]>({
+    queryKey: ["/api/liste/tip-drumuri"],
+    enabled: open,
+  });
+
+  const streetTypes: string[] = streetTypesData && streetTypesData.length > 0
+    ? streetTypesData.map((r: any) => r.tipDrum || r.tip_drum).filter(Boolean)
+    : FALLBACK_STREET_TYPES;
 
   useEffect(() => {
     if (open) {
@@ -76,9 +125,9 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   const resetAll = useCallback(() => {
     setStep("association");
     setAssocName("");
-    setAssocAddress("");
     setAssocCui("");
     setAssocFedId(federationId || "");
+    setAddr({ streetType: "", streetName: "", streetNumber: "", postalCode: "", city: "", county: "", sector: "" });
     setBuildingCount("");
     setBuildings([]);
     setCurrentBldIdx(0);
@@ -98,6 +147,21 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   const goBack = () => {
     const idx = STEPS.indexOf(step);
     if (idx > 0) setStep(STEPS[idx - 1]);
+  };
+
+  const updateAddr = (field: keyof AddressFields, value: string) => {
+    setAddr(prev => {
+      const next = { ...prev, [field]: value };
+      if (field === "city") {
+        if (isBucharest(value)) {
+          next.county = "Bucuresti";
+          next.postalCode = "";
+        } else {
+          next.sector = "";
+        }
+      }
+      return next;
+    });
   };
 
   const canGoNext = (): boolean => {
@@ -144,6 +208,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
             ...Array.from({ length: n - existing.length }, (_, j) => ({
               name: `Scara ${String.fromCharCode(65 + existing.length + j)}`,
               floors: 0,
+              elevators: 0,
               units: [],
             })),
           ],
@@ -159,6 +224,16 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
       return {
         ...b,
         staircases: b.staircases.map((s, j) => j === stIdx ? { ...s, name } : s),
+      };
+    }));
+  };
+
+  const updateStaircaseElevators = (bldIdx: number, stIdx: number, elevators: number) => {
+    setBuildings(prev => prev.map((b, i) => {
+      if (i !== bldIdx) return b;
+      return {
+        ...b,
+        staircases: b.staircases.map((s, j) => j === stIdx ? { ...s, elevators: Math.max(0, elevators) } : s),
       };
     }));
   };
@@ -232,6 +307,9 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
 
   const getTotalUnits = () => buildings.reduce((sum, b) => sum + b.staircases.reduce((s2, st) => s2 + st.units.length, 0), 0);
   const getTotalStaircases = () => buildings.reduce((sum, b) => sum + b.staircases.length, 0);
+  const getTotalElevators = () => buildings.reduce((sum, b) => sum + b.staircases.reduce((s2, st) => s2 + (st.elevators || 0), 0), 0);
+
+  const composedAddress = formatAddress(addr);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -239,7 +317,14 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
       await apiRequest("POST", "/api/association-wizard", {
         association: {
           name: assocName.trim(),
-          address: assocAddress.trim() || null,
+          address: composedAddress || null,
+          streetType: addr.streetType || null,
+          streetName: addr.streetName?.trim() || null,
+          streetNumber: addr.streetNumber?.trim() || null,
+          postalCode: addr.postalCode?.trim() || null,
+          city: addr.city?.trim() || null,
+          county: addr.county?.trim() || null,
+          sector: addr.sector || null,
           cui: assocCui.trim() || null,
           federationId: assocFedId || null,
         },
@@ -248,6 +333,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
           staircases: b.staircases.map(s => ({
             name: s.name,
             floors: s.floors,
+            elevators: s.elevators || 0,
             units: s.units.map(u => ({
               number: u.number,
               unitType: u.unitType,
@@ -313,16 +399,106 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
                 data-testid="input-wizard-assoc-name"
               />
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Adresa</Label>
-              <Input
-                value={assocAddress}
-                onChange={e => setAssocAddress(e.target.value)}
-                placeholder="ex: Str. Exemplu nr. 10, Bucuresti"
-                className="h-8 text-sm"
-                data-testid="input-wizard-assoc-address"
-              />
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
+                  <Select value={addr.streetType || "__none__"} onValueChange={v => updateAddr("streetType", v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-7 text-xs" data-testid="select-wizard-street-type">
+                      <SelectValue placeholder="Selecteaza..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
+                      {streetTypes.map(st => (
+                        <SelectItem key={st} value={st}>{st}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-6">
+                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
+                  <Input
+                    value={addr.streetName}
+                    onChange={e => updateAddr("streetName", e.target.value)}
+                    placeholder="ex: Mihai Eminescu"
+                    className="h-7 text-xs"
+                    data-testid="input-wizard-street-name"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
+                  <Input
+                    value={addr.streetNumber}
+                    onChange={e => updateAddr("streetNumber", e.target.value)}
+                    placeholder="10"
+                    className="h-7 text-xs"
+                    data-testid="input-wizard-street-number"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-12 gap-2">
+                <div className="col-span-4">
+                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
+                  <Input
+                    value={addr.city}
+                    onChange={e => updateAddr("city", e.target.value)}
+                    placeholder="ex: Bucuresti"
+                    className="h-7 text-xs"
+                    data-testid="input-wizard-city"
+                  />
+                </div>
+                {isBucharest(addr.city) ? (
+                  <div className="col-span-4">
+                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
+                    <Select value={addr.sector || "__none__"} onValueChange={v => updateAddr("sector", v === "__none__" ? "" : v)}>
+                      <SelectTrigger className="h-7 text-xs" data-testid="select-wizard-sector">
+                        <SelectValue placeholder="Sector..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- Sector --</SelectItem>
+                        {["1", "2", "3", "4", "5", "6"].map(s => (
+                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
+                      <Input
+                        value={addr.county}
+                        onChange={e => updateAddr("county", e.target.value)}
+                        placeholder="ex: Ilfov"
+                        className="h-7 text-xs"
+                        data-testid="input-wizard-county"
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
+                      <Input
+                        value={addr.postalCode}
+                        onChange={e => updateAddr("postalCode", e.target.value)}
+                        placeholder="ex: 012345"
+                        className="h-7 text-xs"
+                        data-testid="input-wizard-postal-code"
+                      />
+                    </div>
+                  </>
+                )}
+                {isBucharest(addr.city) && (
+                  <div className="col-span-4" />
+                )}
+              </div>
+              {composedAddress && (
+                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded" data-testid="text-wizard-composed-address">
+                  {composedAddress}
+                </div>
+              )}
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">CUI</Label>
               <Input
@@ -333,6 +509,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
                 data-testid="input-wizard-assoc-cui"
               />
             </div>
+
             {federations && federations.length > 0 && (
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Federatie (optional)</Label>
@@ -411,7 +588,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
 
         {step === "staircases" && (
           <div className="space-y-3" data-testid="step-staircases">
-            <Label className="text-xs font-medium">Cate scari are fiecare bloc?</Label>
+            <Label className="text-xs font-medium">Cate scari si ascensoare are fiecare bloc?</Label>
             {buildings.map((b, bi) => (
               <Card key={bi} className="overflow-hidden">
                 <CardContent className="p-2 space-y-2">
@@ -439,8 +616,18 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
                           <Input
                             value={s.name}
                             onChange={e => updateStaircaseName(bi, si, e.target.value)}
-                            className="h-6 text-xs"
+                            className="h-6 text-xs flex-1"
                             data-testid={`input-wizard-staircase-name-${bi}-${si}`}
+                          />
+                          <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Ascensoare:</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="10"
+                            value={s.elevators.toString()}
+                            onChange={e => updateStaircaseElevators(bi, si, parseInt(e.target.value) || 0)}
+                            className="h-6 text-xs w-14"
+                            data-testid={`input-wizard-elevators-${bi}-${si}`}
                           />
                         </div>
                       ))}
@@ -494,80 +681,97 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
         {step === "units" && (
           <div className="space-y-3" data-testid="step-units">
             <Label className="text-xs font-medium">Cate unitati are fiecare etaj?</Label>
-            <div className="flex items-center gap-1 flex-wrap">
-              {buildings.map((b, bi) => (
-                <Button
-                  key={bi}
-                  variant={currentBldIdx === bi ? "default" : "outline"}
-                  size="sm"
-                  className="h-6 px-2 text-[10px]"
-                  onClick={() => setCurrentBldIdx(bi)}
-                  data-testid={`button-wizard-unit-tab-${bi}`}
-                >
-                  <Building2 className="w-3 h-3 mr-0.5" />{b.name}
-                </Button>
-              ))}
-            </div>
+            {buildings.length > 1 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                {buildings.map((b, bi) => (
+                  <Button
+                    key={bi}
+                    variant={currentBldIdx === bi ? "default" : "outline"}
+                    size="sm"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => setCurrentBldIdx(bi)}
+                    data-testid={`button-wizard-unit-tab-${bi}`}
+                  >
+                    <Building2 className="w-3 h-3 mr-0.5" />{b.name}
+                    {b.staircases.reduce((s, st) => s + st.units.length, 0) > 0 && (
+                      <Badge variant="secondary" className="ml-1 text-[8px] py-0 px-1">
+                        {b.staircases.reduce((s, st) => s + st.units.length, 0)}
+                      </Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            )}
 
-            {buildings[currentBldIdx] && buildings[currentBldIdx].staircases.map((st, si) => (
-              <Card key={si} className="overflow-hidden">
-                <CardContent className="p-2 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs font-medium">{st.name}</span>
-                    <Badge variant="secondary" className="text-[9px] py-0">{st.units.length} unitati</Badge>
+            {buildings[currentBldIdx] && (
+              <div className="space-y-3">
+                {buildings.length > 1 && (
+                  <div className="text-xs font-medium text-primary flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5" />
+                    {buildings[currentBldIdx].name}
                   </div>
-                  <div className="pl-5 space-y-2">
-                    {Array.from({ length: (st.floors || 0) + 1 }, (_, f) => f).map(floor => {
-                      const floorUnits = st.units.filter(u => u.floor === floor);
-                      return (
-                        <div key={floor} className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
-                            <span className="text-[11px] font-medium w-16">{getFloorLabel(floor)}</span>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="20"
-                              value={floorUnits.length || ""}
-                              onChange={e => setUnitsForFloor(currentBldIdx, si, floor, e.target.value)}
-                              className="h-6 text-xs w-14"
-                              placeholder="0"
-                              data-testid={`input-wizard-unit-count-${currentBldIdx}-${si}-${floor}`}
-                            />
-                            <span className="text-[10px] text-muted-foreground">unitati</span>
-                          </div>
-                          {floorUnits.length > 0 && (
-                            <div className="pl-8 grid grid-cols-2 sm:grid-cols-3 gap-1">
-                              {floorUnits.map((u, ui) => (
-                                <div key={ui} className="flex items-center gap-1">
-                                  <Input
-                                    value={u.number}
-                                    onChange={e => updateUnitNumber(currentBldIdx, si, floor, ui, e.target.value)}
-                                    className="h-6 text-[11px] flex-1"
-                                    data-testid={`input-wizard-unit-number-${currentBldIdx}-${si}-${floor}-${ui}`}
-                                  />
-                                  <Select value={u.unitType} onValueChange={v => updateUnitType(currentBldIdx, si, floor, ui, v)}>
-                                    <SelectTrigger className="h-6 text-[10px] w-20" data-testid={`select-wizard-unit-type-${currentBldIdx}-${si}-${floor}-${ui}`}>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Object.entries(UNIT_TYPE_LABELS).map(([k, v]) => (
-                                        <SelectItem key={k} value={k}>{v}</SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                )}
+                {buildings[currentBldIdx].staircases.map((st, si) => (
+                  <Card key={`${currentBldIdx}-${si}`} className="overflow-hidden">
+                    <CardContent className="p-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <ArrowUpDown className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-xs font-medium">{st.name}</span>
+                        <Badge variant="secondary" className="text-[9px] py-0">{st.units.length} unitati</Badge>
+                      </div>
+                      <div className="pl-5 space-y-2">
+                        {Array.from({ length: (st.floors || 0) + 1 }, (_, f) => f).map(floor => {
+                          const floorUnits = st.units.filter(u => u.floor === floor);
+                          return (
+                            <div key={floor} className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span className="text-[11px] font-medium w-16">{getFloorLabel(floor)}</span>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="20"
+                                  value={floorUnits.length || ""}
+                                  onChange={e => setUnitsForFloor(currentBldIdx, si, floor, e.target.value)}
+                                  className="h-6 text-xs w-14"
+                                  placeholder="0"
+                                  data-testid={`input-wizard-unit-count-${currentBldIdx}-${si}-${floor}`}
+                                />
+                                <span className="text-[10px] text-muted-foreground">unitati</span>
+                              </div>
+                              {floorUnits.length > 0 && (
+                                <div className="pl-8 grid grid-cols-2 sm:grid-cols-3 gap-1">
+                                  {floorUnits.map((u, ui) => (
+                                    <div key={ui} className="flex items-center gap-1">
+                                      <Input
+                                        value={u.number}
+                                        onChange={e => updateUnitNumber(currentBldIdx, si, floor, ui, e.target.value)}
+                                        className="h-6 text-[11px] flex-1"
+                                        data-testid={`input-wizard-unit-number-${currentBldIdx}-${si}-${floor}-${ui}`}
+                                      />
+                                      <Select value={u.unitType} onValueChange={v => updateUnitType(currentBldIdx, si, floor, ui, v)}>
+                                        <SelectTrigger className="h-6 text-[10px] w-20" data-testid={`select-wizard-unit-type-${currentBldIdx}-${si}-${floor}-${ui}`}>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {Object.entries(UNIT_TYPE_LABELS).map(([k, v]) => (
+                                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
+                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -576,12 +780,15 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
             <Card>
               <CardContent className="p-3 space-y-2">
                 <div className="text-xs font-medium">Asociatia: {assocName}</div>
-                {assocAddress && <div className="text-[11px] text-muted-foreground">Adresa: {assocAddress}</div>}
+                {composedAddress && <div className="text-[11px] text-muted-foreground">Adresa: {composedAddress}</div>}
                 {assocCui && <div className="text-[11px] text-muted-foreground">CUI: {assocCui}</div>}
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="secondary" className="text-[10px]"><Building2 className="w-3 h-3 mr-0.5" />{buildings.length} blocuri</Badge>
                   <Badge variant="secondary" className="text-[10px]"><ArrowUpDown className="w-3 h-3 mr-0.5" />{getTotalStaircases()} scari</Badge>
                   <Badge variant="secondary" className="text-[10px]"><Home className="w-3 h-3 mr-0.5" />{getTotalUnits()} unitati</Badge>
+                  {getTotalElevators() > 0 && (
+                    <Badge variant="secondary" className="text-[10px]">{getTotalElevators()} ascensoare</Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -599,7 +806,10 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
                       <div className="flex items-center gap-2">
                         <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
                         <span className="text-[11px]">{s.name}</span>
-                        <Badge variant="outline" className="text-[9px] py-0">{s.floors} etaje, {s.units.length} unitati</Badge>
+                        <Badge variant="outline" className="text-[9px] py-0">
+                          {s.floors} etaje, {s.units.length} unitati
+                          {s.elevators > 0 && `, ${s.elevators} asc.`}
+                        </Badge>
                       </div>
                       {s.units.length > 0 && (
                         <div className="pl-5 flex items-center gap-1 flex-wrap">
