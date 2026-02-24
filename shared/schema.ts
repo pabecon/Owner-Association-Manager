@@ -250,6 +250,7 @@ export const documents = pgTable("documents", {
   entityId: text("entity_id").notNull(),
   floorNumber: integer("floor_number"),
   documentType: text("document_type"),
+  documentDate: timestamp("document_date"),
   fileName: text("file_name").notNull(),
   originalName: text("original_name").notNull(),
   mimeType: text("mime_type").notNull(),
