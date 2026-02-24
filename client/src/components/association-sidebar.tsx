@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -7,10 +8,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, Home, ArrowUpDown, Receipt, Wallet, Megaphone, User, ArrowLeft, Shield, Gauge } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Building2, Home, ArrowUpDown, Receipt, Wallet, Megaphone, User, ArrowLeft, Shield, Gauge, ChevronRight, Layers, BarChart3, Settings } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +38,8 @@ interface AssociationSidebarProps {
 
 export function AssociationSidebar({ associationId, activeTab, onTabChange }: AssociationSidebarProps) {
   const { user } = useAuth();
+  const isContoareActive = activeTab.startsWith("contoare");
+  const [contoareOpen, setContoareOpen] = useState(isContoareActive);
 
   const { data: roleInfo } = useQuery<RoleInfo>({
     queryKey: ["/api/me/roles"],
@@ -51,12 +58,20 @@ export function AssociationSidebar({ associationId, activeTab, onTabChange }: As
 
   const displayName = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "Utilizator" : "";
 
-  const menuItems = [
+  const topItems = [
     { id: "imobiliar", label: "Imobiliar", icon: Building2 },
-    { id: "contoare", label: "Contoare Comune", icon: Gauge },
+  ];
+
+  const bottomItems = [
     { id: "financiar", label: "Financiar", icon: Receipt },
     { id: "contact", label: "Contact", icon: User },
     { id: "anunturi", label: "Anunturi", icon: Megaphone },
+  ];
+
+  const contoareSubItems = [
+    { id: "contoare-structura", label: "Structura", icon: Layers },
+    { id: "contoare-citiri", label: "Citiri", icon: BarChart3 },
+    { id: "contoare-estimare", label: "Model Estimare", icon: Settings },
   ];
 
   return (
@@ -81,7 +96,54 @@ export function AssociationSidebar({ associationId, activeTab, onTabChange }: As
           <SidebarGroupLabel className="text-[10px] leading-none px-2 py-1">Administrare</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map(item => (
+              {topItems.map(item => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    data-active={activeTab === item.id}
+                    className={`h-7 text-[12px] cursor-pointer ${activeTab === item.id ? "bg-sidebar-accent" : ""}`}
+                    onClick={() => onTabChange(item.id)}
+                    data-testid={`link-assoc-${item.id}`}
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+
+              <Collapsible open={contoareOpen} onOpenChange={setContoareOpen} className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      data-active={isContoareActive}
+                      className={`h-7 text-[12px] cursor-pointer ${isContoareActive ? "bg-sidebar-accent" : ""}`}
+                      data-testid="link-assoc-contoare"
+                    >
+                      <Gauge className="w-3.5 h-3.5" />
+                      <span>Contoare Comune</span>
+                      <ChevronRight className={`ml-auto w-3.5 h-3.5 transition-transform duration-200 ${contoareOpen ? "rotate-90" : ""}`} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {contoareSubItems.map(sub => (
+                        <SidebarMenuSubItem key={sub.id}>
+                          <SidebarMenuSubButton
+                            data-active={activeTab === sub.id}
+                            className={`h-6 text-[11px] cursor-pointer ${activeTab === sub.id ? "bg-sidebar-accent font-medium" : ""}`}
+                            onClick={() => onTabChange(sub.id)}
+                            data-testid={`link-assoc-${sub.id}`}
+                          >
+                            <sub.icon className="w-3 h-3" />
+                            <span>{sub.label}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {bottomItems.map(item => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     data-active={activeTab === item.id}

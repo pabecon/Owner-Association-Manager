@@ -347,13 +347,26 @@ export default function AssociationPortal() {
             </div>
           )}
 
-          {activeTab === "contoare" && associationId && (
-            <CommonMetersSection
+          {activeTab === "contoare-structura" && associationId && (
+            <MeterStructuraSection
               associationId={associationId}
               buildings={assocBuildings}
               staircases={assocStaircases}
               apartments={assocApartments}
             />
+          )}
+
+          {activeTab === "contoare-citiri" && associationId && (
+            <MeterCitiriSection
+              associationId={associationId}
+              buildings={assocBuildings}
+              staircases={assocStaircases}
+              apartments={assocApartments}
+            />
+          )}
+
+          {activeTab === "contoare-estimare" && associationId && (
+            <EstimationConfigPanel associationId={associationId} />
           )}
 
           {activeTab === "financiar" && (
@@ -1316,139 +1329,105 @@ function CommonMetersList({ meters, label, associationId, hideReadings }: { mete
   );
 }
 
-function CitiriMeterItem({ meter, associationId }: { meter: Meter; associationId: string }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function MeterReadingsHistoryWithDiff({ meterId, associationId }: { meterId: string; associationId: string }) {
+  const { toast } = useToast();
+  const { data: readings } = useQuery<MeterReading[]>({
+    queryKey: ["/api/meter-readings", meterId],
+  });
+
+  const { data: aptTotals } = useQuery<{ totals: Record<string, number> }>({
+    queryKey: ["/api/apartment-consumption-totals", meterId],
+    queryFn: async () => {
+      const res = await fetch(`/api/apartment-consumption-totals/${meterId}`);
+      if (!res.ok) return { totals: {} };
+      return res.json();
+    },
+  });
+
+  const deleteReadingMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/meter-readings/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", meterId] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
+      queryClient.invalidateQueries({ queryKey: ["/api/apartment-consumption-totals", meterId] });
+      toast({ title: "Citire stearsa" });
+    },
+  });
+
+  if (!readings || readings.length === 0) {
+    return <p className="text-[10px] text-muted-foreground py-2">Nicio citire inregistrata pentru acest contor.</p>;
+  }
 
   return (
-    <div data-testid={`citiri-meter-${meter.id}`}>
-      <div
-        className="flex items-center gap-1.5 text-[10px] py-1 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
-        data-testid={`button-expand-citiri-meter-${meter.id}`}
-      >
-        {isExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
-        <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[meter.meterType as MeterType] || meter.meterType}</Badge>
-        <span className="text-muted-foreground">
-          <Hash className="w-2.5 h-2.5 inline" />{meter.serialNumber} / {meter.meterNumber}
-        </span>
-      </div>
-      {isExpanded && (
-        <div className="ml-5 border-l-2 border-muted pl-2 pb-2">
-          <MeterReadingForm meterId={meter.id} associationId={associationId} enhanced />
-          <MeterReadingsHistory meterId={meter.id} enhanced />
-        </div>
-      )}
-    </div>
-  );
-}
+    <div>
+      <Table className="compact-table">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-[9px] py-0.5 px-1">Data</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1">Tip</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right">Index</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right" title="Diferenta absoluta intre indici consecutivi">Dif. Abs.</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right" title="Diferenta intre indici minus totalul diferentelor apartamentelor">Dif. Ajust.</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 w-6"></TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 w-6"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {readings.map(r => {
+            const absDiff = r.consumption != null ? Number(r.consumption) : null;
+            const aptTotal = aptTotals?.totals?.[r.readingDate] || 0;
+            const adjustedDiff = absDiff != null ? absDiff - aptTotal : null;
 
-function CitiriSubTab({ associationId, commonMeters, buildings, staircases, apartments }: {
-  associationId: string;
-  commonMeters: Meter[];
-  buildings: Building[];
-  staircases: Staircase[];
-  apartments: Apartment[];
-}) {
-  const assocMeters = commonMeters.filter(m => m.scopeType === "association");
-
-  return (
-    <div className="space-y-3">
-      {assocMeters.length > 0 && (
-        <Card data-testid="citiri-group-association">
-          <CardHeader className="pb-1">
-            <CardTitle className="text-xs flex items-center gap-2">
-              <Gauge className="w-3.5 h-3.5 text-primary" />
-              Contoare Asociatie
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {assocMeters.map(m => (
-              <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {buildings.map(bld => {
-        const bldMeters = commonMeters.filter(m => m.scopeType === "building" && m.buildingId === bld.id);
-        const bldScs = staircases.filter(s => s.buildingId === bld.id);
-        const scMetersAll = bldScs.flatMap(sc => {
-          const scM = commonMeters.filter(m => m.scopeType === "staircase" && m.staircaseId === sc.id);
-          const scApts = apartments.filter(a => a.staircaseId === sc.id);
-          const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
-          const flM = floors.flatMap(fl => commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl));
-          return [...scM, ...flM];
-        });
-        const allBldMeters = [...bldMeters, ...scMetersAll];
-        if (allBldMeters.length === 0) return null;
-
-        return (
-          <Card key={bld.id} data-testid={`citiri-group-building-${bld.id}`}>
-            <CardHeader className="pb-1">
-              <CardTitle className="text-xs flex items-center gap-2">
-                <Building2 className="w-3.5 h-3.5 text-primary" />
-                {bld.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-2">
-              {bldMeters.length > 0 && (
-                <div>
-                  <p className="text-[9px] text-muted-foreground font-medium mb-0.5">Contoare bloc</p>
-                  {bldMeters.map(m => (
-                    <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
-                  ))}
-                </div>
-              )}
-
-              {bldScs.map(sc => {
-                const scM = commonMeters.filter(m => m.scopeType === "staircase" && m.staircaseId === sc.id);
-                const scApts = apartments.filter(a => a.staircaseId === sc.id);
-                const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
-                const hasMeters = scM.length > 0 || floors.some(fl => commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl).length > 0);
-                if (!hasMeters) return null;
-
-                return (
-                  <div key={sc.id} className="border-l-2 border-primary/20 pl-3">
-                    <p className="text-[10px] font-medium flex items-center gap-1 mb-0.5">
-                      <ArrowUpDown className="w-3 h-3 text-primary" />
-                      {sc.name}
-                    </p>
-                    {scM.map(m => (
-                      <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
-                    ))}
-                    {floors.map(fl => {
-                      const flM = commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl);
-                      if (flM.length === 0) return null;
-                      return (
-                        <div key={fl} className="border-l-2 border-muted pl-2 ml-1 mt-1">
-                          <p className="text-[9px] font-medium text-muted-foreground mb-0.5">
-                            <Layers className="w-2.5 h-2.5 inline mr-0.5" />
-                            {fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}
-                          </p>
-                          {flM.map(m => (
-                            <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      {commonMeters.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <Gauge className="w-10 h-10 text-muted-foreground/30 mb-2" />
-            <p className="text-sm text-muted-foreground">Nu exista contoare comune. Adaugati contoare din sub-tab-ul Structura.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      <ConsumptionDifferencesPanel associationId={associationId} />
+            return (
+              <TableRow key={r.id} data-testid={`row-reading-${r.id}`}>
+                <TableCell className="text-[9px] py-0.5 px-1">{r.readingDate}</TableCell>
+                <TableCell className="text-[9px] py-0.5 px-1">
+                  <Badge
+                    variant="outline"
+                    className={`text-[8px] py-0 px-1 ${r.readingType === "regularizat" ? "border-green-500 text-green-700 dark:text-green-400" : r.readingType === "estimat" ? "border-amber-500 text-amber-700 dark:text-amber-400" : "border-blue-500 text-blue-700 dark:text-blue-400"}`}
+                    data-testid={`badge-reading-type-${r.id}`}
+                  >
+                    {READING_TYPE_LABELS[r.readingType as ReadingType] || r.readingType}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums font-medium">{r.readingValue}</TableCell>
+                <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">
+                  {absDiff != null ? (
+                    <span className={absDiff > 0 ? "text-blue-600 dark:text-blue-400" : ""} data-testid={`text-abs-diff-${r.id}`}>
+                      {absDiff.toFixed(3)}
+                    </span>
+                  ) : "-"}
+                </TableCell>
+                <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">
+                  {adjustedDiff != null ? (
+                    <span
+                      className={adjustedDiff > 0 ? "text-orange-600 dark:text-orange-400 font-medium" : adjustedDiff < 0 ? "text-red-600 dark:text-red-400 font-medium" : ""}
+                      title={`Dif. absoluta (${absDiff?.toFixed(3)}) - Total apt. (${aptTotal.toFixed(3)})`}
+                      data-testid={`text-adj-diff-${r.id}`}
+                    >
+                      {adjustedDiff.toFixed(3)}
+                    </span>
+                  ) : "-"}
+                </TableCell>
+                <TableCell className="py-0.5 px-1">
+                  {r.readingPhotoPath ? (
+                    <a href={`/api/meter-readings/${r.id}/photo`} target="_blank" rel="noopener noreferrer" data-testid={`link-photo-${r.id}`}>
+                      <Camera className="w-3 h-3 text-primary cursor-pointer" />
+                    </a>
+                  ) : (
+                    <Camera className="w-3 h-3 text-muted-foreground/30" />
+                  )}
+                </TableCell>
+                <TableCell className="py-0.5 px-1">
+                  <Button size="icon" variant="ghost" className="h-4 w-4" onClick={() => deleteReadingMutation.mutate(r.id)} data-testid={`button-delete-reading-${r.id}`}>
+                    <Trash2 className="w-2 h-2 text-muted-foreground" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -1768,14 +1747,12 @@ function EstimationConfigPanel({ associationId }: { associationId: string }) {
   );
 }
 
-function CommonMetersSection({ associationId, buildings, staircases, apartments }: {
+function MeterStructuraSection({ associationId, buildings, staircases, apartments }: {
   associationId: string;
   buildings: Building[];
   staircases: Staircase[];
   apartments: Apartment[];
 }) {
-  const [meterSubTab, setMeterSubTab] = useState<"structura" | "citiri" | "estimare">("structura");
-
   const commonMetersUrl = `/api/common-meters?associationId=${associationId}`;
   const { data: commonMeters, isLoading } = useQuery<Meter[]>({
     queryKey: [commonMetersUrl],
@@ -1792,118 +1769,371 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1" data-testid="meter-sub-tabs">
+      <Card data-testid="card-common-meters-association">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Gauge className="w-4 h-4 text-primary" />
+            Contor General Asociatie
+            <Badge variant="outline" className="text-[10px]">{assocMeters.length} contoare</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <CommonMetersList meters={assocMeters} label="Asociatie" associationId={associationId} hideReadings />
+          <CommonMeterAddForm scopeType="association" associationId={associationId} />
+        </CardContent>
+      </Card>
+
+      {buildings.map(bld => {
+        const bldM = buildingMeters(bld.id);
+        const bldScs = staircases.filter(s => s.buildingId === bld.id);
+
+        return (
+          <Card key={bld.id} data-testid={`card-common-meters-building-${bld.id}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-primary" />
+                {bld.name}
+                <Badge variant="outline" className="text-[10px]">{bldM.length} contoare bloc</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <CommonMetersList meters={bldM} label={bld.name} associationId={associationId} hideReadings />
+              <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
+
+              {bldScs.map(sc => {
+                const scM = staircaseMeters(sc.id);
+                const scApts = apartments.filter(a => a.staircaseId === sc.id);
+                const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+
+                return (
+                  <div key={sc.id} className="border-l-2 border-primary/20 pl-3 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
+                      <span className="text-xs font-medium">{sc.name}</span>
+                      <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
+                    </div>
+                    <CommonMetersList meters={scM} label={sc.name} associationId={associationId} hideReadings />
+                    <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
+
+                    {floors.map(fl => {
+                      const flM = floorMeters(sc.id, fl);
+                      return (
+                        <div key={fl} className="border-l-2 border-muted pl-3 space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <Layers className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
+                            <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
+                          </div>
+                          <CommonMetersList meters={flM} label={`Etaj ${fl}`} associationId={associationId} hideReadings />
+                          <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function MeterCitiriSection({ associationId, buildings, staircases, apartments }: {
+  associationId: string;
+  buildings: Building[];
+  staircases: Staircase[];
+  apartments: Apartment[];
+}) {
+  const { toast } = useToast();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [scopeType, setScopeType] = useState<string>("building");
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>("");
+  const [selectedStaircaseId, setSelectedStaircaseId] = useState<string>("");
+  const [selectedFloor, setSelectedFloor] = useState<string>("");
+  const [selectedMeterId, setSelectedMeterId] = useState<string>("");
+  const [readingType, setReadingType] = useState<string>("regularizat");
+  const [readingDate, setReadingDate] = useState("");
+  const [readingValue, setReadingValue] = useState("");
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const commonMetersUrl = `/api/common-meters?associationId=${associationId}`;
+  const { data: commonMeters } = useQuery<Meter[]>({
+    queryKey: [commonMetersUrl],
+  });
+
+  const filteredStaircases = selectedBuildingId ? staircases.filter(s => s.buildingId === selectedBuildingId) : [];
+  const filteredFloors = selectedStaircaseId
+    ? Array.from(new Set(apartments.filter(a => a.staircaseId === selectedStaircaseId).map(a => a.floor))).sort((a, b) => b - a)
+    : [];
+
+  const availableMeters = (commonMeters || []).filter(m => {
+    if (scopeType === "building" && selectedBuildingId) return m.scopeType === "building" && m.buildingId === selectedBuildingId;
+    if (scopeType === "staircase" && selectedStaircaseId) return m.scopeType === "staircase" && m.staircaseId === selectedStaircaseId;
+    if (scopeType === "floor" && selectedStaircaseId && selectedFloor !== "") return m.scopeType === "floor" && m.staircaseId === selectedStaircaseId && m.floor === Number(selectedFloor);
+    return false;
+  });
+
+  useEffect(() => {
+    setSelectedStaircaseId("");
+    setSelectedFloor("");
+    setSelectedMeterId("");
+  }, [selectedBuildingId]);
+
+  useEffect(() => {
+    setSelectedFloor("");
+    setSelectedMeterId("");
+  }, [selectedStaircaseId]);
+
+  useEffect(() => {
+    setSelectedMeterId("");
+  }, [scopeType]);
+
+  const { data: estimate } = useQuery<{ estimatedValue: number; method: string; details: string } | null>({
+    queryKey: ["/api/estimate-reading", selectedMeterId, readingDate],
+    queryFn: async () => {
+      if (!readingDate || !selectedMeterId) return null;
+      const res = await fetch(`/api/estimate-reading?meterId=${selectedMeterId}&readingDate=${readingDate}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: readingType === "estimat" && !!readingDate && !!selectedMeterId,
+  });
+
+  useEffect(() => {
+    if (readingType === "estimat" && estimate?.estimatedValue != null) {
+      setReadingValue(String(estimate.estimatedValue));
+    }
+  }, [estimate, readingType]);
+
+  const addReadingMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/meter-readings", {
+        meterId: selectedMeterId,
+        readingDate,
+        readingValue,
+        readingType,
+      });
+      const data = await res.json();
+      if (selectedPhoto && data.id) {
+        const formData = new FormData();
+        formData.append("photo", selectedPhoto);
+        await fetch(`/api/meter-readings/${data.id}/upload-photo`, {
+          method: "POST",
+          body: formData,
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", selectedMeterId] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/common-meters") });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
+      setReadingDate(""); setReadingValue(""); setReadingType("regularizat"); setSelectedPhoto(null);
+      toast({ title: "Citire adaugata" });
+    },
+    onError: (err: any) => { toast({ title: err.message || "Eroare la adaugare citire", variant: "destructive" }); },
+  });
+
+  const getFloorLabel = (fl: number) => {
+    if (fl < 0) return `Subsol ${Math.abs(fl)}`;
+    if (fl === 0) return "Parter";
+    return `Etaj ${fl}`;
+  };
+
+  const selectedMeter = commonMeters?.find(m => m.id === selectedMeterId);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          Citiri Contoare Comune
+        </h3>
         <Button
-          variant={meterSubTab === "structura" ? "default" : "ghost"}
           size="sm"
-          onClick={() => setMeterSubTab("structura")}
-          data-testid="button-subtab-structura"
+          onClick={() => setShowAddForm(!showAddForm)}
+          data-testid="button-toggle-add-reading"
         >
-          Structura
-        </Button>
-        <Button
-          variant={meterSubTab === "citiri" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setMeterSubTab("citiri")}
-          data-testid="button-subtab-citiri"
-        >
-          Citiri
-        </Button>
-        <Button
-          variant={meterSubTab === "estimare" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setMeterSubTab("estimare")}
-          data-testid="button-subtab-estimare"
-        >
-          Model Estimare
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Adauga Citire
         </Button>
       </div>
 
-      {meterSubTab === "structura" && (
-        <div className="space-y-3">
-          <Card data-testid="card-common-meters-association">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Gauge className="w-4 h-4 text-primary" />
-                Contor General Asociatie
-                <Badge variant="outline" className="text-[10px]">{assocMeters.length} contoare</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <CommonMetersList meters={assocMeters} label="Asociatie" associationId={associationId} hideReadings />
-              <CommonMeterAddForm scopeType="association" associationId={associationId} />
-            </CardContent>
-          </Card>
+      {showAddForm && (
+        <Card data-testid="card-add-reading-form">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs">Citire noua</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Nivel contor</label>
+                <Select value={scopeType} onValueChange={setScopeType}>
+                  <SelectTrigger className="h-7 text-[11px]" data-testid="select-scope-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="building">Bloc / Imobil</SelectItem>
+                    <SelectItem value="staircase">Scara</SelectItem>
+                    <SelectItem value="floor">Etaj</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {buildings.map(bld => {
-            const bldM = buildingMeters(bld.id);
-            const bldScs = staircases.filter(s => s.buildingId === bld.id);
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Bloc</label>
+                <Select value={selectedBuildingId} onValueChange={setSelectedBuildingId}>
+                  <SelectTrigger className="h-7 text-[11px]" data-testid="select-building">
+                    <SelectValue placeholder="Alege bloc" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildings.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            return (
-              <Card key={bld.id} data-testid={`card-common-meters-building-${bld.id}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary" />
-                    {bld.name}
-                    <Badge variant="outline" className="text-[10px]">{bldM.length} contoare bloc</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0 space-y-3">
-                  <CommonMetersList meters={bldM} label={bld.name} associationId={associationId} hideReadings />
-                  <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
+              {(scopeType === "staircase" || scopeType === "floor") && (
+                <div>
+                  <label className="text-[10px] text-muted-foreground font-medium">Scara</label>
+                  <Select value={selectedStaircaseId} onValueChange={setSelectedStaircaseId}>
+                    <SelectTrigger className="h-7 text-[11px]" data-testid="select-staircase">
+                      <SelectValue placeholder="Alege scara" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredStaircases.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-                  {bldScs.map(sc => {
-                    const scM = staircaseMeters(sc.id);
-                    const scApts = apartments.filter(a => a.staircaseId === sc.id);
-                    const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+              {scopeType === "floor" && (
+                <div>
+                  <label className="text-[10px] text-muted-foreground font-medium">Etaj</label>
+                  <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+                    <SelectTrigger className="h-7 text-[11px]" data-testid="select-floor">
+                      <SelectValue placeholder="Alege etaj" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredFloors.map(fl => (
+                        <SelectItem key={fl} value={String(fl)}>{getFloorLabel(fl)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
-                    return (
-                      <div key={sc.id} className="border-l-2 border-primary/20 pl-3 space-y-2">
-                        <div className="flex items-center gap-1.5">
-                          <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
-                          <span className="text-xs font-medium">{sc.name}</span>
-                          <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
-                        </div>
-                        <CommonMetersList meters={scM} label={sc.name} associationId={associationId} hideReadings />
-                        <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
+            {availableMeters.length > 0 && (
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Contor</label>
+                <Select value={selectedMeterId} onValueChange={setSelectedMeterId}>
+                  <SelectTrigger className="h-7 text-[11px]" data-testid="select-meter">
+                    <SelectValue placeholder="Alege contor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableMeters.map(m => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType} — #{m.serialNumber} / {m.meterNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-                        {floors.map(fl => {
-                          const flM = floorMeters(sc.id, fl);
-                          return (
-                            <div key={fl} className="border-l-2 border-muted pl-3 space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <Layers className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
-                                <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
-                              </div>
-                              <CommonMetersList meters={flM} label={`Etaj ${fl}`} associationId={associationId} hideReadings />
-                              <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+            {availableMeters.length === 0 && selectedBuildingId && (
+              <p className="text-[10px] text-muted-foreground">Nu exista contoare la acest nivel. Creati contoare din pagina Structura.</p>
+            )}
+
+            {selectedMeterId && (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground font-medium">Tip lectura</label>
+                    <Select value={readingType} onValueChange={setReadingType}>
+                      <SelectTrigger className="h-7 text-[11px]" data-testid="select-reading-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {readingTypeEnum.map(t => (
+                          <SelectItem key={t} value={t}>{READING_TYPE_LABELS[t]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground font-medium">Data</label>
+                    <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citire" className="h-7 text-[11px]" data-testid="datepicker-reading" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground font-medium">Index</label>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      value={readingValue}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReadingValue(e.target.value)}
+                      placeholder="Valoare index"
+                      className="h-7 text-[11px]"
+                      data-testid="input-reading-value"
+                    />
+                  </div>
+                  <div className="flex items-end gap-1">
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setSelectedPhoto(e.target.files?.[0] || null)}
+                      data-testid="input-photo"
+                    />
+                    <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => photoInputRef.current?.click()} data-testid="button-select-photo">
+                      <Camera className="w-3 h-3 mr-1" />
+                      {selectedPhoto ? selectedPhoto.name.substring(0, 12) + "..." : "Foto"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      disabled={!readingDate || !readingValue || addReadingMutation.isPending}
+                      onClick={() => addReadingMutation.mutate()}
+                      data-testid="button-save-reading"
+                    >
+                      <Save className="w-3 h-3 mr-1" />
+                      {addReadingMutation.isPending ? "..." : "Salveaza"}
+                    </Button>
+                  </div>
+                </div>
+                {readingType === "estimat" && estimate?.estimatedValue != null && (
+                  <p className="text-[9px] text-muted-foreground">
+                    Estimare automata: {estimate.estimatedValue} ({ESTIMATION_MODEL_LABELS[estimate.method as keyof typeof ESTIMATION_MODEL_LABELS] || estimate.method}) — {estimate.details}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      {meterSubTab === "citiri" && (
-        <CitiriSubTab
-          associationId={associationId}
-          commonMeters={commonMeters || []}
-          buildings={buildings}
-          staircases={staircases}
-          apartments={apartments}
-        />
+      {selectedMeterId && selectedMeter && (
+        <Card data-testid="card-selected-meter-readings">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs flex items-center gap-2">
+              <Gauge className="w-3.5 h-3.5 text-primary" />
+              Citiri: {METER_TYPE_LABELS[selectedMeter.meterType as MeterType]} — #{selectedMeter.serialNumber}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <MeterReadingsHistoryWithDiff meterId={selectedMeterId} associationId={associationId} />
+          </CardContent>
+        </Card>
       )}
 
-      {meterSubTab === "estimare" && (
-        <EstimationConfigPanel associationId={associationId} />
-      )}
+      <ConsumptionDifferencesPanel associationId={associationId} />
     </div>
   );
 }

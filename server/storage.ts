@@ -108,6 +108,7 @@ export interface IStorage {
   deleteMeterReading(id: string): Promise<void>;
   getMetersWithLatestReading(scope: { associationId: string; scopeType?: string; buildingId?: string; staircaseId?: string }): Promise<Array<Meter & { latestReading?: MeterReading }>>;
   getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any>;
+  getApartmentMetersByScope(commonMeter: Meter): Promise<Meter[]>;
 
   getEstimationConfigs(associationId: string): Promise<EstimationConfig[]>;
   getEstimationConfig(id: string): Promise<EstimationConfig | undefined>;
@@ -499,6 +500,44 @@ export class DatabaseStorage implements IStorage {
       results.push({ ...m, latestReading: latest || undefined });
     }
     return results;
+  }
+
+  async getApartmentMetersByScope(commonMeter: Meter): Promise<Meter[]> {
+    if (!commonMeter.associationId) return [];
+    const assocBuildings = await db.select().from(buildings).where(eq(buildings.associationId, commonMeter.associationId!));
+    const buildingIds = assocBuildings.map(b => b.id);
+    if (buildingIds.length === 0) return [];
+
+    let allStaircases: any[] = [];
+    allStaircases = await db.select().from(staircases).where(inArray(staircases.buildingId, buildingIds));
+    let staircaseIds = allStaircases.map(s => s.id);
+
+    if (commonMeter.scopeType === "building" && commonMeter.buildingId) {
+      const bldStaircases = allStaircases.filter(s => s.buildingId === commonMeter.buildingId);
+      staircaseIds = bldStaircases.map(s => s.id);
+    } else if (commonMeter.scopeType === "staircase" && commonMeter.staircaseId) {
+      staircaseIds = [commonMeter.staircaseId];
+    } else if (commonMeter.scopeType === "floor" && commonMeter.staircaseId) {
+      staircaseIds = [commonMeter.staircaseId];
+    }
+
+    if (staircaseIds.length === 0) return [];
+    let aptList = await db.select().from(apartments).where(inArray(apartments.staircaseId, staircaseIds));
+
+    if (commonMeter.scopeType === "floor" && commonMeter.floor != null) {
+      aptList = aptList.filter(a => a.floor === commonMeter.floor);
+    }
+
+    const aptIds = aptList.map(a => a.id);
+    if (aptIds.length === 0) return [];
+
+    return db.select().from(meters).where(
+      and(
+        inArray(meters.apartmentId, aptIds),
+        eq(meters.meterType, commonMeter.meterType),
+        eq(meters.isActive, true)
+      )
+    );
   }
 
   async getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any> {

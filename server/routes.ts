@@ -739,6 +739,29 @@ export async function registerRoutes(
     res.json(result);
   });
 
+  app.get("/api/apartment-consumption-totals/:meterId", ...auth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const meter = await storage.getMeter(req.params.meterId);
+      if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
+      if (!meter.associationId) return res.json({ totals: {} });
+
+      const allApartmentMeters = await storage.getApartmentMetersByScope(meter);
+      const totals: Record<string, number> = {};
+      for (const aptMeter of allApartmentMeters) {
+        const readings = await storage.getMeterReadings(aptMeter.id);
+        for (const r of readings) {
+          if (r.consumption) {
+            const dateKey = r.readingDate;
+            totals[dateKey] = (totals[dateKey] || 0) + Number(r.consumption);
+          }
+        }
+      }
+      res.json({ totals });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
   // Estimation Configs
   app.get("/api/estimation-configs", ...auth, async (req: AuthenticatedRequest, res) => {
     const { associationId } = req.query;
