@@ -522,12 +522,16 @@ export async function registerRoutes(
         }
       }
     }
-    const { chamberLocation, serialNumber, meterNumber, isActive } = req.body;
+    const { chamberLocation, serialNumber, meterNumber, isActive, meterType, placement, installDate, initialReading } = req.body;
     const updateData: Record<string, any> = {};
     if (chamberLocation !== undefined) updateData.chamberLocation = chamberLocation;
     if (serialNumber !== undefined) updateData.serialNumber = serialNumber;
     if (meterNumber !== undefined) updateData.meterNumber = meterNumber;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (meterType !== undefined) updateData.meterType = meterType;
+    if (placement !== undefined) updateData.placement = placement;
+    if (installDate !== undefined) updateData.installDate = installDate;
+    if (initialReading !== undefined) updateData.initialReading = initialReading;
     const updated = await storage.updateMeter(req.params.id as string, updateData);
     if (!updated) return res.status(404).json({ message: "Contorul nu a fost gasit" });
     res.json(updated);

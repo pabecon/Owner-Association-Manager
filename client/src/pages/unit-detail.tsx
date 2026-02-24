@@ -1057,38 +1057,115 @@ const METER_TYPE_ICONS: Record<string, any> = {
   gas: Flame,
 };
 
+type MeterFormData = {
+  meterType: string;
+  placement: string;
+  chamberLocation: string;
+  serialNumber: string;
+  meterNumber: string;
+  installDate: string;
+  initialReading: string;
+};
+
+const emptyMeterForm: MeterFormData = { meterType: "", placement: "interior", chamberLocation: "", serialNumber: "", meterNumber: "", installDate: "", initialReading: "0" };
+
+function MeterFormRow({ data, onChange, rooms, isNew }: { data: MeterFormData; onChange: (d: MeterFormData) => void; rooms: string[]; isNew?: boolean }) {
+  const upd = (field: keyof MeterFormData, val: string) => {
+    const next = { ...data, [field]: val };
+    if (field === "placement" && val === "exterior") next.chamberLocation = "";
+    onChange(next);
+  };
+  return (
+    <div className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px] gap-1.5 items-center" data-testid="meter-form-row">
+      <Select value={data.meterType} onValueChange={v => upd("meterType", v)}>
+        <SelectTrigger className="h-7 text-[11px]" data-testid="select-meter-type">
+          <SelectValue placeholder="Tip..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="water">Apa</SelectItem>
+          <SelectItem value="electricity">Electric.</SelectItem>
+          <SelectItem value="gas">Gaz</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={data.placement} onValueChange={v => upd("placement", v)}>
+        <SelectTrigger className="h-7 text-[11px]" data-testid="select-meter-placement">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="interior">Interior</SelectItem>
+          <SelectItem value="exterior">Exterior</SelectItem>
+        </SelectContent>
+      </Select>
+      {data.placement === "interior" ? (
+        <Select value={data.chamberLocation} onValueChange={v => upd("chamberLocation", v)}>
+          <SelectTrigger className="h-7 text-[11px]" data-testid="select-meter-room">
+            <SelectValue placeholder="Camera..." />
+          </SelectTrigger>
+          <SelectContent>
+            {rooms.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      ) : (
+        <div />
+      )}
+      <Input value={data.serialNumber} onChange={e => upd("serialNumber", e.target.value)} placeholder="Serie" className="h-7 text-[11px]" data-testid="input-meter-serial" />
+      <Input value={data.meterNumber} onChange={e => upd("meterNumber", e.target.value)} placeholder="Nr. contor" className="h-7 text-[11px]" data-testid="input-meter-number" />
+      <Input type="date" value={data.installDate} onChange={e => upd("installDate", e.target.value)} className="h-7 text-[11px]" data-testid="input-meter-install-date" />
+      <Input type="number" step="0.001" value={data.initialReading} onChange={e => upd("initialReading", e.target.value)} placeholder="Index" className="h-7 text-[11px]" data-testid="input-meter-initial-reading" />
+    </div>
+  );
+}
+
 function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Meter[]; rooms: UnitRoom[] }) {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    meterType: "",
-    placement: "interior" as string,
-    chamberLocation: "",
-    serialNumber: "",
-    meterNumber: "",
-    installDate: "",
-    initialReading: "0",
-  });
+  const [newData, setNewData] = useState<MeterFormData>({ ...emptyMeterForm });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<MeterFormData>({ ...emptyMeterForm });
+
+  const roomNames = rooms.map(r => r.name).filter(Boolean);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/meters", {
         apartmentId: unitId,
         scopeType: "apartment",
-        meterType: formData.meterType,
-        placement: formData.placement,
-        chamberLocation: formData.placement === "interior" ? formData.chamberLocation : null,
-        serialNumber: formData.serialNumber,
-        meterNumber: formData.meterNumber,
-        installDate: formData.installDate,
-        initialReading: formData.initialReading || "0",
+        meterType: newData.meterType,
+        placement: newData.placement,
+        chamberLocation: newData.placement === "interior" ? newData.chamberLocation : null,
+        serialNumber: newData.serialNumber,
+        meterNumber: newData.meterNumber,
+        installDate: newData.installDate,
+        initialReading: newData.initialReading || "0",
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meters", unitId] });
       toast({ title: "Contorul a fost creat" });
       setShowForm(false);
-      setFormData({ meterType: "", placement: "interior", chamberLocation: "", serialNumber: "", meterNumber: "", installDate: "", initialReading: "0" });
+      setNewData({ ...emptyMeterForm });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (meterId: string) => {
+      await apiRequest("PATCH", `/api/meters/${meterId}`, {
+        meterType: editData.meterType,
+        placement: editData.placement,
+        chamberLocation: editData.placement === "interior" ? editData.chamberLocation : null,
+        serialNumber: editData.serialNumber,
+        meterNumber: editData.meterNumber,
+        installDate: editData.installDate,
+        initialReading: editData.initialReading || "0",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", unitId] });
+      toast({ title: "Contorul a fost actualizat" });
+      setEditingId(null);
     },
     onError: (error: Error) => {
       toast({ title: "Eroare", description: error.message, variant: "destructive" });
@@ -1108,199 +1185,109 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
     },
   });
 
-  const isFormValid = formData.meterType && formData.serialNumber.trim() && formData.meterNumber.trim() && formData.installDate &&
-    (formData.placement === "exterior" || (formData.placement === "interior" && formData.chamberLocation));
+  const startEdit = (meter: Meter) => {
+    setEditingId(meter.id);
+    setEditData({
+      meterType: meter.meterType,
+      placement: (meter as any).placement || "interior",
+      chamberLocation: meter.chamberLocation || "",
+      serialNumber: meter.serialNumber,
+      meterNumber: meter.meterNumber,
+      installDate: meter.installDate,
+      initialReading: meter.initialReading?.toString() || "0",
+    });
+  };
 
-  const roomNames = rooms.map(r => r.name).filter(Boolean);
+  const isNewValid = newData.meterType && newData.serialNumber.trim() && newData.meterNumber.trim() && newData.installDate &&
+    (newData.placement === "exterior" || (newData.placement === "interior" && newData.chamberLocation));
+
+  const isEditValid = editData.meterType && editData.serialNumber.trim() && editData.meterNumber.trim() && editData.installDate &&
+    (editData.placement === "exterior" || (editData.placement === "interior" && editData.chamberLocation));
 
   return (
-    <div className="space-y-2 max-w-4xl">
+    <div className="space-y-2 max-w-full">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">Contoare ({meters.length})</h2>
         {!showForm && (
-          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setShowForm(true)} data-testid="button-add-meter">
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => { setShowForm(true); setEditingId(null); }} data-testid="button-add-meter">
             <Plus className="w-3 h-3 mr-0.5" />Adauga Contor
           </Button>
         )}
       </div>
 
-      {showForm && (
-        <Card data-testid="meter-form">
-          <CardContent className="p-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold">Contor Nou</h3>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setShowForm(false)} data-testid="button-cancel-meter">
-                  <X className="w-3 h-3 mr-0.5" />Anuleaza
-                </Button>
-                <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => createMutation.mutate()} disabled={!isFormValid || createMutation.isPending} data-testid="button-save-meter">
-                  <Save className="w-3 h-3 mr-0.5" />{createMutation.isPending ? "Salvare..." : "Salveaza"}
-                </Button>
-              </div>
-            </div>
+      <Card>
+        <CardContent className="p-2 space-y-1">
+          <div className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px_auto] gap-1.5 text-[9px] text-muted-foreground font-medium px-0.5">
+            <span>Tip</span>
+            <span>Amplasare</span>
+            <span>Camera</span>
+            <span>Serie</span>
+            <span>Nr. contor</span>
+            <span>Data inst.</span>
+            <span>Index</span>
+            <span className="w-14"></span>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Tip contor *</label>
-                <Select value={formData.meterType} onValueChange={val => setFormData(p => ({ ...p, meterType: val }))}>
-                  <SelectTrigger className="h-7 text-xs" data-testid="select-meter-type">
-                    <SelectValue placeholder="Selecteaza tipul..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="water"><div className="flex items-center gap-1.5"><Droplets className="w-3 h-3" />Apa</div></SelectItem>
-                    <SelectItem value="electricity"><div className="flex items-center gap-1.5"><Zap className="w-3 h-3" />Electricitate</div></SelectItem>
-                    <SelectItem value="gas"><div className="flex items-center gap-1.5"><Flame className="w-3 h-3" />Gaz</div></SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Amplasare *</label>
-                <Select value={formData.placement} onValueChange={val => setFormData(p => ({ ...p, placement: val, chamberLocation: val === "exterior" ? "" : p.chamberLocation }))}>
-                  <SelectTrigger className="h-7 text-xs" data-testid="select-meter-placement">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="exterior">Exterior</SelectItem>
-                    <SelectItem value="interior">Interior</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.placement === "interior" && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium text-muted-foreground">Camera *</label>
-                  <Select value={formData.chamberLocation} onValueChange={val => setFormData(p => ({ ...p, chamberLocation: val }))}>
-                    <SelectTrigger className="h-7 text-xs" data-testid="select-meter-room">
-                      <SelectValue placeholder="Selecteaza camera..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roomNames.length > 0 ? (
-                        roomNames.map(name => (
-                          <SelectItem key={name} value={name}>{name}</SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="_none" disabled>Nu exista camere definite</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Serie contor *</label>
-                <Input
-                  value={formData.serialNumber}
-                  onChange={e => setFormData(p => ({ ...p, serialNumber: e.target.value }))}
-                  placeholder="Seria contorului"
-                  className="h-7 text-xs"
-                  data-testid="input-meter-serial"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Numar contor *</label>
-                <Input
-                  value={formData.meterNumber}
-                  onChange={e => setFormData(p => ({ ...p, meterNumber: e.target.value }))}
-                  placeholder="Numarul contorului"
-                  className="h-7 text-xs"
-                  data-testid="input-meter-number"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Data instalarii *</label>
-                <Input
-                  type="date"
-                  value={formData.installDate}
-                  onChange={e => setFormData(p => ({ ...p, installDate: e.target.value }))}
-                  className="h-7 text-xs"
-                  data-testid="input-meter-install-date"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-medium text-muted-foreground">Index initial</label>
-                <Input
-                  type="number"
-                  step="0.001"
-                  value={formData.initialReading}
-                  onChange={e => setFormData(p => ({ ...p, initialReading: e.target.value }))}
-                  placeholder="0.000"
-                  className="h-7 text-xs"
-                  data-testid="input-meter-initial-reading"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {meters.length > 0 ? (
-        <div className="space-y-2">
           {meters.map(meter => {
             const MeterIcon = METER_TYPE_ICONS[meter.meterType] || Layers;
-            return (
-              <Card key={meter.id} data-testid={`meter-card-${meter.id}`}>
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 p-1.5 rounded-md bg-muted">
-                      <MeterIcon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
-                        <Badge variant={meter.isActive ? "default" : "secondary"} className="text-[9px]">
-                          {meter.isActive ? "Activ" : "Inactiv"}
-                        </Badge>
-                        {(meter as any).placement && (
-                          <Badge variant="outline" className="text-[9px]">
-                            {METER_PLACEMENT_LABELS[(meter as any).placement as MeterPlacement] || (meter as any).placement}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1.5 text-[11px]">
-                        <div>
-                          <span className="text-muted-foreground">Serie: </span>
-                          <span className="font-medium">{meter.serialNumber}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Nr: </span>
-                          <span className="font-medium">{meter.meterNumber}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Instalat: </span>
-                          <span className="font-medium">{meter.installDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Index: </span>
-                          <span className="font-medium">{meter.initialReading}</span>
-                        </div>
-                        {meter.chamberLocation && (
-                          <div className="col-span-2">
-                            <span className="text-muted-foreground">Camera: </span>
-                            <span className="font-medium">{meter.chamberLocation}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button size="icon" variant="ghost" className="w-6 h-6 text-destructive shrink-0" onClick={() => deleteMutation.mutate(meter.id)} data-testid={`button-delete-meter-${meter.id}`}>
-                      <Trash2 className="w-3 h-3" />
+            if (editingId === meter.id) {
+              return (
+                <div key={meter.id} className="space-y-1" data-testid={`meter-edit-${meter.id}`}>
+                  <MeterFormRow data={editData} onChange={setEditData} rooms={roomNames} />
+                  <div className="flex justify-end gap-1">
+                    <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]" onClick={() => setEditingId(null)} data-testid="button-cancel-edit-meter">
+                      <X className="w-3 h-3 mr-0.5" />Anul.
+                    </Button>
+                    <Button size="sm" className="h-5 px-2 text-[10px]" onClick={() => updateMutation.mutate(meter.id)} disabled={!isEditValid || updateMutation.isPending} data-testid="button-save-edit-meter">
+                      <Save className="w-3 h-3 mr-0.5" />{updateMutation.isPending ? "..." : "Salv."}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              );
+            }
+            return (
+              <div key={meter.id} className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px_auto] gap-1.5 items-center py-0.5" data-testid={`meter-card-${meter.id}`}>
+                <div className="flex items-center gap-1 text-[11px]">
+                  <MeterIcon className="w-3 h-3 text-primary shrink-0" />
+                  <span className="font-medium truncate">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
+                </div>
+                <span className="text-[11px] text-muted-foreground truncate">{METER_PLACEMENT_LABELS[(meter as any).placement as MeterPlacement] || (meter as any).placement || "-"}</span>
+                <span className="text-[11px] text-muted-foreground truncate">{meter.chamberLocation || "-"}</span>
+                <span className="text-[11px] font-medium truncate">{meter.serialNumber}</span>
+                <span className="text-[11px] font-medium truncate">{meter.meterNumber}</span>
+                <span className="text-[11px] text-muted-foreground">{meter.installDate}</span>
+                <span className="text-[11px] font-medium">{meter.initialReading}</span>
+                <div className="flex items-center gap-0.5 w-14 justify-end">
+                  <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => startEdit(meter)} data-testid={`button-edit-meter-${meter.id}`}>
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="w-5 h-5 text-destructive" onClick={() => deleteMutation.mutate(meter.id)} data-testid={`button-delete-meter-${meter.id}`}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
             );
           })}
-        </div>
-      ) : !showForm ? (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground text-center">Niciun contor inregistrat</p>
-          </CardContent>
-        </Card>
-      ) : null}
+
+          {showForm && (
+            <div className="space-y-1 border-t pt-1.5" data-testid="meter-form">
+              <MeterFormRow data={newData} onChange={setNewData} rooms={roomNames} isNew />
+              <div className="flex justify-end gap-1">
+                <Button variant="outline" size="sm" className="h-5 px-2 text-[10px]" onClick={() => { setShowForm(false); setNewData({ ...emptyMeterForm }); }} data-testid="button-cancel-meter">
+                  <X className="w-3 h-3 mr-0.5" />Anul.
+                </Button>
+                <Button size="sm" className="h-5 px-2 text-[10px]" onClick={() => createMutation.mutate()} disabled={!isNewValid || createMutation.isPending} data-testid="button-save-meter">
+                  <Save className="w-3 h-3 mr-0.5" />{createMutation.isPending ? "..." : "Salv."}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {meters.length === 0 && !showForm && (
+            <p className="text-xs text-muted-foreground text-center py-3">Niciun contor inregistrat</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
