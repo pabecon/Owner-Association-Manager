@@ -13,7 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar } from "lucide-react";
+import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { ro } from "date-fns/locale";
 import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
@@ -924,6 +928,8 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [docDescription, setDocDescription] = useState("");
   const [docType, setDocType] = useState("");
+  const [docDate, setDocDate] = useState<Date | undefined>(undefined);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const { data: docs, isLoading } = useQuery<Document[]>({
     queryKey: ["/api/documents", "apartment", unitId],
@@ -947,6 +953,12 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       formData.append("entityId", unitId);
       if (docDescription.trim()) formData.append("description", docDescription.trim());
       if (docType) formData.append("documentType", docType);
+      if (docDate) {
+        const y = docDate.getFullYear();
+        const m = String(docDate.getMonth() + 1).padStart(2, "0");
+        const d = String(docDate.getDate()).padStart(2, "0");
+        formData.append("documentDate", `${y}-${m}-${d}`);
+      }
       const res = await fetch("/api/documents/upload", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Upload failed");
       return res.json();
@@ -955,6 +967,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       queryClient.invalidateQueries({ queryKey: ["/api/documents", "apartment", unitId] });
       setDocDescription("");
       setDocType("");
+      setDocDate(undefined);
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast({ title: "Document incarcat" });
     },
@@ -977,6 +990,11 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
+    if (!docDate) {
+      toast({ title: "Selecteaza data documentului", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     uploadMutation.mutate(file);
   };
 
@@ -987,13 +1005,26 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const groupedDocs = (docs || []).reduce<Record<string, Document[]>>((acc, doc) => {
+    const type = doc.documentType || "Fara tip";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(doc);
+    return acc;
+  }, {});
+
+  const sortedGroups = Object.entries(groupedDocs).sort(([a], [b]) => {
+    if (a === "Fara tip") return 1;
+    if (b === "Fara tip") return -1;
+    return a.localeCompare(b, "ro");
+  });
+
   return (
     <div className="space-y-2 max-w-4xl">
       <h2 className="text-sm font-semibold">Documente</h2>
       <Card>
         <CardContent className="p-3 space-y-2">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Select value={docType} onValueChange={setDocType}>
                 <SelectTrigger className="w-44 h-7 text-xs" data-testid="select-doc-type">
                   <SelectValue placeholder="Tip document *" />
@@ -1004,11 +1035,32 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
                   ))}
                 </SelectContent>
               </Select>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`w-40 h-7 text-xs justify-start text-left font-normal ${!docDate ? "text-muted-foreground" : ""}`}
+                    data-testid="button-doc-date"
+                  >
+                    <CalendarIcon className="mr-1 h-3 w-3" />
+                    {docDate ? format(docDate, "dd.MM.yyyy") : "Data document *"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={docDate}
+                    onSelect={(date) => { setDocDate(date); setCalendarOpen(false); }}
+                    locale={ro}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <Input
                 placeholder="Denumire document (optional)"
                 value={docDescription}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
-                className="flex-1 h-7 text-xs"
+                className="flex-1 h-7 text-xs min-w-[150px]"
                 data-testid="input-unit-doc-desc"
               />
               <input
@@ -1023,7 +1075,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
                 variant="outline"
                 size="sm"
                 className="h-7 px-2 text-[11px]"
-                disabled={uploadMutation.isPending || !docType}
+                disabled={uploadMutation.isPending || !docType || !docDate}
                 onClick={() => fileInputRef.current?.click()}
                 data-testid="button-upload-unit-doc"
               >
@@ -1035,43 +1087,54 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
 
           {isLoading ? (
             <Skeleton className="h-16 w-full" />
-          ) : docs && docs.length > 0 ? (
-            <div className="space-y-2">
-              {docs.map(doc => (
-                <div key={doc.id} className="flex items-center justify-between gap-2 p-2 border rounded-md" data-testid={`unit-doc-${doc.id}`}>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    {isImage(doc.mimeType) ? <Image className="w-4 h-4 shrink-0 text-muted-foreground" /> : <File className="w-4 h-4 shrink-0 text-muted-foreground" />}
-                    <div className="flex-1 min-w-0">
-                      <a
-                        href={`/api/documents/download/${doc.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline truncate block"
-                        data-testid={`link-unit-doc-${doc.id}`}
-                      >
-                        {doc.description || doc.originalName}
-                      </a>
-                      <p className="text-xs text-muted-foreground">
-                        {doc.documentType && <Badge variant="outline" className="text-[9px] py-0 mr-1">{doc.documentType}</Badge>}
-                        {doc.originalName} — {formatSize(doc.size)}
-                        {doc.createdAt && ` — ${new Date(doc.createdAt).toLocaleDateString("ro-RO")}`}
-                      </p>
-                    </div>
+          ) : sortedGroups.length > 0 ? (
+            <div className="space-y-3">
+              {sortedGroups.map(([groupType, groupDocs]) => (
+                <div key={groupType} data-testid={`doc-group-${groupType}`}>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{groupType}</span>
+                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{groupDocs.length}</Badge>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noopener noreferrer">
-                      <Button size="icon" variant="ghost" data-testid={`button-download-doc-${doc.id}`}>
-                        <Download className="w-4 h-4" />
-                      </Button>
-                    </a>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteMutation.mutate(doc.id)}
-                      data-testid={`button-delete-unit-doc-${doc.id}`}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
+                  <div className="space-y-1 ml-5">
+                    {groupDocs.map(doc => (
+                      <div key={doc.id} className="flex items-center justify-between gap-2 p-2 border rounded-md" data-testid={`unit-doc-${doc.id}`}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {isImage(doc.mimeType) ? <Image className="w-4 h-4 shrink-0 text-muted-foreground" /> : <File className="w-4 h-4 shrink-0 text-muted-foreground" />}
+                          <div className="flex-1 min-w-0">
+                            <a
+                              href={`/api/documents/download/${doc.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-primary hover:underline truncate block"
+                              data-testid={`link-unit-doc-${doc.id}`}
+                            >
+                              {doc.description || doc.originalName}
+                            </a>
+                            <p className="text-xs text-muted-foreground">
+                              {doc.originalName} — {formatSize(doc.size)}
+                              {(doc as any).documentDate && ` — ${format(new Date((doc as any).documentDate), "dd.MM.yyyy")}`}
+                              {!(doc as any).documentDate && doc.createdAt && ` — ${format(new Date(doc.createdAt), "dd.MM.yyyy")}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <a href={`/api/documents/download/${doc.id}`} target="_blank" rel="noopener noreferrer">
+                            <Button size="icon" variant="ghost" data-testid={`button-download-doc-${doc.id}`}>
+                              <Download className="w-4 h-4" />
+                            </Button>
+                          </a>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => deleteMutation.mutate(doc.id)}
+                            data-testid={`button-delete-unit-doc-${doc.id}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -1103,6 +1166,42 @@ type MeterFormData = {
 
 const emptyMeterForm: MeterFormData = { meterType: "", placement: "interior", chamberLocation: "", serialNumber: "", meterNumber: "", installDate: "", initialReading: "0" };
 
+function MeterDatePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const dateValue = value ? new Date(value) : undefined;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={`h-7 text-[11px] w-full justify-start text-left font-normal px-2 ${!value ? "text-muted-foreground" : ""}`}
+          data-testid="button-meter-install-date"
+        >
+          <CalendarIcon className="mr-1 h-3 w-3 shrink-0" />
+          {dateValue ? format(dateValue, "dd.MM.yyyy") : "Data inst."}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={dateValue}
+          onSelect={(date) => {
+            if (date) {
+              const y = date.getFullYear();
+              const m = String(date.getMonth() + 1).padStart(2, "0");
+              const d = String(date.getDate()).padStart(2, "0");
+              onChange(`${y}-${m}-${d}`);
+            }
+            setOpen(false);
+          }}
+          locale={ro}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function MeterFormRow({ data, onChange, rooms, isNew }: { data: MeterFormData; onChange: (d: MeterFormData) => void; rooms: string[]; isNew?: boolean }) {
   const upd = (field: keyof MeterFormData, val: string) => {
     const next = { ...data, [field]: val };
@@ -1110,7 +1209,7 @@ function MeterFormRow({ data, onChange, rooms, isNew }: { data: MeterFormData; o
     onChange(next);
   };
   return (
-    <div className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px] gap-1.5 items-center" data-testid="meter-form-row">
+    <div className="grid grid-cols-[90px_80px_80px_1fr_1fr_120px_70px] gap-1.5 items-center" data-testid="meter-form-row">
       <Select value={data.meterType} onValueChange={v => upd("meterType", v)}>
         <SelectTrigger className="h-7 text-[11px]" data-testid="select-meter-type">
           <SelectValue placeholder="Tip..." />
@@ -1144,7 +1243,7 @@ function MeterFormRow({ data, onChange, rooms, isNew }: { data: MeterFormData; o
       )}
       <Input value={data.serialNumber} onChange={e => upd("serialNumber", e.target.value)} placeholder="Serie" className="h-7 text-[11px]" data-testid="input-meter-serial" />
       <Input value={data.meterNumber} onChange={e => upd("meterNumber", e.target.value)} placeholder="Nr. contor" className="h-7 text-[11px]" data-testid="input-meter-number" />
-      <Input type="date" value={data.installDate} onChange={e => upd("installDate", e.target.value)} className="h-7 text-[11px]" data-testid="input-meter-install-date" />
+      <MeterDatePicker value={data.installDate} onChange={v => upd("installDate", v)} />
       <Input type="number" step="0.001" value={data.initialReading} onChange={e => upd("initialReading", e.target.value)} placeholder="Index" className="h-7 text-[11px]" data-testid="input-meter-initial-reading" />
     </div>
   );
@@ -1289,7 +1388,7 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
                 <span className="text-[11px] text-muted-foreground truncate">{meter.chamberLocation || "-"}</span>
                 <span className="text-[11px] font-medium truncate">{meter.serialNumber}</span>
                 <span className="text-[11px] font-medium truncate">{meter.meterNumber}</span>
-                <span className="text-[11px] text-muted-foreground">{meter.installDate}</span>
+                <span className="text-[11px] text-muted-foreground">{meter.installDate ? format(new Date(meter.installDate), "dd.MM.yyyy") : "-"}</span>
                 <span className="text-[11px] font-medium">{meter.initialReading}</span>
                 <div className="flex items-center gap-0.5 w-14 justify-end">
                   <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => startEdit(meter)} data-testid={`button-edit-meter-${meter.id}`}>
