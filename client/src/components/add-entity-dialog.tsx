@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,35 +12,10 @@ import { useUpload } from "@/hooks/use-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Federation, Association, Building, Staircase } from "@shared/schema";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
+import { AddressFields, composeAddress, isBucharestCity } from "@/components/address-fields";
 import {
   Upload, FileText, Image, File, Loader2, X, Plus, Trash2
 } from "lucide-react";
-
-const FALLBACK_STREET_TYPES = [
-  "Strada", "Bulevardul", "Aleea", "Calea", "Drumul", "Fundatura",
-  "Intrarea", "Pasajul", "Piata", "Soseaua", "Splaiul", "Prelungirea",
-];
-
-const BUCHAREST_CITIES = ["bucuresti", "bucharest", "bucurești"];
-
-function isBucharestCity(city: string) {
-  return BUCHAREST_CITIES.includes(city.toLowerCase().trim());
-}
-
-function composeAddress(formData: Record<string, string>): string {
-  const parts: string[] = [];
-  if (formData.streetType && formData.streetName) {
-    parts.push(`${formData.streetType} ${formData.streetName}`);
-  } else if (formData.streetName) {
-    parts.push(formData.streetName);
-  }
-  if (formData.streetNumber) parts.push(`nr. ${formData.streetNumber}`);
-  if (formData.city) parts.push(formData.city);
-  if (formData.sector) parts.push(`Sector ${formData.sector}`);
-  if (formData.county && !isBucharestCity(formData.city || "")) parts.push(`jud. ${formData.county}`);
-  if (formData.postalCode && !isBucharestCity(formData.city || "")) parts.push(`cod ${formData.postalCode}`);
-  return parts.join(", ");
-}
 
 type EntityLevel = "federation" | "association" | "building" | "staircase" | "apartment";
 
@@ -120,13 +95,6 @@ export function AddEntityDialog({
       toast({ title: "Eroare la incarcare fisier", description: error.message, variant: "destructive" });
     },
   });
-
-  const { data: streetTypesData } = useQuery<any[]>({
-    queryKey: ["/api/liste/tip-drumuri"],
-  });
-  const streetTypes: string[] = streetTypesData && streetTypesData.length > 0
-    ? streetTypesData.map((r: any) => typeof r === "string" ? r : (r.tipDrum || r.tip_drum || r.name || "")).filter(Boolean)
-    : FALLBACK_STREET_TYPES;
 
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
@@ -218,12 +186,6 @@ export function AddEntityDialog({
           city: formData.city || null,
           county: formData.county || null,
           sector: formData.sector || null,
-          presidentName: formData.presidentName || null,
-          presidentPhone: formData.presidentPhone || null,
-          presidentEmail: formData.presidentEmail || null,
-          adminName: formData.adminName || null,
-          adminPhone: formData.adminPhone || null,
-          adminEmail: formData.adminEmail || null,
         };
       } else if (level === "building") {
         if (!formData.name?.trim() || !formData.address?.trim()) {
@@ -349,72 +311,19 @@ export function AddEntityDialog({
               <Label htmlFor="fed-desc">Descriere</Label>
               <Textarea id="fed-desc" value={formData.description || ""} onChange={e => updateField("description", e.target.value)} placeholder="Descriere" data-testid="input-entity-description" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Adresa</Label>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
-                  <Select value={formData.streetType || "__none__"} onValueChange={v => updateField("streetType", v === "__none__" ? "" : v)}>
-                    <SelectTrigger className="h-7 text-xs" data-testid="select-entity-street-type">
-                      <SelectValue placeholder="Selecteaza..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
-                      {streetTypes.map((st: string) => (
-                        <SelectItem key={st} value={st}>{st}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-6">
-                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
-                  <Input value={formData.streetName || ""} onChange={e => updateField("streetName", e.target.value)} placeholder="ex: Mihai Eminescu" className="h-7 text-xs" data-testid="input-entity-street-name" />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
-                  <Input value={formData.streetNumber || ""} onChange={e => updateField("streetNumber", e.target.value)} placeholder="10" className="h-7 text-xs" data-testid="input-entity-street-number" />
-                </div>
-              </div>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
-                  <Input value={formData.city || ""} onChange={e => { updateField("city", e.target.value); if (isBucharestCity(e.target.value)) { updateField("county", "Bucuresti"); updateField("postalCode", ""); } else { updateField("sector", ""); } }} placeholder="ex: Bucuresti" className="h-7 text-xs" data-testid="input-entity-city" />
-                </div>
-                {isBucharestCity(formData.city || "") ? (
-                  <div className="col-span-4">
-                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
-                    <Select value={formData.sector || "__none__"} onValueChange={v => updateField("sector", v === "__none__" ? "" : v)}>
-                      <SelectTrigger className="h-7 text-xs" data-testid="select-entity-sector">
-                        <SelectValue placeholder="Sector..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">-- Sector --</SelectItem>
-                        {["1", "2", "3", "4", "5", "6"].map(s => (
-                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
-                      <Input value={formData.county || ""} onChange={e => updateField("county", e.target.value)} placeholder="ex: Ilfov" className="h-7 text-xs" data-testid="input-entity-county" />
-                    </div>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
-                      <Input value={formData.postalCode || ""} onChange={e => updateField("postalCode", e.target.value)} placeholder="ex: 012345" className="h-7 text-xs" data-testid="input-entity-postal-code" />
-                    </div>
-                  </>
-                )}
-                {isBucharestCity(formData.city || "") && <div className="col-span-4" />}
-              </div>
-              {composeAddress(formData) && (
-                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                  {composeAddress(formData)}
-                </div>
-              )}
-            </div>
+            <AddressFields
+              values={{
+                streetType: formData.streetType || "",
+                streetName: formData.streetName || "",
+                streetNumber: formData.streetNumber || "",
+                city: formData.city || "",
+                county: formData.county || "",
+                sector: formData.sector || "",
+                postalCode: formData.postalCode || "",
+              }}
+              onChange={(field, value) => updateField(field, value)}
+              idPrefix="fed-"
+            />
             <div>
               <Label htmlFor="fed-phone">Telefon</Label>
               <Input id="fed-phone" value={formData.phone || ""} onChange={e => updateField("phone", e.target.value)} placeholder="Telefon" data-testid="input-entity-phone" />
@@ -459,103 +368,22 @@ export function AddEntityDialog({
               <Label htmlFor="assoc-cui">CUI</Label>
               <Input id="assoc-cui" value={formData.cui || ""} onChange={e => updateField("cui", e.target.value)} placeholder="CUI" data-testid="input-entity-cui" />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-medium">Adresa</Label>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
-                  <Select value={formData.streetType || "__none__"} onValueChange={v => updateField("streetType", v === "__none__" ? "" : v)}>
-                    <SelectTrigger className="h-7 text-xs" data-testid="select-entity-street-type">
-                      <SelectValue placeholder="Selecteaza..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
-                      {streetTypes.map((st: string) => (
-                        <SelectItem key={st} value={st}>{st}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-6">
-                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
-                  <Input value={formData.streetName || ""} onChange={e => updateField("streetName", e.target.value)} placeholder="ex: Mihai Eminescu" className="h-7 text-xs" data-testid="input-entity-street-name" />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
-                  <Input value={formData.streetNumber || ""} onChange={e => updateField("streetNumber", e.target.value)} placeholder="10" className="h-7 text-xs" data-testid="input-entity-street-number" />
-                </div>
-              </div>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
-                  <Input value={formData.city || ""} onChange={e => { updateField("city", e.target.value); if (isBucharestCity(e.target.value)) { updateField("county", "Bucuresti"); updateField("postalCode", ""); } else { updateField("sector", ""); } }} placeholder="ex: Bucuresti" className="h-7 text-xs" data-testid="input-entity-city" />
-                </div>
-                {isBucharestCity(formData.city || "") ? (
-                  <div className="col-span-4">
-                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
-                    <Select value={formData.sector || "__none__"} onValueChange={v => updateField("sector", v === "__none__" ? "" : v)}>
-                      <SelectTrigger className="h-7 text-xs" data-testid="select-entity-sector">
-                        <SelectValue placeholder="Sector..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">-- Sector --</SelectItem>
-                        {["1", "2", "3", "4", "5", "6"].map(s => (
-                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
-                      <Input value={formData.county || ""} onChange={e => updateField("county", e.target.value)} placeholder="ex: Ilfov" className="h-7 text-xs" data-testid="input-entity-county" />
-                    </div>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
-                      <Input value={formData.postalCode || ""} onChange={e => updateField("postalCode", e.target.value)} placeholder="ex: 012345" className="h-7 text-xs" data-testid="input-entity-postal-code" />
-                    </div>
-                  </>
-                )}
-                {isBucharestCity(formData.city || "") && <div className="col-span-4" />}
-              </div>
-              {composeAddress(formData) && (
-                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                  {composeAddress(formData)}
-                </div>
-              )}
-            </div>
+            <AddressFields
+              values={{
+                streetType: formData.streetType || "",
+                streetName: formData.streetName || "",
+                streetNumber: formData.streetNumber || "",
+                city: formData.city || "",
+                county: formData.county || "",
+                sector: formData.sector || "",
+                postalCode: formData.postalCode || "",
+              }}
+              onChange={(field, value) => updateField(field, value)}
+              idPrefix="assoc-"
+            />
             <div>
               <Label htmlFor="assoc-desc">Descriere</Label>
               <Textarea id="assoc-desc" value={formData.description || ""} onChange={e => updateField("description", e.target.value)} placeholder="Descriere" data-testid="input-entity-description" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label htmlFor="assoc-pn">Presedinte</Label>
-                <Input id="assoc-pn" value={formData.presidentName || ""} onChange={e => updateField("presidentName", e.target.value)} placeholder="Nume" data-testid="input-entity-president" />
-              </div>
-              <div>
-                <Label htmlFor="assoc-pp">Tel. Presedinte</Label>
-                <Input id="assoc-pp" value={formData.presidentPhone || ""} onChange={e => updateField("presidentPhone", e.target.value)} placeholder="Telefon" data-testid="input-entity-president-phone" />
-              </div>
-              <div>
-                <Label htmlFor="assoc-pe">Email Presedinte</Label>
-                <Input id="assoc-pe" value={formData.presidentEmail || ""} onChange={e => updateField("presidentEmail", e.target.value)} placeholder="Email" data-testid="input-entity-president-email" />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label htmlFor="assoc-an">Administrator</Label>
-                <Input id="assoc-an" value={formData.adminName || ""} onChange={e => updateField("adminName", e.target.value)} placeholder="Nume" data-testid="input-entity-admin" />
-              </div>
-              <div>
-                <Label htmlFor="assoc-ap">Tel. Admin</Label>
-                <Input id="assoc-ap" value={formData.adminPhone || ""} onChange={e => updateField("adminPhone", e.target.value)} placeholder="Telefon" data-testid="input-entity-admin-phone" />
-              </div>
-              <div>
-                <Label htmlFor="assoc-ae">Email Admin</Label>
-                <Input id="assoc-ae" value={formData.adminEmail || ""} onChange={e => updateField("adminEmail", e.target.value)} placeholder="Email" data-testid="input-entity-admin-email" />
-              </div>
             </div>
           </div>
         );

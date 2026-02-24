@@ -11,14 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
 import type { Federation } from "@shared/schema";
+import { AddressFields, composeAddress } from "@/components/address-fields";
 import {
   ChevronRight, ChevronLeft, Building2, ArrowUpDown, Layers, Home, Plus, Trash2, Loader2, Check
 } from "lucide-react";
-
-const FALLBACK_STREET_TYPES = [
-  "Strada", "Bulevardul", "Aleea", "Calea", "Drumul", "Fundatura",
-  "Intrarea", "Pasajul", "Piata", "Soseaua", "Splaiul", "Prelungirea",
-];
 
 interface WizardUnit {
   number: string;
@@ -67,26 +63,6 @@ const STEP_LABELS: Record<WizardStep, string> = {
   summary: "Sumar",
 };
 
-const BUCHAREST_CITIES = ["bucuresti", "bucharest", "bucurești"];
-
-function isBucharest(city: string) {
-  return BUCHAREST_CITIES.includes(city.toLowerCase().trim());
-}
-
-function formatAddress(addr: AddressFields): string {
-  const parts: string[] = [];
-  if (addr.streetType && addr.streetName) {
-    parts.push(`${addr.streetType} ${addr.streetName}`);
-  } else if (addr.streetName) {
-    parts.push(addr.streetName);
-  }
-  if (addr.streetNumber) parts.push(`nr. ${addr.streetNumber}`);
-  if (addr.city) parts.push(addr.city);
-  if (addr.sector) parts.push(`Sector ${addr.sector}`);
-  if (addr.county && !isBucharest(addr.city)) parts.push(`jud. ${addr.county}`);
-  if (addr.postalCode && !isBucharest(addr.city)) parts.push(`cod ${addr.postalCode}`);
-  return parts.join(", ");
-}
 
 export function AssociationWizard({ open, onOpenChange, federationId, federations }: AssociationWizardProps) {
   const { toast } = useToast();
@@ -106,15 +82,6 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   const [currentBldIdx, setCurrentBldIdx] = useState(0);
 
   const stepIdx = STEPS.indexOf(step);
-
-  const { data: streetTypesData } = useQuery<any[]>({
-    queryKey: ["/api/liste/tip-drumuri"],
-    enabled: open,
-  });
-
-  const streetTypes: string[] = streetTypesData && streetTypesData.length > 0
-    ? streetTypesData.map((r: any) => r.tipDrum || r.tip_drum).filter(Boolean)
-    : FALLBACK_STREET_TYPES;
 
   useEffect(() => {
     if (open) {
@@ -150,18 +117,11 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   };
 
   const updateAddr = (field: keyof AddressFields, value: string) => {
-    setAddr(prev => {
-      const next = { ...prev, [field]: value };
-      if (field === "city") {
-        if (isBucharest(value)) {
-          next.county = "Bucuresti";
-          next.postalCode = "";
-        } else {
-          next.sector = "";
-        }
-      }
-      return next;
-    });
+    setAddr(prev => ({ ...prev, [field]: value }));
+  };
+
+  const batchUpdateAddr = (updates: Partial<AddressFields>) => {
+    setAddr(prev => ({ ...prev, ...updates }));
   };
 
   const canGoNext = (): boolean => {
@@ -309,7 +269,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   const getTotalStaircases = () => buildings.reduce((sum, b) => sum + b.staircases.length, 0);
   const getTotalElevators = () => buildings.reduce((sum, b) => sum + b.staircases.reduce((s2, st) => s2 + (st.elevators || 0), 0), 0);
 
-  const composedAddress = formatAddress(addr);
+  const composedAddress = composeAddress(addr);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -400,104 +360,12 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Adresa</Label>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Tip drum</Label>
-                  <Select value={addr.streetType || "__none__"} onValueChange={v => updateAddr("streetType", v === "__none__" ? "" : v)}>
-                    <SelectTrigger className="h-7 text-xs" data-testid="select-wizard-street-type">
-                      <SelectValue placeholder="Selecteaza..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">-- Selecteaza --</SelectItem>
-                      {streetTypes.map(st => (
-                        <SelectItem key={st} value={st}>{st}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-6">
-                  <Label className="text-[10px] text-muted-foreground">Nume strada</Label>
-                  <Input
-                    value={addr.streetName}
-                    onChange={e => updateAddr("streetName", e.target.value)}
-                    placeholder="ex: Mihai Eminescu"
-                    className="h-7 text-xs"
-                    data-testid="input-wizard-street-name"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-[10px] text-muted-foreground">Nr.</Label>
-                  <Input
-                    value={addr.streetNumber}
-                    onChange={e => updateAddr("streetNumber", e.target.value)}
-                    placeholder="10"
-                    className="h-7 text-xs"
-                    data-testid="input-wizard-street-number"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-12 gap-2">
-                <div className="col-span-4">
-                  <Label className="text-[10px] text-muted-foreground">Oras</Label>
-                  <Input
-                    value={addr.city}
-                    onChange={e => updateAddr("city", e.target.value)}
-                    placeholder="ex: Bucuresti"
-                    className="h-7 text-xs"
-                    data-testid="input-wizard-city"
-                  />
-                </div>
-                {isBucharest(addr.city) ? (
-                  <div className="col-span-4">
-                    <Label className="text-[10px] text-muted-foreground">Sector</Label>
-                    <Select value={addr.sector || "__none__"} onValueChange={v => updateAddr("sector", v === "__none__" ? "" : v)}>
-                      <SelectTrigger className="h-7 text-xs" data-testid="select-wizard-sector">
-                        <SelectValue placeholder="Sector..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">-- Sector --</SelectItem>
-                        {["1", "2", "3", "4", "5", "6"].map(s => (
-                          <SelectItem key={s} value={s}>Sector {s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Judet</Label>
-                      <Input
-                        value={addr.county}
-                        onChange={e => updateAddr("county", e.target.value)}
-                        placeholder="ex: Ilfov"
-                        className="h-7 text-xs"
-                        data-testid="input-wizard-county"
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <Label className="text-[10px] text-muted-foreground">Cod Postal</Label>
-                      <Input
-                        value={addr.postalCode}
-                        onChange={e => updateAddr("postalCode", e.target.value)}
-                        placeholder="ex: 012345"
-                        className="h-7 text-xs"
-                        data-testid="input-wizard-postal-code"
-                      />
-                    </div>
-                  </>
-                )}
-                {isBucharest(addr.city) && (
-                  <div className="col-span-4" />
-                )}
-              </div>
-              {composedAddress && (
-                <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded" data-testid="text-wizard-composed-address">
-                  {composedAddress}
-                </div>
-              )}
-            </div>
+            <AddressFields
+              values={addr}
+              onChange={updateAddr}
+              onBatchChange={batchUpdateAddr}
+              idPrefix="wizard-"
+            />
 
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">CUI</Label>
