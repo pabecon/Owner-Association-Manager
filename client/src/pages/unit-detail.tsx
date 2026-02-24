@@ -13,12 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar as CalendarIcon, History, ClipboardPlus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
-import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
+import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type MeterReading, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -1282,12 +1282,155 @@ function MeterFormRow({ data, onChange, rooms, isNew }: { data: MeterFormData; o
   );
 }
 
+function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; meter: Meter; onClose: () => void }) {
+  const { toast } = useToast();
+  const [readingDate, setReadingDate] = useState("");
+  const [readingValue, setReadingValue] = useState("");
+  const [dateOpen, setDateOpen] = useState(false);
+
+  const addReadingMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/meter-readings", {
+        meterId,
+        readingDate,
+        readingValue,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", meterId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", meter.apartmentId] });
+      toast({ title: "Citire adaugata cu succes" });
+      onClose();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const dateValue = readingDate ? new Date(readingDate) : undefined;
+
+  return (
+    <div className="border rounded-md p-2 bg-muted/30 space-y-2" data-testid={`reading-form-${meterId}`}>
+      <div className="text-[10px] font-medium text-muted-foreground">Adauga citire contor</div>
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Data citirii</label>
+          <Popover open={dateOpen} onOpenChange={setDateOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={`h-7 text-[11px] w-full justify-start text-left font-normal px-2 ${!readingDate ? "text-muted-foreground" : ""}`}
+                data-testid={`button-reading-date-${meterId}`}
+              >
+                <CalendarIcon className="mr-1 h-3 w-3 shrink-0" />
+                {dateValue ? format(dateValue, "dd.MM.yyyy") : "Selecteaza data"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={dateValue}
+                onSelect={(date) => {
+                  if (date) {
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, "0");
+                    const d = String(date.getDate()).padStart(2, "0");
+                    setReadingDate(`${y}-${m}-${d}`);
+                  }
+                  setDateOpen(false);
+                }}
+                locale={ro}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex-1">
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Valoare index</label>
+          <Input
+            type="number"
+            step="0.001"
+            className="h-7 text-[11px]"
+            placeholder="ex: 1234.567"
+            value={readingValue}
+            onChange={(e) => setReadingValue(e.target.value)}
+            data-testid={`input-reading-value-${meterId}`}
+          />
+        </div>
+        <Button
+          size="sm"
+          className="h-7 px-2 text-[10px]"
+          onClick={() => addReadingMutation.mutate()}
+          disabled={!readingDate || !readingValue || addReadingMutation.isPending}
+          data-testid={`button-save-reading-${meterId}`}
+        >
+          <Save className="w-3 h-3 mr-0.5" />{addReadingMutation.isPending ? "..." : "Salveaza"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[10px]"
+          onClick={onClose}
+          data-testid={`button-cancel-reading-${meterId}`}
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function MeterReadingHistory({ meterId }: { meterId: string }) {
+  const { data: readings, isLoading } = useQuery<MeterReading[]>({
+    queryKey: ["/api/meter-readings", meterId],
+  });
+
+  if (isLoading) return <Skeleton className="h-12 w-full" />;
+  if (!readings || readings.length === 0) {
+    return (
+      <div className="border rounded-md p-2 bg-muted/20" data-testid={`history-empty-${meterId}`}>
+        <p className="text-[10px] text-muted-foreground text-center py-1">Nicio citire inregistrata</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border rounded-md p-2 bg-muted/20 space-y-1" data-testid={`history-panel-${meterId}`}>
+      <div className="text-[10px] font-medium text-muted-foreground mb-1">Istoric citiri</div>
+      <div className="grid grid-cols-[100px_90px_90px_90px] gap-1 text-[9px] text-muted-foreground font-medium border-b pb-0.5">
+        <span>Data</span>
+        <span className="text-right">Index</span>
+        <span className="text-right">Consum</span>
+        <span className="text-right">Total acum.</span>
+      </div>
+      {readings.map((r) => (
+        <div
+          key={r.id}
+          className="grid grid-cols-[100px_90px_90px_90px] gap-1 text-[11px] items-center py-0.5 border-b border-muted last:border-0"
+          data-testid={`history-row-${r.id}`}
+        >
+          <span className="text-muted-foreground">{r.readingDate ? format(new Date(r.readingDate), "dd.MM.yyyy") : "-"}</span>
+          <span className="text-right font-medium tabular-nums">{Number(r.readingValue).toFixed(3)}</span>
+          <span className="text-right tabular-nums text-primary font-medium">
+            {r.consumption != null ? Number(r.consumption).toFixed(3) : "-"}
+          </span>
+          <span className="text-right tabular-nums text-muted-foreground">
+            {r.accumulatedConsumption != null ? Number(r.accumulatedConsumption).toFixed(3) : "-"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Meter[]; rooms: UnitRoom[] }) {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [newData, setNewData] = useState<MeterFormData>({ ...emptyMeterForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<MeterFormData>({ ...emptyMeterForm });
+  const [addReadingId, setAddReadingId] = useState<string | null>(null);
+  const [historyId, setHistoryId] = useState<string | null>(null);
 
   const roomNames = rooms.map(r => r.name).filter(Boolean);
 
@@ -1353,6 +1496,8 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
 
   const startEdit = (meter: Meter) => {
     setEditingId(meter.id);
+    setAddReadingId(null);
+    setHistoryId(null);
     setEditData({
       meterType: meter.meterType,
       placement: (meter as any).placement || "interior",
@@ -1362,6 +1507,15 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
       installDate: meter.installDate,
       initialReading: meter.initialReading?.toString() || "0",
     });
+  };
+
+  const toggleAddReading = (meterId: string) => {
+    setAddReadingId(addReadingId === meterId ? null : meterId);
+    setEditingId(null);
+  };
+
+  const toggleHistory = (meterId: string) => {
+    setHistoryId(historyId === meterId ? null : meterId);
   };
 
   const isNewValid = newData.meterType && newData.serialNumber.trim() && newData.meterNumber.trim() && newData.installDate &&
@@ -1391,7 +1545,7 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
             <span>Nr. contor</span>
             <span>Data inst.</span>
             <span>Index</span>
-            <span className="w-14"></span>
+            <span className="w-24"></span>
           </div>
 
           {meters.map(meter => {
@@ -1412,25 +1566,41 @@ function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Mete
               );
             }
             return (
-              <div key={meter.id} className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px_auto] gap-1.5 items-center py-0.5" data-testid={`meter-card-${meter.id}`}>
-                <div className="flex items-center gap-1 text-[11px]">
-                  <MeterIcon className="w-3 h-3 text-primary shrink-0" />
-                  <span className="font-medium truncate">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
+              <div key={meter.id} className="space-y-1" data-testid={`meter-card-${meter.id}`}>
+                <div className="grid grid-cols-[90px_80px_80px_1fr_1fr_100px_70px_auto] gap-1.5 items-center py-0.5">
+                  <div className="flex items-center gap-1 text-[11px]">
+                    <MeterIcon className="w-3 h-3 text-primary shrink-0" />
+                    <span className="font-medium truncate">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
+                  </div>
+                  <span className="text-[11px] text-muted-foreground truncate">{METER_PLACEMENT_LABELS[(meter as any).placement as MeterPlacement] || (meter as any).placement || "-"}</span>
+                  <span className="text-[11px] text-muted-foreground truncate">{meter.chamberLocation || "-"}</span>
+                  <span className="text-[11px] font-medium truncate">{meter.serialNumber}</span>
+                  <span className="text-[11px] font-medium truncate">{meter.meterNumber}</span>
+                  <span className="text-[11px] text-muted-foreground">{meter.installDate ? format(new Date(meter.installDate), "dd.MM.yyyy") : "-"}</span>
+                  <span className="text-[11px] font-medium">{meter.initialReading}</span>
+                  <div className="flex items-center gap-0.5 w-24 justify-end">
+                    <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => startEdit(meter)} title="Editeaza contor" data-testid={`button-edit-meter-${meter.id}`}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className={`w-5 h-5 ${addReadingId === meter.id ? "bg-primary/10 text-primary" : ""}`} onClick={() => toggleAddReading(meter.id)} title="Adauga citire" data-testid={`button-add-reading-${meter.id}`}>
+                      <ClipboardPlus className="w-3 h-3" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className={`w-5 h-5 ${historyId === meter.id ? "bg-primary/10 text-primary" : ""}`} onClick={() => toggleHistory(meter.id)} title="Istoric citiri" data-testid={`button-history-${meter.id}`}>
+                      <History className="w-3 h-3" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="w-5 h-5 text-destructive" onClick={() => deleteMutation.mutate(meter.id)} title="Sterge contor" data-testid={`button-delete-meter-${meter.id}`}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
-                <span className="text-[11px] text-muted-foreground truncate">{METER_PLACEMENT_LABELS[(meter as any).placement as MeterPlacement] || (meter as any).placement || "-"}</span>
-                <span className="text-[11px] text-muted-foreground truncate">{meter.chamberLocation || "-"}</span>
-                <span className="text-[11px] font-medium truncate">{meter.serialNumber}</span>
-                <span className="text-[11px] font-medium truncate">{meter.meterNumber}</span>
-                <span className="text-[11px] text-muted-foreground">{meter.installDate ? format(new Date(meter.installDate), "dd.MM.yyyy") : "-"}</span>
-                <span className="text-[11px] font-medium">{meter.initialReading}</span>
-                <div className="flex items-center gap-0.5 w-14 justify-end">
-                  <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => startEdit(meter)} data-testid={`button-edit-meter-${meter.id}`}>
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="w-5 h-5 text-destructive" onClick={() => deleteMutation.mutate(meter.id)} data-testid={`button-delete-meter-${meter.id}`}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
+
+                {addReadingId === meter.id && (
+                  <MeterReadingInlineForm meterId={meter.id} meter={meter} onClose={() => setAddReadingId(null)} />
+                )}
+
+                {historyId === meter.id && (
+                  <MeterReadingHistory meterId={meter.id} />
+                )}
               </div>
             );
           })}
