@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image } from "lucide-react";
-import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document } from "@shared/schema";
+import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar } from "lucide-react";
+import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -72,7 +72,7 @@ export default function UnitDetail() {
 
   const { data: rooms } = useQuery<UnitRoom[]>({
     queryKey: ["/api/unit-rooms", unitId],
-    enabled: !!unitId && activeTab === "camere",
+    enabled: !!unitId && (activeTab === "camere" || activeTab === "contoare"),
   });
 
   const { data: meters } = useQuery<Meter[]>({
@@ -659,42 +659,11 @@ export default function UnitDetail() {
         )}
 
         {activeTab === "camere" && unitId && (
-          <UnitRoomsTab unitId={unitId} rooms={rooms || []} />
+          <UnitRoomsTab unitId={unitId} rooms={rooms || []} unit={unit} />
         )}
 
-        {activeTab === "contoare" && (
-          <div className="space-y-2 max-w-4xl">
-            <h2 className="text-sm font-semibold">Contoare</h2>
-            {unitMeters.length > 0 ? (
-              <div className="space-y-2">
-                {unitMeters.map(meter => (
-                  <Card key={meter.id} data-testid={`meter-card-${meter.id}`}>
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
-                            <Badge variant={meter.isActive ? "default" : "secondary"} className="text-[9px]">
-                              {meter.isActive ? "Activ" : "Inactiv"}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Serie: {meter.serialNumber} | Nr: {meter.meterNumber}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground text-center">Niciun contor inregistrat</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {activeTab === "contoare" && unitId && (
+          <UnitMetersTab unitId={unitId} meters={unitMeters} rooms={rooms || []} />
         )}
 
         {activeTab === "documente" && unitId && (
@@ -733,10 +702,11 @@ interface RoomTypeItem {
   descriere?: string;
 }
 
-function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: UnitRoom[] }) {
+function UnitRoomsTab({ unitId, rooms: initialRooms, unit }: { unitId: string; rooms: UnitRoom[]; unit?: Apartment }) {
   const { toast } = useToast();
   const [editingRooms, setEditingRooms] = useState<{ name: string; surface: string; terraceSurface: string }[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [builtSurface, setBuiltSurface] = useState("");
 
   const { data: roomTypes } = useQuery<RoomTypeItem[]>({
     queryKey: ["/api/liste", "tip-camera"],
@@ -752,9 +722,12 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
     }
   }, [initialRooms]);
 
+  useEffect(() => {
+    setBuiltSurface(unit?.builtSurface?.toString() || "");
+  }, [unit?.builtSurface]);
+
   const surfaceSum = editingRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
   const terraceSum = editingRooms.reduce((sum, r) => sum + (parseFloat(r.terraceSurface) || 0), 0);
-  const totalBuiltSurface = surfaceSum + terraceSum;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -769,11 +742,10 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
         })),
       });
       const totalUseful = validRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
-      const totalTerrace = validRooms.reduce((sum, r) => sum + (parseFloat(r.terraceSurface) || 0), 0);
-      const totalBuilt = totalUseful + totalTerrace;
+      const builtVal = parseFloat(builtSurface);
       await apiRequest("PATCH", `/api/apartments/${unitId}`, {
         surface: totalUseful > 0 ? totalUseful.toFixed(2) : null,
-        builtSurface: totalBuilt > 0 ? totalBuilt.toFixed(2) : null,
+        builtSurface: builtVal > 0 ? builtVal.toFixed(2) : null,
         rooms: validRooms.length || null,
       });
     },
@@ -808,6 +780,7 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
       surface: r.surface?.toString() || "",
       terraceSurface: r.terraceSurface?.toString() || "",
     })));
+    setBuiltSurface(unit?.builtSurface?.toString() || "");
     setIsEditing(false);
   };
 
@@ -905,7 +878,22 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground font-semibold">Suprafata construita totala</span>
-                  <span className="text-xs font-bold" data-testid="text-built-surface-total">{totalBuiltSurface > 0 ? `${totalBuiltSurface.toFixed(2)} m²` : "-"}</span>
+                  {isEditing ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={builtSurface}
+                        onChange={e => setBuiltSurface(e.target.value)}
+                        placeholder="m²"
+                        className="h-6 text-xs w-24 text-right font-bold"
+                        data-testid="input-built-surface-total"
+                      />
+                      <span className="text-[10px] text-muted-foreground">m²</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-bold" data-testid="text-built-surface-total">{builtSurface && parseFloat(builtSurface) > 0 ? `${parseFloat(builtSurface).toFixed(2)} m²` : "-"}</span>
+                  )}
                 </div>
               </div>
             </>
@@ -1059,6 +1047,260 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+const METER_TYPE_ICONS: Record<string, any> = {
+  water: Droplets,
+  electricity: Zap,
+  gas: Flame,
+};
+
+function UnitMetersTab({ unitId, meters, rooms }: { unitId: string; meters: Meter[]; rooms: UnitRoom[] }) {
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    meterType: "",
+    placement: "interior" as string,
+    chamberLocation: "",
+    serialNumber: "",
+    meterNumber: "",
+    installDate: "",
+    initialReading: "0",
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/meters", {
+        apartmentId: unitId,
+        scopeType: "apartment",
+        meterType: formData.meterType,
+        placement: formData.placement,
+        chamberLocation: formData.placement === "interior" ? formData.chamberLocation : null,
+        serialNumber: formData.serialNumber,
+        meterNumber: formData.meterNumber,
+        installDate: formData.installDate,
+        initialReading: formData.initialReading || "0",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", unitId] });
+      toast({ title: "Contorul a fost creat" });
+      setShowForm(false);
+      setFormData({ meterType: "", placement: "interior", chamberLocation: "", serialNumber: "", meterNumber: "", installDate: "", initialReading: "0" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (meterId: string) => {
+      await apiRequest("DELETE", `/api/meters/${meterId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meters", unitId] });
+      toast({ title: "Contorul a fost sters" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Eroare", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const isFormValid = formData.meterType && formData.serialNumber.trim() && formData.meterNumber.trim() && formData.installDate &&
+    (formData.placement === "exterior" || (formData.placement === "interior" && formData.chamberLocation));
+
+  const roomNames = rooms.map(r => r.name).filter(Boolean);
+
+  return (
+    <div className="space-y-2 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold">Contoare ({meters.length})</h2>
+        {!showForm && (
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setShowForm(true)} data-testid="button-add-meter">
+            <Plus className="w-3 h-3 mr-0.5" />Adauga Contor
+          </Button>
+        )}
+      </div>
+
+      {showForm && (
+        <Card data-testid="meter-form">
+          <CardContent className="p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold">Contor Nou</h3>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => setShowForm(false)} data-testid="button-cancel-meter">
+                  <X className="w-3 h-3 mr-0.5" />Anuleaza
+                </Button>
+                <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => createMutation.mutate()} disabled={!isFormValid || createMutation.isPending} data-testid="button-save-meter">
+                  <Save className="w-3 h-3 mr-0.5" />{createMutation.isPending ? "Salvare..." : "Salveaza"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Tip contor *</label>
+                <Select value={formData.meterType} onValueChange={val => setFormData(p => ({ ...p, meterType: val }))}>
+                  <SelectTrigger className="h-7 text-xs" data-testid="select-meter-type">
+                    <SelectValue placeholder="Selecteaza tipul..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="water"><div className="flex items-center gap-1.5"><Droplets className="w-3 h-3" />Apa</div></SelectItem>
+                    <SelectItem value="electricity"><div className="flex items-center gap-1.5"><Zap className="w-3 h-3" />Electricitate</div></SelectItem>
+                    <SelectItem value="gas"><div className="flex items-center gap-1.5"><Flame className="w-3 h-3" />Gaz</div></SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Amplasare *</label>
+                <Select value={formData.placement} onValueChange={val => setFormData(p => ({ ...p, placement: val, chamberLocation: val === "exterior" ? "" : p.chamberLocation }))}>
+                  <SelectTrigger className="h-7 text-xs" data-testid="select-meter-placement">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="exterior">Exterior</SelectItem>
+                    <SelectItem value="interior">Interior</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.placement === "interior" && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground">Camera *</label>
+                  <Select value={formData.chamberLocation} onValueChange={val => setFormData(p => ({ ...p, chamberLocation: val }))}>
+                    <SelectTrigger className="h-7 text-xs" data-testid="select-meter-room">
+                      <SelectValue placeholder="Selecteaza camera..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roomNames.length > 0 ? (
+                        roomNames.map(name => (
+                          <SelectItem key={name} value={name}>{name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="_none" disabled>Nu exista camere definite</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Serie contor *</label>
+                <Input
+                  value={formData.serialNumber}
+                  onChange={e => setFormData(p => ({ ...p, serialNumber: e.target.value }))}
+                  placeholder="Seria contorului"
+                  className="h-7 text-xs"
+                  data-testid="input-meter-serial"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Numar contor *</label>
+                <Input
+                  value={formData.meterNumber}
+                  onChange={e => setFormData(p => ({ ...p, meterNumber: e.target.value }))}
+                  placeholder="Numarul contorului"
+                  className="h-7 text-xs"
+                  data-testid="input-meter-number"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Data instalarii *</label>
+                <Input
+                  type="date"
+                  value={formData.installDate}
+                  onChange={e => setFormData(p => ({ ...p, installDate: e.target.value }))}
+                  className="h-7 text-xs"
+                  data-testid="input-meter-install-date"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Index initial</label>
+                <Input
+                  type="number"
+                  step="0.001"
+                  value={formData.initialReading}
+                  onChange={e => setFormData(p => ({ ...p, initialReading: e.target.value }))}
+                  placeholder="0.000"
+                  className="h-7 text-xs"
+                  data-testid="input-meter-initial-reading"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {meters.length > 0 ? (
+        <div className="space-y-2">
+          {meters.map(meter => {
+            const MeterIcon = METER_TYPE_ICONS[meter.meterType] || Layers;
+            return (
+              <Card key={meter.id} data-testid={`meter-card-${meter.id}`}>
+                <CardContent className="p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 rounded-md bg-muted">
+                      <MeterIcon className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{METER_TYPE_LABELS[meter.meterType] || meter.meterType}</span>
+                        <Badge variant={meter.isActive ? "default" : "secondary"} className="text-[9px]">
+                          {meter.isActive ? "Activ" : "Inactiv"}
+                        </Badge>
+                        {(meter as any).placement && (
+                          <Badge variant="outline" className="text-[9px]">
+                            {METER_PLACEMENT_LABELS[(meter as any).placement as MeterPlacement] || (meter as any).placement}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mt-1.5 text-[11px]">
+                        <div>
+                          <span className="text-muted-foreground">Serie: </span>
+                          <span className="font-medium">{meter.serialNumber}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Nr: </span>
+                          <span className="font-medium">{meter.meterNumber}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Instalat: </span>
+                          <span className="font-medium">{meter.installDate}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Index: </span>
+                          <span className="font-medium">{meter.initialReading}</span>
+                        </div>
+                        {meter.chamberLocation && (
+                          <div className="col-span-2">
+                            <span className="text-muted-foreground">Camera: </span>
+                            <span className="font-medium">{meter.chamberLocation}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button size="icon" variant="ghost" className="w-6 h-6 text-destructive shrink-0" onClick={() => deleteMutation.mutate(meter.id)} data-testid={`button-delete-meter-${meter.id}`}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : !showForm ? (
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground text-center">Niciun contor inregistrat</p>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

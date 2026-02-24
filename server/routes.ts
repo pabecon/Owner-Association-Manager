@@ -491,7 +491,7 @@ export async function registerRoutes(
     res.json(metersList);
   });
 
-  app.post("/api/meters", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+  app.post("/api/meters", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
     const parsed = insertMeterSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
     const scopeType = parsed.data.scopeType || "apartment";
@@ -533,7 +533,7 @@ export async function registerRoutes(
     res.json(updated);
   });
 
-  app.delete("/api/meters/:id", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+  app.delete("/api/meters/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
     const meter = await storage.getMeter(req.params.id as string);
     if (!meter) return res.status(404).json({ message: "Contorul nu a fost gasit" });
     if (meter.apartmentId) {

@@ -120,6 +120,14 @@ export const METER_SCOPE_LABELS: Record<MeterScope, string> = {
   floor: "Etaj",
 };
 
+export const meterPlacementEnum = ["exterior", "interior"] as const;
+export type MeterPlacement = typeof meterPlacementEnum[number];
+
+export const METER_PLACEMENT_LABELS: Record<MeterPlacement, string> = {
+  exterior: "Exterior",
+  interior: "Interior",
+};
+
 export const meters = pgTable("meters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   apartmentId: varchar("apartment_id").references(() => apartments.id, { onDelete: "cascade" }),
@@ -129,6 +137,7 @@ export const meters = pgTable("meters", {
   floor: integer("floor"),
   scopeType: text("scope_type").notNull().default("apartment"),
   meterType: text("meter_type").notNull(),
+  placement: text("placement").default("interior"),
   serialNumber: text("serial_number").notNull(),
   meterNumber: text("meter_number").notNull(),
   chamberLocation: text("chamber_location"),
