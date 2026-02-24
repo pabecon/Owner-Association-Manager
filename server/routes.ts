@@ -14,9 +14,9 @@ import {
   ROLE_HIERARCHY, type UserRole,
   type Contract, type InsertProformaInvoice,
 } from "@shared/schema";
-import { users, appSettings, platformUsers, userActivityLog, associations, buildings, staircases, apartments } from "@shared/schema";
+import { users, appSettings, platformUsers, userActivityLog, associations, buildings, staircases, apartments, listaCursValutarBnr as listaCursValutarBnrTable } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray, desc, sql } from "drizzle-orm";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 async function generateProformaInvoices(contract: Contract) {
@@ -1762,6 +1762,89 @@ export async function registerRoutes(
       });
     } catch (error: any) {
       res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
+  app.get("/api/bnr/status", ...auth, async (_req, res) => {
+    try {
+      const { getLastSyncDate, getTotalRatesCount, getAvailableCurrencies } = await import("./bnr-sync");
+      const [lastDate, totalCount, currencies] = await Promise.all([
+        getLastSyncDate(),
+        getTotalRatesCount(),
+        getAvailableCurrencies(),
+      ]);
+      res.json({ lastDate, totalCount, currencies });
+    } catch (error: any) {
+      console.error("BNR status error:", error);
+      res.status(500).json({ message: "Eroare la verificarea statusului BNR" });
+    }
+  });
+
+  app.post("/api/bnr/sync", ...auth, async (_req, res) => {
+    try {
+      const { syncCurrentRates } = await import("./bnr-sync");
+      const result = await syncCurrentRates();
+      res.json({ message: `Sincronizare completa`, date: result.date, count: result.count });
+    } catch (error: any) {
+      console.error("BNR sync error:", error);
+      res.status(500).json({ message: "Eroare la sincronizarea cursului BNR" });
+    }
+  });
+
+  app.post("/api/bnr/sync-historical", ...auth, async (req, res) => {
+    try {
+      const fromYear = parseInt(req.body.fromYear) || 2005;
+      const toYear = parseInt(req.body.toYear) || new Date().getFullYear();
+      const { syncHistoricalRates } = await import("./bnr-sync");
+      const result = await syncHistoricalRates(fromYear, toYear);
+      res.json({
+        message: `Import istoric complet`,
+        totalInserted: result.totalInserted,
+        yearsProcessed: result.yearsProcessed,
+      });
+    } catch (error: any) {
+      console.error("BNR historical sync error:", error);
+      res.status(500).json({ message: "Eroare la importul istoric BNR" });
+    }
+  });
+
+  app.get("/api/bnr/rates", ...auth, async (req, res) => {
+    try {
+      const { moneda, dataInceput, dataSfarsit, limit: limitStr, offset: offsetStr } = req.query;
+      let query = db.select().from(listaCursValutarBnrTable).orderBy(sql`${listaCursValutarBnrTable.dataInceput} DESC, ${listaCursValutarBnrTable.moneda} ASC`);
+
+      const conditions: any[] = [];
+      if (moneda) conditions.push(eq(listaCursValutarBnrTable.moneda, String(moneda)));
+      if (dataInceput) conditions.push(sql`${listaCursValutarBnrTable.dataInceput} >= ${String(dataInceput)}`);
+      if (dataSfarsit) conditions.push(sql`${listaCursValutarBnrTable.dataInceput} <= ${String(dataSfarsit)}`);
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions)) as any;
+      }
+
+      const limit = parseInt(String(limitStr)) || 1000;
+      const offset = parseInt(String(offsetStr)) || 0;
+      query = query.limit(limit).offset(offset) as any;
+
+      const results = await query;
+      res.json(results);
+    } catch (error: any) {
+      console.error("BNR rates error:", error);
+      res.status(500).json({ message: "Eroare la citirea cursurilor BNR" });
+    }
+  });
+
+  app.get("/api/bnr/dates", ...auth, async (_req, res) => {
+    try {
+      const results = await db
+        .selectDistinct({ date: listaCursValutarBnrTable.dataInceput })
+        .from(listaCursValutarBnrTable)
+        .orderBy(sql`${listaCursValutarBnrTable.dataInceput} DESC`)
+        .limit(500);
+      res.json(results.map(r => r.date));
+    } catch (error: any) {
+      console.error("BNR dates error:", error);
+      res.status(500).json({ message: "Eroare" });
     }
   });
 
