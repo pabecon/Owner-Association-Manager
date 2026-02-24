@@ -645,6 +645,80 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  app.post("/api/meter-readings/:id/upload-photo", ...auth, requirePermission("manageApartments"), async (req: AuthenticatedRequest, res) => {
+    try {
+      const reading = await storage.getMeterReading(req.params.id as string);
+      if (!reading) return res.status(404).json({ message: "Citirea nu a fost gasita" });
+      const meter = await storage.getMeter(reading.meterId);
+      if (meter && meter.apartmentId) {
+        const apt = await storage.getApartment(meter.apartmentId);
+        if (apt) {
+          const staircase = await storage.getStaircase(apt.staircaseId);
+          if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+            return res.status(403).json({ message: "Nu aveti acces" });
+          }
+        }
+      }
+      const multer = (await import("multer")).default;
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+      upload.single("photo")(req, res, async (err: any) => {
+        if (err) {
+          if (err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ message: "Fisierul depaseste limita de 10 MB" });
+          return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        }
+        const file = (req as any).file;
+        if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
+        const ext = file.originalname.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `.private/meter-readings/${reading.id}/photo.${ext}`;
+        try {
+          const { Client } = await import("@replit/object-storage");
+          const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+          await client.uploadFromBytes(path, file.buffer);
+          await storage.updateMeterReading(reading.id, { readingPhotoPath: path });
+          res.json({ path });
+        } catch (objErr) {
+          console.error("Object storage upload failed:", objErr);
+          res.status(500).json({ message: "Eroare la incarcarea fotografiei in storage" });
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare interna" });
+    }
+  });
+
+  app.get("/api/meter-readings/:id/photo", ...auth, async (req: AuthenticatedRequest, res) => {
+    const reading = await storage.getMeterReading(req.params.id as string);
+    if (!reading || !reading.readingPhotoPath) return res.status(404).json({ message: "Fotografia nu a fost gasita" });
+    const meter = await storage.getMeter(reading.meterId);
+    if (meter && meter.apartmentId) {
+      const apt = await storage.getApartment(meter.apartmentId);
+      if (apt) {
+        const staircase = await storage.getStaircase(apt.staircaseId);
+        if (staircase && !isInBuildingScope(req, staircase.buildingId)) {
+          if (!isInApartmentScope(req, apt.id)) {
+            return res.status(403).json({ message: "Nu aveti acces" });
+          }
+        }
+      }
+    }
+    try {
+      const { Client } = await import("@replit/object-storage");
+      const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+      const { ok, value: buffer } = await client.downloadAsBytes(reading.readingPhotoPath);
+      if (!ok || !buffer) return res.status(404).json({ message: "Fisierul nu a fost gasit in storage" });
+      const ext = reading.readingPhotoPath.split(".").pop()?.toLowerCase() || "jpg";
+      const mimeMap: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+      res.set({
+        "Content-Type": mimeMap[ext] || "image/jpeg",
+        "Content-Disposition": `inline; filename="reading-${reading.id}.${ext}"`,
+        "Content-Length": String(Buffer.from(buffer).length),
+      });
+      res.send(Buffer.from(buffer));
+    } catch (error: any) {
+      res.status(500).json({ message: "Eroare la descarcarea fotografiei" });
+    }
+  });
+
   app.get("/api/meters-with-readings", ...auth, async (req: AuthenticatedRequest, res) => {
     const { associationId, scopeType, buildingId, staircaseId } = req.query;
     if (!associationId) return res.status(400).json({ message: "associationId este obligatoriu" });

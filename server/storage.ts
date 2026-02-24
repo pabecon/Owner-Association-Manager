@@ -104,6 +104,7 @@ export interface IStorage {
   getMeterReading(id: string): Promise<MeterReading | undefined>;
   getLatestMeterReading(meterId: string): Promise<MeterReading | undefined>;
   createMeterReading(data: InsertMeterReading): Promise<MeterReading>;
+  updateMeterReading(id: string, data: Partial<InsertMeterReading>): Promise<MeterReading | undefined>;
   deleteMeterReading(id: string): Promise<void>;
   getMetersWithLatestReading(scope: { associationId: string; scopeType?: string; buildingId?: string; staircaseId?: string }): Promise<Array<Meter & { latestReading?: MeterReading }>>;
   getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any>;
@@ -473,6 +474,11 @@ export class DatabaseStorage implements IStorage {
   async createMeterReading(data: InsertMeterReading): Promise<MeterReading> {
     const [reading] = await db.insert(meterReadings).values(data).returning();
     return reading;
+  }
+
+  async updateMeterReading(id: string, data: Partial<InsertMeterReading>): Promise<MeterReading | undefined> {
+    const [updated] = await db.update(meterReadings).set(data).where(eq(meterReadings.id, id)).returning();
+    return updated;
   }
 
   async deleteMeterReading(id: string): Promise<void> {

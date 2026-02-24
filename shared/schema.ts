@@ -163,6 +163,7 @@ export const meterReadings = pgTable("meter_readings", {
   consumption: numeric("consumption", { precision: 12, scale: 3 }),
   accumulatedConsumption: numeric("accumulated_consumption", { precision: 12, scale: 3 }),
   readingType: text("reading_type").notNull().default("regularizat"),
+  readingPhotoPath: text("reading_photo_path"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,10 +19,10 @@ import {
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
   ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink,
   Gauge, DoorOpen, Calendar, Hash, Upload, Download, File, Image,
-  BarChart3, Eye, EyeOff, Settings, Pencil, Save, X
+  BarChart3, Eye, EyeOff, Settings, Pencil, Save, X, Camera
 } from "lucide-react";
-import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, MeterReading, EstimationConfig, Document } from "@shared/schema";
-import { METER_TYPE_LABELS, meterTypeEnum, METER_SCOPE_LABELS, ESTIMATION_MODEL_LABELS, estimationModelEnum } from "@shared/schema";
+import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, MeterReading, EstimationConfig, Document, ReadingType } from "@shared/schema";
+import { METER_TYPE_LABELS, meterTypeEnum, METER_SCOPE_LABELS, ESTIMATION_MODEL_LABELS, estimationModelEnum, READING_TYPE_LABELS, readingTypeEnum } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1080,42 +1080,112 @@ function CommonMeterAddForm({ scopeType, associationId, buildingId, staircaseId,
   );
 }
 
-function MeterReadingForm({ meterId, associationId }: { meterId: string; associationId: string }) {
+function MeterReadingForm({ meterId, associationId, enhanced }: { meterId: string; associationId: string; enhanced?: boolean }) {
   const { toast } = useToast();
   const [readingDate, setReadingDate] = useState("");
   const [readingValue, setReadingValue] = useState("");
+  const [readingType, setReadingType] = useState<string>("regularizat");
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: estimate } = useQuery<{ estimatedValue: number; method: string; details: string } | null>({
+    queryKey: ["/api/estimate-reading", meterId, readingDate],
+    queryFn: async () => {
+      if (!readingDate) return null;
+      const res = await fetch(`/api/estimate-reading?meterId=${meterId}&readingDate=${readingDate}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: enhanced === true && readingType === "estimat" && !!readingDate,
+  });
+
+  useEffect(() => {
+    if (enhanced && readingType === "estimat" && estimate?.estimatedValue != null) {
+      setReadingValue(String(estimate.estimatedValue));
+    }
+  }, [estimate, readingType, enhanced]);
 
   const addReadingMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/meter-readings", {
+      const res = await apiRequest("POST", "/api/meter-readings", {
         meterId,
         readingDate,
         readingValue,
+        readingType,
       });
+      const data = await res.json();
+      if (selectedPhoto && data.id) {
+        const formData = new FormData();
+        formData.append("photo", selectedPhoto);
+        await fetch(`/api/meter-readings/${data.id}/upload-photo`, {
+          method: "POST",
+          body: formData,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", meterId] });
       queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/common-meters") });
       queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/meters-with-readings") });
       queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
-      setReadingDate(""); setReadingValue("");
+      setReadingDate(""); setReadingValue(""); setReadingType("regularizat"); setSelectedPhoto(null);
       toast({ title: "Citire adaugata" });
     },
     onError: (err: any) => { toast({ title: err.message || "Eroare la adaugare citire", variant: "destructive" }); },
   });
 
+  if (!enhanced) {
+    return (
+      <div className="flex items-center gap-1 mt-1">
+        <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citire" className="h-6 text-[10px] w-28" data-testid={`datepicker-reading-${meterId}`} />
+        <Input type="number" step="0.001" value={readingValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReadingValue(e.target.value)} placeholder="Index" className="h-6 text-[10px] w-20" data-testid={`input-reading-value-${meterId}`} />
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-1.5" disabled={!readingDate || !readingValue || addReadingMutation.isPending} onClick={() => addReadingMutation.mutate()} data-testid={`button-add-reading-${meterId}`}>
+          <Plus className="w-3 h-3" />
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-1 mt-1">
-      <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citire" className="h-6 text-[10px] w-28" data-testid={`datepicker-reading-${meterId}`} />
-      <Input type="number" step="0.001" value={readingValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReadingValue(e.target.value)} placeholder="Index" className="h-6 text-[10px] w-20" data-testid={`input-reading-value-${meterId}`} />
-      <Button size="sm" variant="outline" className="h-6 text-[10px] px-1.5" disabled={!readingDate || !readingValue || addReadingMutation.isPending} onClick={() => addReadingMutation.mutate()} data-testid={`button-add-reading-${meterId}`}>
-        <Plus className="w-3 h-3" />
-      </Button>
+    <div className="space-y-1.5 mt-1.5 p-2 bg-muted/30 rounded-md">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <Select value={readingType} onValueChange={setReadingType}>
+          <SelectTrigger className="h-6 text-[10px] w-28" data-testid={`select-reading-type-${meterId}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {readingTypeEnum.map(t => (
+              <SelectItem key={t} value={t}>{READING_TYPE_LABELS[t]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citire" className="h-6 text-[10px] w-28" data-testid={`datepicker-reading-${meterId}`} />
+        <Input type="number" step="0.001" value={readingValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReadingValue(e.target.value)} placeholder="Index" className="h-6 text-[10px] w-20" data-testid={`input-reading-value-${meterId}`} />
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => setSelectedPhoto(e.target.files?.[0] || null)}
+          data-testid={`input-photo-${meterId}`}
+        />
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-1.5" onClick={() => photoInputRef.current?.click()} data-testid={`button-select-photo-${meterId}`}>
+          <Camera className="w-3 h-3 mr-0.5" />
+          {selectedPhoto ? selectedPhoto.name.substring(0, 10) + "..." : "Foto"}
+        </Button>
+        <Button size="sm" variant="outline" className="h-6 text-[10px] px-1.5" disabled={!readingDate || !readingValue || addReadingMutation.isPending} onClick={() => addReadingMutation.mutate()} data-testid={`button-add-reading-${meterId}`}>
+          <Save className="w-3 h-3 mr-0.5" />
+          {addReadingMutation.isPending ? "..." : "Salveaza"}
+        </Button>
+      </div>
+      {readingType === "estimat" && estimate?.estimatedValue != null && (
+        <p className="text-[9px] text-muted-foreground">Estimare automata: {estimate.estimatedValue} ({ESTIMATION_MODEL_LABELS[estimate.method as keyof typeof ESTIMATION_MODEL_LABELS] || estimate.method}) — {estimate.details}</p>
+      )}
     </div>
   );
 }
 
-function MeterReadingsHistory({ meterId }: { meterId: string }) {
+function MeterReadingsHistory({ meterId, enhanced }: { meterId: string; enhanced?: boolean }) {
   const { toast } = useToast();
   const { data: readings } = useQuery<MeterReading[]>({
     queryKey: ["/api/meter-readings", meterId],
@@ -1140,9 +1210,11 @@ function MeterReadingsHistory({ meterId }: { meterId: string }) {
         <TableHeader>
           <TableRow>
             <TableHead className="text-[9px] py-0.5 px-1">Data</TableHead>
+            {enhanced && <TableHead className="text-[9px] py-0.5 px-1">Tip</TableHead>}
             <TableHead className="text-[9px] py-0.5 px-1 text-right">Index</TableHead>
             <TableHead className="text-[9px] py-0.5 px-1 text-right">Consum</TableHead>
             <TableHead className="text-[9px] py-0.5 px-1 text-right">Acumulat</TableHead>
+            {enhanced && <TableHead className="text-[9px] py-0.5 px-1 w-6"></TableHead>}
             <TableHead className="text-[9px] py-0.5 px-1 w-6"></TableHead>
           </TableRow>
         </TableHeader>
@@ -1150,9 +1222,31 @@ function MeterReadingsHistory({ meterId }: { meterId: string }) {
           {readings.map(r => (
             <TableRow key={r.id} data-testid={`row-reading-${r.id}`}>
               <TableCell className="text-[9px] py-0.5 px-1">{r.readingDate}</TableCell>
+              {enhanced && (
+                <TableCell className="text-[9px] py-0.5 px-1">
+                  <Badge
+                    variant="outline"
+                    className={`text-[8px] py-0 px-1 ${r.readingType === "regularizat" ? "border-green-500 text-green-700 dark:text-green-400" : "border-amber-500 text-amber-700 dark:text-amber-400"}`}
+                    data-testid={`badge-reading-type-${r.id}`}
+                  >
+                    {READING_TYPE_LABELS[r.readingType as ReadingType] || r.readingType}
+                  </Badge>
+                </TableCell>
+              )}
               <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.readingValue}</TableCell>
               <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.consumption || "-"}</TableCell>
               <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.accumulatedConsumption || "-"}</TableCell>
+              {enhanced && (
+                <TableCell className="py-0.5 px-1">
+                  {r.readingPhotoPath ? (
+                    <a href={`/api/meter-readings/${r.id}/photo`} target="_blank" rel="noopener noreferrer" data-testid={`link-photo-${r.id}`}>
+                      <Camera className="w-3 h-3 text-primary cursor-pointer" />
+                    </a>
+                  ) : (
+                    <Camera className="w-3 h-3 text-muted-foreground/30" />
+                  )}
+                </TableCell>
+              )}
               <TableCell className="py-0.5 px-1">
                 <Button size="icon" variant="ghost" className="h-4 w-4" onClick={() => deleteReadingMutation.mutate(r.id)} data-testid={`button-delete-reading-${r.id}`}>
                   <Trash2 className="w-2 h-2 text-muted-foreground" />
@@ -1166,7 +1260,7 @@ function MeterReadingsHistory({ meterId }: { meterId: string }) {
   );
 }
 
-function CommonMetersList({ meters, label, associationId }: { meters: Meter[]; label: string; associationId: string }) {
+function CommonMetersList({ meters, label, associationId, hideReadings }: { meters: Meter[]; label: string; associationId: string; hideReadings?: boolean }) {
   const { toast } = useToast();
   const [expandedMeters, setExpandedMeters] = useState<Set<string>>(new Set());
 
@@ -1192,12 +1286,12 @@ function CommonMetersList({ meters, label, associationId }: { meters: Meter[]; l
   return (
     <div className="space-y-1">
       {meters.map(m => {
-        const isExpanded = expandedMeters.has(m.id);
+        const isExpanded = !hideReadings && expandedMeters.has(m.id);
         return (
           <div key={m.id} data-testid={`common-meter-${m.id}`}>
             <div className="flex items-center justify-between gap-1 text-[10px] py-0.5">
-              <div className="flex items-center gap-1 flex-1 min-w-0 cursor-pointer" onClick={() => toggleExpanded(m.id)} data-testid={`button-expand-meter-${m.id}`}>
-                {isExpanded ? <ChevronDown className="w-2.5 h-2.5 shrink-0" /> : <ChevronRight className="w-2.5 h-2.5 shrink-0" />}
+              <div className="flex items-center gap-1 flex-1 min-w-0 cursor-pointer" onClick={() => !hideReadings && toggleExpanded(m.id)} data-testid={`button-expand-meter-${m.id}`}>
+                {!hideReadings && (isExpanded ? <ChevronDown className="w-2.5 h-2.5 shrink-0" /> : <ChevronRight className="w-2.5 h-2.5 shrink-0" />)}
                 <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType}</Badge>
                 <span className="text-muted-foreground truncate">
                   <Hash className="w-2.5 h-2.5 inline" />{m.serialNumber} / {m.meterNumber}
@@ -1209,7 +1303,7 @@ function CommonMetersList({ meters, label, associationId }: { meters: Meter[]; l
                 <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
               </Button>
             </div>
-            {isExpanded && (
+            {isExpanded && !hideReadings && (
               <div className="ml-4 border-l-2 border-muted pl-2">
                 <MeterReadingForm meterId={m.id} associationId={associationId} />
                 <MeterReadingsHistory meterId={m.id} />
@@ -1218,6 +1312,143 @@ function CommonMetersList({ meters, label, associationId }: { meters: Meter[]; l
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function CitiriMeterItem({ meter, associationId }: { meter: Meter; associationId: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div data-testid={`citiri-meter-${meter.id}`}>
+      <div
+        className="flex items-center gap-1.5 text-[10px] py-1 cursor-pointer hover:bg-muted/30 rounded px-1 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+        data-testid={`button-expand-citiri-meter-${meter.id}`}
+      >
+        {isExpanded ? <ChevronDown className="w-3 h-3 shrink-0" /> : <ChevronRight className="w-3 h-3 shrink-0" />}
+        <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[meter.meterType as MeterType] || meter.meterType}</Badge>
+        <span className="text-muted-foreground">
+          <Hash className="w-2.5 h-2.5 inline" />{meter.serialNumber} / {meter.meterNumber}
+        </span>
+      </div>
+      {isExpanded && (
+        <div className="ml-5 border-l-2 border-muted pl-2 pb-2">
+          <MeterReadingForm meterId={meter.id} associationId={associationId} enhanced />
+          <MeterReadingsHistory meterId={meter.id} enhanced />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CitiriSubTab({ associationId, commonMeters, buildings, staircases, apartments }: {
+  associationId: string;
+  commonMeters: Meter[];
+  buildings: Building[];
+  staircases: Staircase[];
+  apartments: Apartment[];
+}) {
+  const assocMeters = commonMeters.filter(m => m.scopeType === "association");
+
+  return (
+    <div className="space-y-3">
+      {assocMeters.length > 0 && (
+        <Card data-testid="citiri-group-association">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-xs flex items-center gap-2">
+              <Gauge className="w-3.5 h-3.5 text-primary" />
+              Contoare Asociatie
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {assocMeters.map(m => (
+              <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {buildings.map(bld => {
+        const bldMeters = commonMeters.filter(m => m.scopeType === "building" && m.buildingId === bld.id);
+        const bldScs = staircases.filter(s => s.buildingId === bld.id);
+        const scMetersAll = bldScs.flatMap(sc => {
+          const scM = commonMeters.filter(m => m.scopeType === "staircase" && m.staircaseId === sc.id);
+          const scApts = apartments.filter(a => a.staircaseId === sc.id);
+          const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+          const flM = floors.flatMap(fl => commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl));
+          return [...scM, ...flM];
+        });
+        const allBldMeters = [...bldMeters, ...scMetersAll];
+        if (allBldMeters.length === 0) return null;
+
+        return (
+          <Card key={bld.id} data-testid={`citiri-group-building-${bld.id}`}>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5 text-primary" />
+                {bld.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2">
+              {bldMeters.length > 0 && (
+                <div>
+                  <p className="text-[9px] text-muted-foreground font-medium mb-0.5">Contoare bloc</p>
+                  {bldMeters.map(m => (
+                    <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
+                  ))}
+                </div>
+              )}
+
+              {bldScs.map(sc => {
+                const scM = commonMeters.filter(m => m.scopeType === "staircase" && m.staircaseId === sc.id);
+                const scApts = apartments.filter(a => a.staircaseId === sc.id);
+                const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+                const hasMeters = scM.length > 0 || floors.some(fl => commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl).length > 0);
+                if (!hasMeters) return null;
+
+                return (
+                  <div key={sc.id} className="border-l-2 border-primary/20 pl-3">
+                    <p className="text-[10px] font-medium flex items-center gap-1 mb-0.5">
+                      <ArrowUpDown className="w-3 h-3 text-primary" />
+                      {sc.name}
+                    </p>
+                    {scM.map(m => (
+                      <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
+                    ))}
+                    {floors.map(fl => {
+                      const flM = commonMeters.filter(m => m.scopeType === "floor" && m.staircaseId === sc.id && m.floor === fl);
+                      if (flM.length === 0) return null;
+                      return (
+                        <div key={fl} className="border-l-2 border-muted pl-2 ml-1 mt-1">
+                          <p className="text-[9px] font-medium text-muted-foreground mb-0.5">
+                            <Layers className="w-2.5 h-2.5 inline mr-0.5" />
+                            {fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}
+                          </p>
+                          {flM.map(m => (
+                            <CitiriMeterItem key={m.id} meter={m} associationId={associationId} />
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {commonMeters.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <Gauge className="w-10 h-10 text-muted-foreground/30 mb-2" />
+            <p className="text-sm text-muted-foreground">Nu exista contoare comune. Adaugati contoare din sub-tab-ul Structura.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <ConsumptionDifferencesPanel associationId={associationId} />
     </div>
   );
 }
@@ -1543,6 +1774,8 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
   staircases: Staircase[];
   apartments: Apartment[];
 }) {
+  const [meterSubTab, setMeterSubTab] = useState<"structura" | "citiri" | "estimare">("structura");
+
   const commonMetersUrl = `/api/common-meters?associationId=${associationId}`;
   const { data: commonMeters, isLoading } = useQuery<Meter[]>({
     queryKey: [commonMetersUrl],
@@ -1559,77 +1792,118 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
 
   return (
     <div className="space-y-3">
-      <Card data-testid="card-common-meters-association">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Gauge className="w-4 h-4 text-primary" />
-            Contor General Asociatie
-            <Badge variant="outline" className="text-[10px]">{assocMeters.length} contoare</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <CommonMetersList meters={assocMeters} label="Asociatie" associationId={associationId} />
-          <CommonMeterAddForm scopeType="association" associationId={associationId} />
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-1" data-testid="meter-sub-tabs">
+        <Button
+          variant={meterSubTab === "structura" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMeterSubTab("structura")}
+          data-testid="button-subtab-structura"
+        >
+          Structura
+        </Button>
+        <Button
+          variant={meterSubTab === "citiri" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMeterSubTab("citiri")}
+          data-testid="button-subtab-citiri"
+        >
+          Citiri
+        </Button>
+        <Button
+          variant={meterSubTab === "estimare" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setMeterSubTab("estimare")}
+          data-testid="button-subtab-estimare"
+        >
+          Model Estimare
+        </Button>
+      </div>
 
-      {buildings.map(bld => {
-        const bldM = buildingMeters(bld.id);
-        const bldScs = staircases.filter(s => s.buildingId === bld.id);
-
-        return (
-          <Card key={bld.id} data-testid={`card-common-meters-building-${bld.id}`}>
+      {meterSubTab === "structura" && (
+        <div className="space-y-3">
+          <Card data-testid="card-common-meters-association">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-primary" />
-                {bld.name}
-                <Badge variant="outline" className="text-[10px]">{bldM.length} contoare bloc</Badge>
+                <Gauge className="w-4 h-4 text-primary" />
+                Contor General Asociatie
+                <Badge variant="outline" className="text-[10px]">{assocMeters.length} contoare</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 space-y-3">
-              <CommonMetersList meters={bldM} label={bld.name} associationId={associationId} />
-              <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
-
-              {bldScs.map(sc => {
-                const scM = staircaseMeters(sc.id);
-                const scApts = apartments.filter(a => a.staircaseId === sc.id);
-                const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
-
-                return (
-                  <div key={sc.id} className="border-l-2 border-primary/20 pl-3 space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs font-medium">{sc.name}</span>
-                      <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
-                    </div>
-                    <CommonMetersList meters={scM} label={sc.name} associationId={associationId} />
-                    <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
-
-                    {floors.map(fl => {
-                      const flM = floorMeters(sc.id, fl);
-                      return (
-                        <div key={fl} className="border-l-2 border-muted pl-3 space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <Layers className="w-3 h-3 text-muted-foreground" />
-                            <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
-                            <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
-                          </div>
-                          <CommonMetersList meters={flM} label={`Etaj ${fl}`} associationId={associationId} />
-                          <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+            <CardContent className="pt-0">
+              <CommonMetersList meters={assocMeters} label="Asociatie" associationId={associationId} hideReadings />
+              <CommonMeterAddForm scopeType="association" associationId={associationId} />
             </CardContent>
           </Card>
-        );
-      })}
 
-      <EstimationConfigPanel associationId={associationId} />
+          {buildings.map(bld => {
+            const bldM = buildingMeters(bld.id);
+            const bldScs = staircases.filter(s => s.buildingId === bld.id);
 
-      <ConsumptionDifferencesPanel associationId={associationId} />
+            return (
+              <Card key={bld.id} data-testid={`card-common-meters-building-${bld.id}`}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    {bld.name}
+                    <Badge variant="outline" className="text-[10px]">{bldM.length} contoare bloc</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-3">
+                  <CommonMetersList meters={bldM} label={bld.name} associationId={associationId} hideReadings />
+                  <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
+
+                  {bldScs.map(sc => {
+                    const scM = staircaseMeters(sc.id);
+                    const scApts = apartments.filter(a => a.staircaseId === sc.id);
+                    const floors = Array.from(new Set(scApts.map(a => a.floor))).sort((a, b) => b - a);
+
+                    return (
+                      <div key={sc.id} className="border-l-2 border-primary/20 pl-3 space-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <ArrowUpDown className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-xs font-medium">{sc.name}</span>
+                          <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
+                        </div>
+                        <CommonMetersList meters={scM} label={sc.name} associationId={associationId} hideReadings />
+                        <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
+
+                        {floors.map(fl => {
+                          const flM = floorMeters(sc.id, fl);
+                          return (
+                            <div key={fl} className="border-l-2 border-muted pl-3 space-y-1">
+                              <div className="flex items-center gap-1.5">
+                                <Layers className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
+                                <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
+                              </div>
+                              <CommonMetersList meters={flM} label={`Etaj ${fl}`} associationId={associationId} hideReadings />
+                              <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {meterSubTab === "citiri" && (
+        <CitiriSubTab
+          associationId={associationId}
+          commonMeters={commonMeters || []}
+          buildings={buildings}
+          staircases={staircases}
+          apartments={apartments}
+        />
+      )}
+
+      {meterSubTab === "estimare" && (
+        <EstimationConfigPanel associationId={associationId} />
+      )}
     </div>
   );
 }
