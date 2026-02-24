@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
 import type { Federation } from "@shared/schema";
-import { AddressFields, composeAddress } from "@/components/address-fields";
+import { AddressFields as AddressFieldsComponent, composeAddress } from "@/components/address-fields";
 import {
   ChevronRight, ChevronLeft, Building2, ArrowUpDown, Layers, Home, Plus, Trash2, Loader2, Check
 } from "lucide-react";
@@ -360,7 +360,7 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
               />
             </div>
 
-            <AddressFields
+            <AddressFieldsComponent
               values={addr}
               onChange={updateAddr}
               onBatchChange={batchUpdateAddr}
