@@ -464,6 +464,7 @@ export async function registerRoutes(
         apartmentId,
         name: room.name.trim(),
         surface: room.surface ? String(room.surface) : null,
+        terraceSurface: room.terraceSurface ? String(room.terraceSurface) : null,
         sortOrder: i,
       });
       created.push(r);

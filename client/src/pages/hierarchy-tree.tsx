@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, ChevronDown, ChevronRight, Plus, ExternalLink, FileSpreadsheet, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
 import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
@@ -210,6 +210,40 @@ export default function HierarchyTree() {
   };
 
   const hasActivePanel = addDialog.open || batchDialog.open || editDialog.open || wizardOpen;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [splitPercent, setSplitPercent] = useState(45);
+  const isDragging = useRef(false);
+  const dragCleanup = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (dragCleanup.current) dragCleanup.current();
+    };
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const pct = ((ev.clientY - rect.top) / rect.height) * 100;
+      setSplitPercent(Math.min(Math.max(pct, 15), 85));
+    };
+    const onMouseUp = () => {
+      isDragging.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      dragCleanup.current = null;
+    };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    dragCleanup.current = () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   const getAssocStats = (assocId: string): StatBadge[] => {
     const assocBlds = buildings?.filter(b => b.associationId === assocId) || [];
@@ -459,13 +493,21 @@ export default function HierarchyTree() {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" ref={containerRef}>
       {hasActivePanel ? (
         <>
-          <div className="flex flex-col min-h-0" style={{ height: "45%" }}>
+          <div className="flex flex-col min-h-0" style={{ height: `${splitPercent}%` }}>
             {treeContent}
           </div>
-          <div className="border-t-2 border-primary/20 flex flex-col min-h-0" style={{ height: "55%" }} data-testid="inline-panel">
+          <div
+            className="shrink-0 flex items-center justify-center cursor-row-resize group hover:bg-primary/10 transition-colors select-none"
+            style={{ height: "6px" }}
+            onMouseDown={handleMouseDown}
+            data-testid="split-divider"
+          >
+            <div className="w-12 h-1 rounded-full bg-border group-hover:bg-primary/40 transition-colors" />
+          </div>
+          <div className="flex flex-col min-h-0" style={{ height: `calc(${100 - splitPercent}% - 6px)` }} data-testid="inline-panel">
             {panelContent}
           </div>
         </>

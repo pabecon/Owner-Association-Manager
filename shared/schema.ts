@@ -96,6 +96,7 @@ export const unitRooms = pgTable("unit_rooms", {
   apartmentId: varchar("apartment_id").notNull().references(() => apartments.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   surface: numeric("surface", { precision: 8, scale: 2 }),
+  terraceSurface: numeric("terrace_surface", { precision: 8, scale: 2 }),
   sortOrder: integer("sort_order").default(0),
 });
 

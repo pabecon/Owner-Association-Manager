@@ -32,7 +32,7 @@ type UnitTab = "general" | "camere" | "contoare" | "documente" | "plati" | "anun
 
 const TABS: { key: UnitTab; label: string; icon: any }[] = [
   { key: "general", label: "Informatii", icon: Ruler },
-  { key: "camere", label: "Camere", icon: DoorOpen },
+  { key: "camere", label: "Inf. Imobiliara", icon: DoorOpen },
   { key: "contoare", label: "Contoare", icon: Layers },
   { key: "documente", label: "Documente", icon: FileText },
   { key: "plati", label: "Plati", icon: CreditCard },
@@ -727,21 +727,34 @@ export default function UnitDetail() {
   );
 }
 
+interface RoomTypeItem {
+  id: string;
+  nume: string;
+  descriere?: string;
+}
+
 function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: UnitRoom[] }) {
   const { toast } = useToast();
-  const [editingRooms, setEditingRooms] = useState<{ name: string; surface: string }[]>([]);
+  const [editingRooms, setEditingRooms] = useState<{ name: string; surface: string; terraceSurface: string }[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+
+  const { data: roomTypes } = useQuery<RoomTypeItem[]>({
+    queryKey: ["/api/liste", "tip-camera"],
+  });
 
   useEffect(() => {
     if (initialRooms) {
       setEditingRooms(initialRooms.map(r => ({
         name: r.name,
         surface: r.surface?.toString() || "",
+        terraceSurface: r.terraceSurface?.toString() || "",
       })));
     }
   }, [initialRooms]);
 
   const surfaceSum = editingRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+  const terraceSum = editingRooms.reduce((sum, r) => sum + (parseFloat(r.terraceSurface) || 0), 0);
+  const totalBuiltSurface = surfaceSum + terraceSum;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -751,12 +764,16 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
         rooms: validRooms.map((r, i) => ({
           name: r.name,
           surface: r.surface ? parseFloat(r.surface) : null,
+          terraceSurface: r.terraceSurface ? parseFloat(r.terraceSurface) : null,
           sortOrder: i,
         })),
       });
-      const totalSurface = validRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+      const totalUseful = validRooms.reduce((sum, r) => sum + (parseFloat(r.surface) || 0), 0);
+      const totalTerrace = validRooms.reduce((sum, r) => sum + (parseFloat(r.terraceSurface) || 0), 0);
+      const totalBuilt = totalUseful + totalTerrace;
       await apiRequest("PATCH", `/api/apartments/${unitId}`, {
-        surface: totalSurface > 0 ? totalSurface.toFixed(2) : null,
+        surface: totalUseful > 0 ? totalUseful.toFixed(2) : null,
+        builtSurface: totalBuilt > 0 ? totalBuilt.toFixed(2) : null,
         rooms: validRooms.length || null,
       });
     },
@@ -773,7 +790,7 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
   });
 
   const addRoom = () => {
-    setEditingRooms(prev => [...prev, { name: `Camera ${prev.length + 1}`, surface: "" }]);
+    setEditingRooms(prev => [...prev, { name: "", surface: "", terraceSurface: "" }]);
     if (!isEditing) setIsEditing(true);
   };
 
@@ -781,7 +798,7 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
     setEditingRooms(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const updateRoom = (idx: number, field: "name" | "surface", value: string) => {
+  const updateRoom = (idx: number, field: "name" | "surface" | "terraceSurface", value: string) => {
     setEditingRooms(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
   };
 
@@ -789,9 +806,12 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
     setEditingRooms(initialRooms.map(r => ({
       name: r.name,
       surface: r.surface?.toString() || "",
+      terraceSurface: r.terraceSurface?.toString() || "",
     })));
     setIsEditing(false);
   };
+
+  const roomTypeOptions = roomTypes?.map(rt => rt.nume) || [];
 
   return (
     <div className="space-y-2 max-w-4xl">
@@ -820,24 +840,28 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
         <CardContent className="p-3 space-y-2">
           {editingRooms.length > 0 ? (
             <>
-              <div className="grid grid-cols-[auto_1fr_120px_auto] gap-2 text-[10px] text-muted-foreground font-medium px-0.5">
+              <div className="grid grid-cols-[auto_1fr_100px_100px_auto] gap-2 text-[10px] text-muted-foreground font-medium px-0.5">
                 <span className="w-5">#</span>
-                <span>Nume camera</span>
-                <span>Suprafata (m²)</span>
+                <span>Tip camera</span>
+                <span>Sup. utila (m²)</span>
+                <span>Terasa (m²)</span>
                 <span className="w-6"></span>
               </div>
               {editingRooms.map((room, i) => (
-                <div key={i} className="grid grid-cols-[auto_1fr_120px_auto] gap-2 items-center" data-testid={`room-row-${i}`}>
+                <div key={i} className="grid grid-cols-[auto_1fr_100px_100px_auto] gap-2 items-center" data-testid={`room-row-${i}`}>
                   <span className="text-[10px] text-muted-foreground w-5 text-center">{i + 1}</span>
                   {isEditing ? (
                     <>
-                      <Input
-                        value={room.name}
-                        onChange={e => updateRoom(i, "name", e.target.value)}
-                        placeholder={`Camera ${i + 1}`}
-                        className="h-7 text-xs"
-                        data-testid={`input-room-name-${i}`}
-                      />
+                      <Select value={room.name} onValueChange={val => updateRoom(i, "name", val)}>
+                        <SelectTrigger className="h-7 text-xs" data-testid={`select-room-type-${i}`}>
+                          <SelectValue placeholder="Selecteaza tip..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roomTypeOptions.map(opt => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         type="number"
                         step="0.01"
@@ -847,6 +871,15 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
                         className="h-7 text-xs"
                         data-testid={`input-room-surface-${i}`}
                       />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={room.terraceSurface}
+                        onChange={e => updateRoom(i, "terraceSurface", e.target.value)}
+                        placeholder="m²"
+                        className="h-7 text-xs"
+                        data-testid={`input-room-terrace-${i}`}
+                      />
                       <Button size="icon" variant="ghost" className="w-6 h-6 text-destructive" onClick={() => removeRoom(i)} data-testid={`button-remove-room-${i}`}>
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -855,14 +888,25 @@ function UnitRoomsTab({ unitId, rooms: initialRooms }: { unitId: string; rooms: 
                     <>
                       <span className="text-xs font-medium truncate">{room.name}</span>
                       <span className="text-xs text-muted-foreground">{room.surface ? `${room.surface} m²` : "-"}</span>
+                      <span className="text-xs text-muted-foreground">{room.terraceSurface ? `${room.terraceSurface} m²` : "-"}</span>
                       <span className="w-6" />
                     </>
                   )}
                 </div>
               ))}
-              <div className="border-t pt-1.5 mt-1.5 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Suprafata utila totala</span>
-                <span className="text-xs font-semibold" data-testid="text-room-surface-total">{surfaceSum > 0 ? `${surfaceSum.toFixed(2)} m²` : "-"}</span>
+              <div className="border-t pt-1.5 mt-1.5 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Suprafata utila totala</span>
+                  <span className="text-xs font-semibold" data-testid="text-room-surface-total">{surfaceSum > 0 ? `${surfaceSum.toFixed(2)} m²` : "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Suprafata terasa totala</span>
+                  <span className="text-xs font-semibold" data-testid="text-terrace-surface-total">{terraceSum > 0 ? `${terraceSum.toFixed(2)} m²` : "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground font-semibold">Suprafata construita totala</span>
+                  <span className="text-xs font-bold" data-testid="text-built-surface-total">{totalBuiltSurface > 0 ? `${totalBuiltSurface.toFixed(2)} m²` : "-"}</span>
+                </div>
               </div>
             </>
           ) : (
