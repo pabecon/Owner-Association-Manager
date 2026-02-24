@@ -19,10 +19,10 @@ import {
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
   ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink,
   Gauge, DoorOpen, Calendar, Hash, Upload, Download, File, Image,
-  BarChart3, Eye, EyeOff
+  BarChart3, Eye, EyeOff, Settings, Pencil, Save, X
 } from "lucide-react";
-import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, MeterReading, Document } from "@shared/schema";
-import { METER_TYPE_LABELS, meterTypeEnum, METER_SCOPE_LABELS } from "@shared/schema";
+import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, MeterReading, EstimationConfig, Document } from "@shared/schema";
+import { METER_TYPE_LABELS, meterTypeEnum, METER_SCOPE_LABELS, ESTIMATION_MODEL_LABELS, estimationModelEnum } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1323,6 +1323,220 @@ function ConsumptionDifferencesPanel({ associationId }: { associationId: string 
   );
 }
 
+function EstimationConfigPanel({ associationId }: { associationId: string }) {
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    meterType: "water",
+    modelType: "model_1",
+    startDate: "",
+    endDate: "",
+    percentIncrease: "0",
+    defaultDailyConsumption: "",
+  });
+
+  const { data: configs, isLoading } = useQuery<EstimationConfig[]>({
+    queryKey: [`/api/estimation-configs?associationId=${associationId}`],
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/estimation-configs", {
+        associationId,
+        meterType: formData.meterType,
+        modelType: formData.modelType,
+        startDate: formData.startDate,
+        endDate: formData.endDate || null,
+        percentIncrease: formData.modelType === "model_2" ? formData.percentIncrease : "0",
+        defaultDailyConsumption: formData.modelType === "model_3" ? formData.defaultDailyConsumption : null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/estimation-configs") });
+      toast({ title: "Model de estimare creat" });
+      setShowForm(false);
+      resetForm();
+    },
+    onError: (error: Error) => { toast({ title: "Eroare", description: error.message, variant: "destructive" }); },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("PATCH", `/api/estimation-configs/${id}`, {
+        meterType: formData.meterType,
+        modelType: formData.modelType,
+        startDate: formData.startDate,
+        endDate: formData.endDate || null,
+        percentIncrease: formData.modelType === "model_2" ? formData.percentIncrease : "0",
+        defaultDailyConsumption: formData.modelType === "model_3" ? formData.defaultDailyConsumption : null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/estimation-configs") });
+      toast({ title: "Model de estimare actualizat" });
+      setEditingId(null);
+      resetForm();
+    },
+    onError: (error: Error) => { toast({ title: "Eroare", description: error.message, variant: "destructive" }); },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/estimation-configs/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/estimation-configs") });
+      toast({ title: "Model de estimare sters" });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({ meterType: "water", modelType: "model_1", startDate: "", endDate: "", percentIncrease: "0", defaultDailyConsumption: "" });
+  };
+
+  const startEdit = (cfg: EstimationConfig) => {
+    setEditingId(cfg.id);
+    setShowForm(false);
+    setFormData({
+      meterType: cfg.meterType,
+      modelType: cfg.modelType,
+      startDate: cfg.startDate,
+      endDate: cfg.endDate || "",
+      percentIncrease: cfg.percentIncrease?.toString() || "0",
+      defaultDailyConsumption: cfg.defaultDailyConsumption?.toString() || "",
+    });
+  };
+
+  const renderForm = (isEdit: boolean) => (
+    <div className="border rounded-md p-3 bg-muted/30 space-y-2" data-testid={isEdit ? "estimation-edit-form" : "estimation-add-form"}>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Tip contor</label>
+          <Select value={formData.meterType} onValueChange={(v) => setFormData({ ...formData, meterType: v })}>
+            <SelectTrigger className="h-7 text-[11px]" data-testid="select-estimation-meter-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {meterTypeEnum.map(t => (
+                <SelectItem key={t} value={t}>{METER_TYPE_LABELS[t]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Model estimare</label>
+          <Select value={formData.modelType} onValueChange={(v) => setFormData({ ...formData, modelType: v })}>
+            <SelectTrigger className="h-7 text-[11px]" data-testid="select-estimation-model-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {estimationModelEnum.map(m => (
+                <SelectItem key={m} value={m}>{ESTIMATION_MODEL_LABELS[m]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Data inceput</label>
+          <Input type="date" className="h-7 text-[11px]" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} data-testid="input-estimation-start-date" />
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Data sfarsit (optional)</label>
+          <Input type="date" className="h-7 text-[11px]" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} data-testid="input-estimation-end-date" />
+        </div>
+      </div>
+      {formData.modelType === "model_2" && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Procent majorare (%)</label>
+          <Input type="number" step="0.01" className="h-7 text-[11px] w-32" value={formData.percentIncrease} onChange={(e) => setFormData({ ...formData, percentIncrease: e.target.value })} data-testid="input-estimation-percent" />
+        </div>
+      )}
+      {formData.modelType === "model_3" && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Consum mediu zilnic</label>
+          <Input type="number" step="0.0001" className="h-7 text-[11px] w-32" value={formData.defaultDailyConsumption} onChange={(e) => setFormData({ ...formData, defaultDailyConsumption: e.target.value })} data-testid="input-estimation-daily-consumption" />
+        </div>
+      )}
+      <div className="text-[9px] text-muted-foreground bg-muted/50 rounded p-1.5">
+        {formData.modelType === "model_1" && "Calculeaza consumul mediu zilnic din istoricul individual al contorului (minim 10 citiri regularizate). Se inmulteste cu zilele trecute de la ultima citire."}
+        {formData.modelType === "model_2" && "Calculeaza media consumului zilnic al apartamentelor similare (acelasi numar de camere) din asociatie, plus procentul de majorare configurat."}
+        {formData.modelType === "model_3" && "Aplica un consum mediu zilnic fix, configurat manual, pentru toate apartamentele."}
+      </div>
+      <div className="flex justify-end gap-1">
+        <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => { isEdit ? setEditingId(null) : setShowForm(false); resetForm(); }}>
+          <X className="w-3 h-3 mr-0.5" />Anuleaza
+        </Button>
+        <Button size="sm" className="h-6 px-2 text-[10px]"
+          disabled={!formData.startDate || (!formData.defaultDailyConsumption && formData.modelType === "model_3") || (isEdit ? updateMutation.isPending : createMutation.isPending)}
+          onClick={() => isEdit && editingId ? updateMutation.mutate(editingId) : createMutation.mutate()}
+          data-testid="button-save-estimation-config">
+          <Save className="w-3 h-3 mr-0.5" />{(isEdit ? updateMutation.isPending : createMutation.isPending) ? "..." : "Salveaza"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Card data-testid="card-estimation-configs">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Settings className="w-4 h-4 text-primary" />
+            Modele de Estimare Consum
+          </CardTitle>
+          {!showForm && !editingId && (
+            <Button variant="outline" size="sm" className="h-6 px-2 text-[10px]" onClick={() => { setShowForm(true); resetForm(); }} data-testid="button-add-estimation-config">
+              <Plus className="w-3 h-3 mr-0.5" />Adauga Model
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-2">
+        {isLoading && <Skeleton className="h-12" />}
+
+        {configs && configs.length > 0 && (
+          <div className="space-y-1">
+            {configs.map(cfg => (
+              <div key={cfg.id} data-testid={`estimation-config-${cfg.id}`}>
+                {editingId === cfg.id ? renderForm(true) : (
+                  <div className="flex items-center justify-between border rounded-md px-2 py-1.5">
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex items-center gap-2 text-[11px]">
+                        <Badge variant="outline" className="text-[9px]">{METER_TYPE_LABELS[cfg.meterType as MeterType] || cfg.meterType}</Badge>
+                        <span className="font-medium">{ESTIMATION_MODEL_LABELS[cfg.modelType as keyof typeof ESTIMATION_MODEL_LABELS] || cfg.modelType}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {cfg.startDate} - {cfg.endDate || "indefinit"}
+                        {cfg.modelType === "model_2" && cfg.percentIncrease && ` | +${cfg.percentIncrease}%`}
+                        {cfg.modelType === "model_3" && cfg.defaultDailyConsumption && ` | ${cfg.defaultDailyConsumption}/zi`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <Button size="icon" variant="ghost" className="w-5 h-5" onClick={() => startEdit(cfg)} data-testid={`button-edit-estimation-${cfg.id}`}>
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="w-5 h-5 text-destructive" onClick={() => deleteMutation.mutate(cfg.id)} data-testid={`button-delete-estimation-${cfg.id}`}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {configs && configs.length === 0 && !showForm && (
+          <p className="text-[10px] text-muted-foreground text-center py-2">Nu exista modele de estimare configurate. Asociatia trebuie sa aleaga un model pentru a permite citiri estimate.</p>
+        )}
+
+        {showForm && renderForm(false)}
+      </CardContent>
+    </Card>
+  );
+}
+
 function CommonMetersSection({ associationId, buildings, staircases, apartments }: {
   associationId: string;
   buildings: Building[];
@@ -1412,6 +1626,8 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
           </Card>
         );
       })}
+
+      <EstimationConfigPanel associationId={associationId} />
 
       <ConsumptionDifferencesPanel associationId={associationId} />
     </div>

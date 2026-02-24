@@ -7,7 +7,7 @@ import {
   insertBuildingSchema, insertApartmentSchema, insertExpenseSchema,
   insertPaymentSchema, insertAnnouncementSchema, insertUserRoleSchema,
   insertFederationSchema, insertAssociationSchema, insertStaircaseSchema,
-  insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema,
+  insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema, insertEstimationConfigSchema,
   insertFundSchema, insertFundCategorySchema,
   insertContractSchema, insertContractTemplateSchema,
   insertPlatformUserSchema, insertUserActivityLogSchema,
@@ -662,6 +662,51 @@ export async function registerRoutes(
     const result = await storage.getConsumptionDifferences(
       associationId as string, meterType as string, date as string | undefined
     );
+    res.json(result);
+  });
+
+  // Estimation Configs
+  app.get("/api/estimation-configs", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { associationId } = req.query;
+    if (!associationId) return res.status(400).json({ message: "associationId este obligatoriu" });
+    const configs = await storage.getEstimationConfigs(associationId as string);
+    res.json(configs);
+  });
+
+  app.get("/api/estimation-configs/active", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { associationId, meterType, date } = req.query;
+    if (!associationId || !meterType) return res.status(400).json({ message: "associationId si meterType sunt obligatorii" });
+    const config = await storage.getActiveEstimationConfig(
+      associationId as string, meterType as string, (date as string) || new Date().toISOString().split("T")[0]
+    );
+    res.json(config || null);
+  });
+
+  app.post("/api/estimation-configs", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertEstimationConfigSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const config = await storage.createEstimationConfig(parsed.data);
+    res.json(config);
+  });
+
+  app.patch("/api/estimation-configs/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    const config = await storage.getEstimationConfig(req.params.id as string);
+    if (!config) return res.status(404).json({ message: "Configuratia nu a fost gasita" });
+    const updated = await storage.updateEstimationConfig(req.params.id as string, req.body);
+    res.json(updated);
+  });
+
+  app.delete("/api/estimation-configs/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
+    const config = await storage.getEstimationConfig(req.params.id as string);
+    if (!config) return res.status(404).json({ message: "Configuratia nu a fost gasita" });
+    await storage.deleteEstimationConfig(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  app.get("/api/estimate-reading", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { meterId, readingDate } = req.query;
+    if (!meterId || !readingDate) return res.status(400).json({ message: "meterId si readingDate sunt obligatorii" });
+    const result = await storage.calculateEstimatedReading(meterId as string, readingDate as string);
     res.json(result);
   });
 

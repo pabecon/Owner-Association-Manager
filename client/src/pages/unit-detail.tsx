@@ -18,7 +18,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ro } from "date-fns/locale";
-import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type MeterReading, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
+import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type MeterReading, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum, READING_TYPE_LABELS, readingTypeEnum, type ReadingType, ESTIMATION_MODEL_LABELS } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
@@ -1286,7 +1286,46 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
   const { toast } = useToast();
   const [readingDate, setReadingDate] = useState("");
   const [readingValue, setReadingValue] = useState("");
+  const [readingType, setReadingType] = useState<string>("regularizat");
   const [dateOpen, setDateOpen] = useState(false);
+  const [estimateInfo, setEstimateInfo] = useState<{ estimatedValue: number; method: string; details: string } | null>(null);
+  const [estimateLoading, setEstimateLoading] = useState(false);
+
+  const fetchEstimate = async (date: string) => {
+    if (!date || readingType !== "estimat") return;
+    setEstimateLoading(true);
+    try {
+      const res = await fetch(`/api/estimate-reading?meterId=${meterId}&readingDate=${date}`);
+      const data = await res.json();
+      if (data && data.estimatedValue != null) {
+        setEstimateInfo(data);
+        setReadingValue(String(data.estimatedValue));
+      } else {
+        setEstimateInfo(null);
+        toast({ title: "Nu s-a putut calcula estimarea", description: "Verificati daca asociatia are un model de estimare configurat pentru acest tip de contor.", variant: "destructive" });
+      }
+    } catch {
+      setEstimateInfo(null);
+    }
+    setEstimateLoading(false);
+  };
+
+  const handleDateChange = (date: string) => {
+    setReadingDate(date);
+    if (readingType === "estimat" && date) {
+      fetchEstimate(date);
+    }
+  };
+
+  const handleTypeChange = (type: string) => {
+    setReadingType(type);
+    setEstimateInfo(null);
+    if (type === "estimat" && readingDate) {
+      fetchEstimate(readingDate);
+    } else {
+      setReadingValue("");
+    }
+  };
 
   const addReadingMutation = useMutation({
     mutationFn: async () => {
@@ -1294,6 +1333,7 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
         meterId,
         readingDate,
         readingValue,
+        readingType,
       });
     },
     onSuccess: () => {
@@ -1312,8 +1352,21 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
   return (
     <div className="border rounded-md p-2 bg-muted/30 space-y-2" data-testid={`reading-form-${meterId}`}>
       <div className="text-[10px] font-medium text-muted-foreground">Adauga citire contor</div>
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end gap-2 flex-wrap">
+        <div className="w-28">
+          <label className="text-[9px] text-muted-foreground block mb-0.5">Tip citire</label>
+          <Select value={readingType} onValueChange={handleTypeChange}>
+            <SelectTrigger className="h-7 text-[11px]" data-testid={`select-reading-type-${meterId}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {readingTypeEnum.map(t => (
+                <SelectItem key={t} value={t}>{READING_TYPE_LABELS[t]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 min-w-[120px]">
           <label className="text-[9px] text-muted-foreground block mb-0.5">Data citirii</label>
           <Popover open={dateOpen} onOpenChange={setDateOpen}>
             <PopoverTrigger asChild>
@@ -1335,7 +1388,7 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
                     const y = date.getFullYear();
                     const m = String(date.getMonth() + 1).padStart(2, "0");
                     const d = String(date.getDate()).padStart(2, "0");
-                    setReadingDate(`${y}-${m}-${d}`);
+                    handleDateChange(`${y}-${m}-${d}`);
                   }
                   setDateOpen(false);
                 }}
@@ -1345,7 +1398,7 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
             </PopoverContent>
           </Popover>
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-[100px]">
           <label className="text-[9px] text-muted-foreground block mb-0.5">Valoare index</label>
           <Input
             type="number"
@@ -1354,6 +1407,7 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
             placeholder="ex: 1234.567"
             value={readingValue}
             onChange={(e) => setReadingValue(e.target.value)}
+            disabled={readingType === "estimat" && estimateLoading}
             data-testid={`input-reading-value-${meterId}`}
           />
         </div>
@@ -1376,6 +1430,12 @@ function MeterReadingInlineForm({ meterId, meter, onClose }: { meterId: string; 
           <X className="w-3 h-3" />
         </Button>
       </div>
+      {estimateInfo && (
+        <div className="text-[9px] text-muted-foreground bg-primary/5 rounded p-1.5 border border-primary/20" data-testid={`estimate-info-${meterId}`}>
+          <span className="font-medium text-primary">{ESTIMATION_MODEL_LABELS[estimateInfo.method as keyof typeof ESTIMATION_MODEL_LABELS] || estimateInfo.method}</span>
+          <br />{estimateInfo.details}
+        </div>
+      )}
     </div>
   );
 }
@@ -1397,28 +1457,35 @@ function MeterReadingHistory({ meterId }: { meterId: string }) {
   return (
     <div className="border rounded-md p-2 bg-muted/20 space-y-1" data-testid={`history-panel-${meterId}`}>
       <div className="text-[10px] font-medium text-muted-foreground mb-1">Istoric citiri</div>
-      <div className="grid grid-cols-[100px_90px_90px_90px] gap-1 text-[9px] text-muted-foreground font-medium border-b pb-0.5">
+      <div className="grid grid-cols-[100px_70px_90px_90px_90px] gap-1 text-[9px] text-muted-foreground font-medium border-b pb-0.5">
         <span>Data</span>
+        <span>Tip</span>
         <span className="text-right">Index</span>
         <span className="text-right">Consum</span>
         <span className="text-right">Total acum.</span>
       </div>
-      {readings.map((r) => (
-        <div
-          key={r.id}
-          className="grid grid-cols-[100px_90px_90px_90px] gap-1 text-[11px] items-center py-0.5 border-b border-muted last:border-0"
-          data-testid={`history-row-${r.id}`}
-        >
-          <span className="text-muted-foreground">{r.readingDate ? format(new Date(r.readingDate), "dd.MM.yyyy") : "-"}</span>
-          <span className="text-right font-medium tabular-nums">{Number(r.readingValue).toFixed(3)}</span>
-          <span className="text-right tabular-nums text-primary font-medium">
-            {r.consumption != null ? Number(r.consumption).toFixed(3) : "-"}
-          </span>
-          <span className="text-right tabular-nums text-muted-foreground">
-            {r.accumulatedConsumption != null ? Number(r.accumulatedConsumption).toFixed(3) : "-"}
-          </span>
-        </div>
-      ))}
+      {readings.map((r) => {
+        const isEstimat = (r as any).readingType === "estimat";
+        return (
+          <div
+            key={r.id}
+            className={`grid grid-cols-[100px_70px_90px_90px_90px] gap-1 text-[11px] items-center py-0.5 border-b border-muted last:border-0 ${isEstimat ? "bg-amber-50 dark:bg-amber-950/20" : ""}`}
+            data-testid={`history-row-${r.id}`}
+          >
+            <span className="text-muted-foreground">{r.readingDate ? format(new Date(r.readingDate), "dd.MM.yyyy") : "-"}</span>
+            <span className={`text-[9px] font-medium ${isEstimat ? "text-amber-600" : "text-green-600"}`}>
+              {READING_TYPE_LABELS[(r as any).readingType as ReadingType] || "Reg."}
+            </span>
+            <span className="text-right font-medium tabular-nums">{Number(r.readingValue).toFixed(3)}</span>
+            <span className="text-right tabular-nums text-primary font-medium">
+              {r.consumption != null ? Number(r.consumption).toFixed(3) : "-"}
+            </span>
+            <span className="text-right tabular-nums text-muted-foreground">
+              {r.accumulatedConsumption != null ? Number(r.accumulatedConsumption).toFixed(3) : "-"}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

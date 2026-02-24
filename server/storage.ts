@@ -12,6 +12,7 @@ import {
   type UnitRoom, type InsertUnitRoom,
   type Meter, type InsertMeter,
   type MeterReading, type InsertMeterReading,
+  type EstimationConfig, type InsertEstimationConfig,
   type Fund, type InsertFund,
   type FundCategory, type InsertFundCategory,
   type Contract, type InsertContract,
@@ -19,7 +20,7 @@ import {
   type ProformaInvoice, type InsertProformaInvoice,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
-  meters, meterReadings, funds, fundCategories, contracts, contractTemplates, proformaInvoices,
+  meters, meterReadings, estimationConfigs, funds, fundCategories, contracts, contractTemplates, proformaInvoices,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
@@ -106,6 +107,14 @@ export interface IStorage {
   deleteMeterReading(id: string): Promise<void>;
   getMetersWithLatestReading(scope: { associationId: string; scopeType?: string; buildingId?: string; staircaseId?: string }): Promise<Array<Meter & { latestReading?: MeterReading }>>;
   getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any>;
+
+  getEstimationConfigs(associationId: string): Promise<EstimationConfig[]>;
+  getEstimationConfig(id: string): Promise<EstimationConfig | undefined>;
+  getActiveEstimationConfig(associationId: string, meterType: string, date: string): Promise<EstimationConfig | undefined>;
+  createEstimationConfig(data: InsertEstimationConfig): Promise<EstimationConfig>;
+  updateEstimationConfig(id: string, data: Partial<InsertEstimationConfig>): Promise<EstimationConfig | undefined>;
+  deleteEstimationConfig(id: string): Promise<void>;
+  calculateEstimatedReading(meterId: string, readingDate: string): Promise<{ estimatedValue: number; method: string; details: string } | null>;
 
   getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]>;
   getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]>;
@@ -607,6 +616,166 @@ export class DatabaseStorage implements IStorage {
     result.exteriorCommonConsumption = assocTotalConsumption > 0 ? Math.max(0, assocTotalConsumption - buildingsTotalConsumption) : 0;
     
     return result;
+  }
+
+  async getEstimationConfigs(associationId: string): Promise<EstimationConfig[]> {
+    return db.select().from(estimationConfigs)
+      .where(eq(estimationConfigs.associationId, associationId))
+      .orderBy(desc(estimationConfigs.createdAt));
+  }
+
+  async getEstimationConfig(id: string): Promise<EstimationConfig | undefined> {
+    const [config] = await db.select().from(estimationConfigs).where(eq(estimationConfigs.id, id));
+    return config;
+  }
+
+  async getActiveEstimationConfig(associationId: string, meterType: string, date: string): Promise<EstimationConfig | undefined> {
+    const configs = await db.select().from(estimationConfigs)
+      .where(and(
+        eq(estimationConfigs.associationId, associationId),
+        eq(estimationConfigs.meterType, meterType),
+        sql`${estimationConfigs.startDate} <= ${date}`,
+        sql`(${estimationConfigs.endDate} IS NULL OR ${estimationConfigs.endDate} >= ${date})`
+      ))
+      .orderBy(desc(estimationConfigs.startDate))
+      .limit(1);
+    return configs[0];
+  }
+
+  async createEstimationConfig(data: InsertEstimationConfig): Promise<EstimationConfig> {
+    const [config] = await db.insert(estimationConfigs).values(data).returning();
+    return config;
+  }
+
+  async updateEstimationConfig(id: string, data: Partial<InsertEstimationConfig>): Promise<EstimationConfig | undefined> {
+    const [config] = await db.update(estimationConfigs).set(data).where(eq(estimationConfigs.id, id)).returning();
+    return config;
+  }
+
+  async deleteEstimationConfig(id: string): Promise<void> {
+    await db.delete(estimationConfigs).where(eq(estimationConfigs.id, id));
+  }
+
+  async calculateEstimatedReading(meterId: string, readingDate: string): Promise<{ estimatedValue: number; method: string; details: string } | null> {
+    const meter = await this.getMeter(meterId);
+    if (!meter || !meter.apartmentId) return null;
+
+    const apt = await this.getApartment(meter.apartmentId);
+    if (!apt) return null;
+
+    const staircase = await this.getStaircase(apt.staircaseId);
+    if (!staircase) return null;
+
+    const building = await db.select().from(buildings).where(eq(buildings.id, staircase.buildingId)).limit(1);
+    if (!building[0]) return null;
+
+    const assocId = building[0].associationId;
+    const config = await this.getActiveEstimationConfig(assocId, meter.meterType, readingDate);
+    if (!config) return null;
+
+    const regularizedReadings = await db.select().from(meterReadings)
+      .where(and(eq(meterReadings.meterId, meterId), eq(meterReadings.readingType, "regularizat")))
+      .orderBy(meterReadings.readingDate);
+
+    const lastReading = regularizedReadings.length > 0 
+      ? regularizedReadings[regularizedReadings.length - 1] 
+      : null;
+    const lastValue = lastReading ? Number(lastReading.readingValue) : Number(meter.initialReading);
+    const lastDate = lastReading ? lastReading.readingDate : meter.installDate;
+
+    const daysSinceLast = Math.max(1, Math.round(
+      (new Date(readingDate).getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24)
+    ));
+
+    if (config.modelType === "model_1") {
+      if (regularizedReadings.length >= 10) {
+        const first = regularizedReadings[0];
+        const last = regularizedReadings[regularizedReadings.length - 1];
+        const totalConsumption = Number(last.readingValue) - Number(first.readingValue);
+        const totalDays = Math.max(1, Math.round(
+          (new Date(last.readingDate).getTime() - new Date(first.readingDate).getTime()) / (1000 * 60 * 60 * 24)
+        ));
+        const dailyAvg = totalConsumption / totalDays;
+        const estimatedConsumption = dailyAvg * daysSinceLast;
+        const estimatedValue = lastValue + estimatedConsumption;
+        return {
+          estimatedValue: Math.round(estimatedValue * 1000) / 1000,
+          method: "model_1",
+          details: `Consum mediu zilnic: ${dailyAvg.toFixed(4)} (din ${regularizedReadings.length} citiri regularizate, ${totalDays} zile). Estimare: ${dailyAvg.toFixed(4)} × ${daysSinceLast} zile = ${estimatedConsumption.toFixed(3)}`,
+        };
+      }
+      return null;
+    }
+
+    if (config.modelType === "model_2") {
+      const roomCount = apt.rooms || 0;
+      const assocBuildings = await db.select().from(buildings).where(eq(buildings.associationId, assocId));
+      const bldIds = assocBuildings.map(b => b.id);
+      let allStaircases: any[] = [];
+      if (bldIds.length > 0) {
+        allStaircases = await db.select().from(staircases).where(inArray(staircases.buildingId, bldIds));
+      }
+      const scIds = allStaircases.map(s => s.id);
+      let similarApts: any[] = [];
+      if (scIds.length > 0) {
+        similarApts = await db.select().from(apartments)
+          .where(and(inArray(apartments.staircaseId, scIds), eq(apartments.rooms, roomCount)));
+      }
+      const similarAptIds = similarApts.map(a => a.id).filter(id => id !== apt.id);
+
+      if (similarAptIds.length === 0) return null;
+
+      let similarMeters: any[] = [];
+      if (similarAptIds.length > 0) {
+        similarMeters = await db.select().from(meters)
+          .where(and(inArray(meters.apartmentId, similarAptIds), eq(meters.meterType, meter.meterType), eq(meters.isActive, true)));
+      }
+
+      let totalDailyAvg = 0;
+      let meterCount = 0;
+      for (const sm of similarMeters) {
+        const smReadings = await db.select().from(meterReadings)
+          .where(and(eq(meterReadings.meterId, sm.id), eq(meterReadings.readingType, "regularizat")))
+          .orderBy(meterReadings.readingDate);
+        if (smReadings.length >= 2) {
+          const first = smReadings[0];
+          const last = smReadings[smReadings.length - 1];
+          const cons = Number(last.readingValue) - Number(first.readingValue);
+          const days = Math.max(1, Math.round(
+            (new Date(last.readingDate).getTime() - new Date(first.readingDate).getTime()) / (1000 * 60 * 60 * 24)
+          ));
+          totalDailyAvg += cons / days;
+          meterCount++;
+        }
+      }
+
+      if (meterCount === 0) return null;
+
+      const avgDaily = totalDailyAvg / meterCount;
+      const pctIncrease = Number(config.percentIncrease || 0);
+      const adjustedDaily = avgDaily * (1 + pctIncrease / 100);
+      const estimatedConsumption = adjustedDaily * daysSinceLast;
+      const estimatedValue = lastValue + estimatedConsumption;
+      return {
+        estimatedValue: Math.round(estimatedValue * 1000) / 1000,
+        method: "model_2",
+        details: `Media zilnica apartamente similare (${roomCount} camere, ${meterCount} contoare): ${avgDaily.toFixed(4)} + ${pctIncrease}% = ${adjustedDaily.toFixed(4)}. Estimare: ${adjustedDaily.toFixed(4)} × ${daysSinceLast} zile = ${estimatedConsumption.toFixed(3)}`,
+      };
+    }
+
+    if (config.modelType === "model_3") {
+      const dailyConsumption = Number(config.defaultDailyConsumption || 0);
+      if (dailyConsumption <= 0) return null;
+      const estimatedConsumption = dailyConsumption * daysSinceLast;
+      const estimatedValue = lastValue + estimatedConsumption;
+      return {
+        estimatedValue: Math.round(estimatedValue * 1000) / 1000,
+        method: "model_3",
+        details: `Consum mediu zilnic configurat: ${dailyConsumption.toFixed(4)}. Estimare: ${dailyConsumption.toFixed(4)} × ${daysSinceLast} zile = ${estimatedConsumption.toFixed(3)}`,
+      };
+    }
+
+    return null;
   }
 
   async getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]> {

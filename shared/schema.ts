@@ -147,6 +147,14 @@ export const meters = pgTable("meters", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const readingTypeEnum = ["regularizat", "estimat"] as const;
+export type ReadingType = typeof readingTypeEnum[number];
+
+export const READING_TYPE_LABELS: Record<ReadingType, string> = {
+  regularizat: "Regularizat",
+  estimat: "Estimat",
+};
+
 export const meterReadings = pgTable("meter_readings", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   meterId: varchar("meter_id").notNull().references(() => meters.id, { onDelete: "cascade" }),
@@ -154,6 +162,28 @@ export const meterReadings = pgTable("meter_readings", {
   readingValue: numeric("reading_value", { precision: 12, scale: 3 }).notNull(),
   consumption: numeric("consumption", { precision: 12, scale: 3 }),
   accumulatedConsumption: numeric("accumulated_consumption", { precision: 12, scale: 3 }),
+  readingType: text("reading_type").notNull().default("regularizat"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const estimationModelEnum = ["model_1", "model_2", "model_3"] as const;
+export type EstimationModel = typeof estimationModelEnum[number];
+
+export const ESTIMATION_MODEL_LABELS: Record<EstimationModel, string> = {
+  model_1: "Model 1 - Istoric individual (10+ citiri)",
+  model_2: "Model 2 - Media apartamente similare",
+  model_3: "Model 3 - Consum mediu pe tip apartament",
+};
+
+export const estimationConfigs = pgTable("estimation_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  associationId: varchar("association_id").notNull().references(() => associations.id, { onDelete: "cascade" }),
+  meterType: text("meter_type").notNull(),
+  modelType: text("model_type").notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  percentIncrease: numeric("percent_increase", { precision: 5, scale: 2 }).default("0"),
+  defaultDailyConsumption: numeric("default_daily_consumption", { precision: 10, scale: 4 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -377,6 +407,7 @@ export const insertApartmentSchema = createInsertSchema(apartments).omit({ id: t
 export const insertUnitRoomSchema = createInsertSchema(unitRooms).omit({ id: true });
 export const insertMeterSchema = createInsertSchema(meters).omit({ id: true, createdAt: true });
 export const insertMeterReadingSchema = createInsertSchema(meterReadings).omit({ id: true, createdAt: true });
+export const insertEstimationConfigSchema = createInsertSchema(estimationConfigs).omit({ id: true, createdAt: true });
 export const insertFundSchema = createInsertSchema(funds).omit({ id: true, createdAt: true });
 export const insertFundCategorySchema = createInsertSchema(fundCategories).omit({ id: true, createdAt: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
@@ -400,6 +431,8 @@ export type InsertMeter = z.infer<typeof insertMeterSchema>;
 export type Meter = typeof meters.$inferSelect;
 export type InsertMeterReading = z.infer<typeof insertMeterReadingSchema>;
 export type MeterReading = typeof meterReadings.$inferSelect;
+export type InsertEstimationConfig = z.infer<typeof insertEstimationConfigSchema>;
+export type EstimationConfig = typeof estimationConfigs.$inferSelect;
 export type InsertFund = z.infer<typeof insertFundSchema>;
 export type Fund = typeof funds.$inferSelect;
 export type InsertFundCategory = z.infer<typeof insertFundCategorySchema>;
