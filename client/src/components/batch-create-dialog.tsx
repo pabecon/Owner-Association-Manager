@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -28,8 +28,7 @@ interface BatchItem {
 }
 
 interface BatchCreateDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   level: WizardLevel;
   parentId: string;
   parentName: string;
@@ -58,8 +57,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export function BatchCreateDialog({
-  open,
-  onOpenChange,
+  onClose,
   level,
   parentId,
   parentName,
@@ -90,8 +88,8 @@ export function BatchCreateDialog({
 
   const handleClose = useCallback(() => {
     resetForm();
-    onOpenChange(false);
-  }, [resetForm, onOpenChange]);
+    onClose();
+  }, [resetForm, onClose]);
 
   const handleSetCount = useCallback(() => {
     const n = parseInt(count);
@@ -258,167 +256,178 @@ export function BatchCreateDialog({
   }, [items, level, parentId, staircaseId, floorNumber, parentAddress, uploadFile, handleClose, toast, config]);
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) handleClose(); else onOpenChange(v); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle data-testid="text-batch-title">{config.title}</DialogTitle>
-          <DialogDescription>In: {parentName}</DialogDescription>
-        </DialogHeader>
+    <div className="flex flex-col h-full" data-testid="batch-create-panel">
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b bg-muted/30 shrink-0">
+        <div>
+          <h2 className="text-sm font-semibold" data-testid="text-batch-title">{config.title}</h2>
+          <p className="text-[11px] text-muted-foreground">in {parentName}</p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleClose} data-testid="button-batch-close">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
 
-        {step === "count" && (
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm">{config.countLabel}</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={count}
-                  onChange={e => setCount(e.target.value)}
-                  placeholder="Nr."
-                  className="w-24"
-                  autoFocus
-                  data-testid="input-batch-count"
-                  onKeyDown={e => { if (e.key === "Enter") handleSetCount(); }}
-                />
-                <Button onClick={handleSetCount} data-testid="button-batch-next">
-                  Continua
-                </Button>
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4 space-y-3">
+          {step === "count" && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm">{config.countLabel}</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={count}
+                    onChange={e => setCount(e.target.value)}
+                    placeholder="Nr."
+                    className="w-24"
+                    autoFocus
+                    data-testid="input-batch-count"
+                    onKeyDown={e => { if (e.key === "Enter") handleSetCount(); }}
+                  />
+                  <Button onClick={handleSetCount} data-testid="button-batch-next">
+                    Continua
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {step === "details" && (
-          <div className="space-y-3">
-            {level === "building" && parentAddress && (
-              <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
-                Adresa: {parentAddress}
-              </div>
-            )}
+          {step === "details" && (
+            <div className="space-y-3">
+              {level === "building" && parentAddress && (
+                <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
+                  Adresa: {parentAddress}
+                </div>
+              )}
 
-            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-              {items.map((item, idx) => (
-                <div key={idx} className="border rounded-md p-2 space-y-1.5" data-testid={`batch-item-${idx}`}>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-muted-foreground w-5 shrink-0 text-center">{idx + 1}</span>
+              <div className="space-y-2">
+                {items.map((item, idx) => (
+                  <div key={idx} className="border rounded-md p-2 space-y-1.5" data-testid={`batch-item-${idx}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground w-5 shrink-0 text-center">{idx + 1}</span>
 
-                    {level === "floor" ? (
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <span className="text-xs font-medium" data-testid={`label-batch-floor-${idx}`}>{item.name}</span>
-                        <span className="text-[10px] text-muted-foreground">(adauga plan etaj daca ai)</span>
-                      </div>
-                    ) : level === "unit" ? (
-                      <div className="flex items-center gap-1.5 flex-1">
-                        <Select value={item.unitType || "apartment"} onValueChange={v => updateItemType(idx, v)}>
-                          <SelectTrigger className="w-28 h-7 text-xs" data-testid={`select-batch-type-${idx}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="apartment">{UNIT_TYPE_LABELS.apartment}</SelectItem>
-                            <SelectItem value="box">{UNIT_TYPE_LABELS.box}</SelectItem>
-                            <SelectItem value="parking">{UNIT_TYPE_LABELS.parking}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      {level === "floor" ? (
+                        <div className="flex items-center gap-1.5 flex-1">
+                          <span className="text-xs font-medium" data-testid={`label-batch-floor-${idx}`}>{item.name}</span>
+                          <span className="text-[10px] text-muted-foreground">(adauga plan etaj daca ai)</span>
+                        </div>
+                      ) : level === "unit" ? (
+                        <div className="flex items-center gap-1.5 flex-1">
+                          <Select value={item.unitType || "apartment"} onValueChange={v => updateItemType(idx, v)}>
+                            <SelectTrigger className="w-28 h-7 text-xs" data-testid={`select-batch-type-${idx}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="apartment">{UNIT_TYPE_LABELS.apartment}</SelectItem>
+                              <SelectItem value="box">{UNIT_TYPE_LABELS.box}</SelectItem>
+                              <SelectItem value="parking">{UNIT_TYPE_LABELS.parking}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={item.name}
+                            onChange={e => updateItemName(idx, e.target.value)}
+                            placeholder="Nr."
+                            className="flex-1 h-7 text-xs"
+                            data-testid={`input-batch-name-${idx}`}
+                          />
+                        </div>
+                      ) : (
                         <Input
                           value={item.name}
                           onChange={e => updateItemName(idx, e.target.value)}
-                          placeholder="Nr."
+                          placeholder={`Nume ${config.itemLabel.toLowerCase()}`}
                           className="flex-1 h-7 text-xs"
                           data-testid={`input-batch-name-${idx}`}
                         />
+                      )}
+
+                      <label className="shrink-0">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                          className="hidden"
+                          onChange={e => addFileToItem(idx, e.target.files)}
+                          data-testid={`input-batch-file-${idx}`}
+                        />
+                        <Button size="icon" variant="ghost" className="w-6 h-6" asChild>
+                          <span><Upload className="w-3 h-3" /></span>
+                        </Button>
+                      </label>
+
+                      {level !== "floor" && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-6 h-6 text-destructive"
+                          onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}
+                          data-testid={`button-remove-batch-${idx}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {item.files.length > 0 && (
+                      <div className="pl-5 space-y-1">
+                        {item.files.map((pf, fi) => {
+                          const FIcon = getFileIcon(pf.file.type);
+                          return (
+                            <div key={fi} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <FIcon className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{pf.file.name}</span>
+                              <span className="shrink-0">({formatFileSize(pf.file.size)})</span>
+                              <Button size="icon" variant="ghost" className="w-4 h-4 shrink-0" onClick={() => removeFileFromItem(idx, fi)}>
+                                <X className="w-2.5 h-2.5" />
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <Input
-                        value={item.name}
-                        onChange={e => updateItemName(idx, e.target.value)}
-                        placeholder={`Nume ${config.itemLabel.toLowerCase()}`}
-                        className="flex-1 h-7 text-xs"
-                        data-testid={`input-batch-name-${idx}`}
-                      />
-                    )}
-
-                    <label className="shrink-0">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                        className="hidden"
-                        onChange={e => addFileToItem(idx, e.target.files)}
-                        data-testid={`input-batch-file-${idx}`}
-                      />
-                      <Button size="icon" variant="ghost" className="w-6 h-6" asChild>
-                        <span><Upload className="w-3 h-3" /></span>
-                      </Button>
-                    </label>
-
-                    {level !== "floor" && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-6 h-6 text-destructive"
-                        onClick={() => setItems(prev => prev.filter((_, i) => i !== idx))}
-                        data-testid={`button-remove-batch-${idx}`}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
                     )}
                   </div>
+                ))}
+              </div>
 
-                  {item.files.length > 0 && (
-                    <div className="pl-5 space-y-1">
-                      {item.files.map((pf, fi) => {
-                        const FIcon = getFileIcon(pf.file.type);
-                        return (
-                          <div key={fi} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            <FIcon className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{pf.file.name}</span>
-                            <span className="shrink-0">({formatFileSize(pf.file.size)})</span>
-                            <Button size="icon" variant="ghost" className="w-4 h-4 shrink-0" onClick={() => removeFileFromItem(idx, fi)}>
-                              <X className="w-2.5 h-2.5" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {level !== "floor" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={() => {
+                    const newItem: BatchItem = level === "unit"
+                      ? { name: `${items.length + 1}`, unitType: "apartment", files: [] }
+                      : { name: "", files: [] };
+                    setItems(prev => [...prev, newItem]);
+                  }}
+                  data-testid="button-add-batch-item"
+                >
+                  <Plus className="w-3 h-3 mr-0.5" /> Adauga {config.itemLabel.toLowerCase()}
+                </Button>
+              )}
             </div>
+          )}
+        </div>
+      </ScrollArea>
 
-            {level !== "floor" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs"
-                onClick={() => {
-                  const newItem: BatchItem = level === "unit"
-                    ? { name: `${items.length + 1}`, unitType: "apartment", files: [] }
-                    : { name: "", files: [] };
-                  setItems(prev => [...prev, newItem]);
-                }}
-                data-testid="button-add-batch-item"
-              >
-                <Plus className="w-3 h-3 mr-0.5" /> Adauga {config.itemLabel.toLowerCase()}
-              </Button>
-            )}
-
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" size="sm" onClick={() => setStep("count")} disabled={isSaving || isUploading} data-testid="button-batch-back">
-                Inapoi
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleClose} disabled={isSaving || isUploading} data-testid="button-batch-cancel">
-                Anuleaza
-              </Button>
-              <Button size="sm" onClick={handleSubmit} disabled={isSaving || isUploading} data-testid="button-batch-save">
-                {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                Salveaza {items.filter(i => i.name.trim()).length} {config.pluralLabel}
-              </Button>
-            </div>
-          </div>
+      <div className="flex items-center justify-end gap-2 px-4 py-2 border-t shrink-0 bg-background">
+        {step === "details" && (
+          <Button variant="outline" size="sm" onClick={() => setStep("count")} disabled={isSaving || isUploading} data-testid="button-batch-back">
+            Inapoi
+          </Button>
         )}
-      </DialogContent>
-    </Dialog>
+        <Button variant="outline" size="sm" onClick={handleClose} disabled={isSaving || isUploading} data-testid="button-batch-cancel">
+          Anuleaza
+        </Button>
+        {step === "details" && (
+          <Button size="sm" onClick={handleSubmit} disabled={isSaving || isUploading} data-testid="button-batch-save">
+            {(isSaving || isUploading) && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+            Salveaza {items.filter(i => i.name.trim()).length} {config.pluralLabel}
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }

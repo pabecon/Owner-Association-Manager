@@ -181,17 +181,35 @@ export default function HierarchyTree() {
   const totalBoxes = apartments?.filter(a => a.unitType === "box").length || 0;
   const totalParking = apartments?.filter(a => a.unitType === "parking").length || 0;
 
+  const closeAllPanels = () => {
+    setAddDialog(prev => ({ ...prev, open: false }));
+    setBatchDialog(prev => ({ ...prev, open: false }));
+    setEditDialog(prev => ({ ...prev, open: false }));
+    setWizardOpen(false);
+  };
+
   const openAdd = (level: EntityLevel, parentId?: string, parentName?: string) => {
-    setAddDialog({ open: true, level, parentId, parentName });
+    closeAllPanels();
+    setTimeout(() => setAddDialog({ open: true, level, parentId, parentName }), 0);
   };
 
   const openEdit = (level: EntityLevel, entity: any) => {
-    setEditDialog({ open: true, level, entity });
+    closeAllPanels();
+    setTimeout(() => setEditDialog({ open: true, level, entity }), 0);
   };
 
   const openBatch = (level: "building" | "staircase" | "floor" | "unit", parentId: string, parentName: string, staircaseId?: string, floorNumber?: number, parentAddress?: string) => {
-    setBatchDialog({ open: true, level, parentId, parentName, staircaseId, floorNumber, parentAddress });
+    closeAllPanels();
+    setTimeout(() => setBatchDialog({ open: true, level, parentId, parentName, staircaseId, floorNumber, parentAddress }), 0);
   };
+
+  const openWizard = (fedId?: string) => {
+    closeAllPanels();
+    setWizardFedId(fedId);
+    setTimeout(() => setWizardOpen(true), 0);
+  };
+
+  const hasActivePanel = addDialog.open || batchDialog.open || editDialog.open || wizardOpen;
 
   const getAssocStats = (assocId: string): StatBadge[] => {
     const assocBlds = buildings?.filter(b => b.associationId === assocId) || [];
@@ -298,9 +316,9 @@ export default function HierarchyTree() {
     );
   };
 
-  return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 pt-2 pb-1 space-y-1">
+  const treeContent = (
+    <>
+      <div className="px-3 pt-2 pb-1 space-y-1 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <h1 className="text-sm font-bold tracking-tight" data-testid="text-tree-title">Infografie Ierarhie</h1>
@@ -312,7 +330,7 @@ export default function HierarchyTree() {
             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openAdd("federation")} data-testid="button-add-federation">
               <Plus className="w-3 h-3 mr-0.5" />Fed
             </Button>
-            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => { setWizardFedId(undefined); setWizardOpen(true); }} data-testid="button-add-association">
+            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => openWizard(undefined)} data-testid="button-add-association">
               <Plus className="w-3 h-3 mr-0.5" />Asoc
             </Button>
             <Button size="sm" className="h-6 px-2 text-[10px]" onClick={() => setImportOpen(true)} data-testid="button-import-excel">
@@ -337,7 +355,7 @@ export default function HierarchyTree() {
                     badge={`${fedAssocs.length} asociatii`}
                     defaultOpen={true}
                     onEdit={() => openEdit("federation", fed)}
-                    onAdd={() => { setWizardFedId(fed.id); setWizardOpen(true); }}
+                    onAdd={() => openWizard(fed.id)}
                   >
                     {fedAssocs.map(assoc => {
                       const assocBlds = buildings?.filter(b => b.associationId === assoc.id) || [];
@@ -385,52 +403,77 @@ export default function HierarchyTree() {
               )}
             </CardContent>
           </Card>
-
         </div>
       </div>
+    </>
+  );
 
-      <AddEntityDialog
-        open={addDialog.open}
-        onOpenChange={open => setAddDialog(prev => ({ ...prev, open }))}
-        level={addDialog.level}
-        parentId={addDialog.parentId}
-        parentName={addDialog.parentName}
-        federations={federations}
-        associations={associations}
-        buildings={buildings}
-        staircases={staircases}
-      />
+  const panelContent = (
+    <>
+      {addDialog.open && (
+        <AddEntityDialog
+          onClose={() => setAddDialog(prev => ({ ...prev, open: false }))}
+          level={addDialog.level}
+          parentId={addDialog.parentId}
+          parentName={addDialog.parentName}
+          federations={federations}
+          associations={associations}
+          buildings={buildings}
+          staircases={staircases}
+        />
+      )}
 
-      <BatchCreateDialog
-        open={batchDialog.open}
-        onOpenChange={open => setBatchDialog(prev => ({ ...prev, open }))}
-        level={batchDialog.level}
-        parentId={batchDialog.parentId}
-        parentName={batchDialog.parentName}
-        staircaseId={batchDialog.staircaseId}
-        floorNumber={batchDialog.floorNumber}
-        parentAddress={batchDialog.parentAddress}
-      />
+      {batchDialog.open && (
+        <BatchCreateDialog
+          onClose={() => setBatchDialog(prev => ({ ...prev, open: false }))}
+          level={batchDialog.level}
+          parentId={batchDialog.parentId}
+          parentName={batchDialog.parentName}
+          staircaseId={batchDialog.staircaseId}
+          floorNumber={batchDialog.floorNumber}
+          parentAddress={batchDialog.parentAddress}
+        />
+      )}
+
+      {wizardOpen && (
+        <AssociationWizard
+          onClose={() => setWizardOpen(false)}
+          federationId={wizardFedId}
+          federations={federations}
+        />
+      )}
+
+      {editDialog.open && (
+        <EditEntityDialog
+          open={editDialog.open}
+          onClose={() => setEditDialog(prev => ({ ...prev, open: false }))}
+          level={editDialog.level}
+          entity={editDialog.entity}
+          federations={federations}
+          associations={associations}
+          buildings={buildings}
+          staircases={staircases}
+        />
+      )}
+    </>
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      {hasActivePanel ? (
+        <>
+          <div className="flex flex-col min-h-0" style={{ height: "45%" }}>
+            {treeContent}
+          </div>
+          <div className="border-t-2 border-primary/20 flex flex-col min-h-0" style={{ height: "55%" }} data-testid="inline-panel">
+            {panelContent}
+          </div>
+        </>
+      ) : (
+        treeContent
+      )}
 
       <ExcelImportDialog open={importOpen} onOpenChange={setImportOpen} />
-
-      <AssociationWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        federationId={wizardFedId}
-        federations={federations}
-      />
-
-      <EditEntityDialog
-        open={editDialog.open}
-        onOpenChange={open => setEditDialog(prev => ({ ...prev, open }))}
-        level={editDialog.level}
-        entity={editDialog.entity}
-        federations={federations}
-        associations={associations}
-        buildings={buildings}
-        staircases={staircases}
-      />
     </div>
   );
 }

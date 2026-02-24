@@ -6,19 +6,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Federation, Association, Building, Staircase, Apartment, UnitRoom } from "@shared/schema";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
-import { Loader2, Plus, Trash2, Building2, ArrowUpDown, Users, Network } from "lucide-react";
+import { Loader2, Plus, Trash2, Building2, ArrowUpDown, Users, Network, X } from "lucide-react";
 import { AddressFields, composeAddress, isBucharestCity } from "@/components/address-fields";
 
 type EntityLevel = "federation" | "association" | "building" | "staircase" | "apartment";
 
 interface EditEntityDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   level: EntityLevel;
   entity: any;
   federations?: Federation[];
@@ -51,7 +51,7 @@ interface RoomEntry {
 
 export function EditEntityDialog({
   open,
-  onOpenChange,
+  onClose,
   level,
   entity,
   federations,
@@ -302,13 +302,13 @@ export function EditEntityDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/staircases"] });
       queryClient.invalidateQueries({ queryKey: ["/api/apartments"] });
       toast({ title: `${LEVEL_LABELS[level]} actualizat(a) cu succes` });
-      onOpenChange(false);
+      onClose();
     } catch (error: any) {
       toast({ title: "Eroare", description: error.message, variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
-  }, [level, formData, entity, rooms, onOpenChange, toast]);
+  }, [level, formData, entity, rooms, onClose, toast]);
 
   const renderFields = () => {
     switch (level) {
@@ -641,22 +641,54 @@ export function EditEntityDialog({
     }
   };
 
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleDelete = useCallback(async () => {
+    if (!entity) return;
+    try {
+      await apiRequest("DELETE", `${LEVEL_ENDPOINTS[level]}/${entity.id}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/federations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/associations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/buildings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/staircases"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/apartments"] });
+      toast({ title: `${LEVEL_LABELS[level]} sters(a) cu succes` });
+      onClose();
+    } catch (error: any) {
+      toast({ title: "Eroare la stergere", description: error.message, variant: "destructive" });
+    }
+  }, [entity, level, onClose, toast]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" data-testid="edit-entity-dialog">
-        <DialogHeader>
-          <DialogTitle data-testid="edit-dialog-title">Editeaza {LEVEL_LABELS[level]}</DialogTitle>
-          <DialogDescription>Modificati datele si salvati</DialogDescription>
-        </DialogHeader>
-        {renderFields()}
-        <div className="flex justify-end gap-2 pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="edit-btn-cancel">Anuleaza</Button>
-          <Button onClick={handleSubmit} disabled={isSaving} data-testid="edit-btn-save">
-            {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Salveaza
-          </Button>
+    <div className="flex flex-col h-full" data-testid="edit-entity-panel">
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b bg-muted/30 shrink-0">
+        <div>
+          <h2 className="text-sm font-semibold" data-testid="edit-panel-title">Editare {LEVEL_LABELS[level]}</h2>
+          <p className="text-[11px] text-muted-foreground">{entity?.name || entity?.number}</p>
         </div>
-      </DialogContent>
-    </Dialog>
+        <Button variant="ghost" size="icon" onClick={handleClose} data-testid="edit-btn-close">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4 space-y-3">
+          {renderFields()}
+        </div>
+      </ScrollArea>
+
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-t shrink-0 bg-background">
+        <Button variant="destructive" size="sm" onClick={handleDelete} data-testid="edit-btn-delete">
+          <Trash2 className="w-3.5 h-3.5 mr-1" />
+          Sterge
+        </Button>
+        <Button size="sm" onClick={handleSubmit} disabled={isSaving} data-testid="edit-btn-save">
+          {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Salveaza
+        </Button>
+      </div>
+    </div>
   );
 }

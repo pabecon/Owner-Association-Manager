@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { UNIT_TYPE_LABELS } from "@shared/schema";
 import type { Federation } from "@shared/schema";
 import { AddressFields as AddressFieldsComponent, composeAddress } from "@/components/address-fields";
 import {
-  ChevronRight, ChevronLeft, Building2, ArrowUpDown, Layers, Home, Plus, Trash2, Loader2, Check
+  ChevronRight, ChevronLeft, Building2, ArrowUpDown, Layers, Home, Plus, Trash2, Loader2, Check, X
 } from "lucide-react";
 
 interface WizardUnit {
@@ -45,8 +45,7 @@ interface AddressFields {
 }
 
 interface AssociationWizardProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   federationId?: string;
   federations?: Federation[];
 }
@@ -64,7 +63,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 };
 
 
-export function AssociationWizard({ open, onOpenChange, federationId, federations }: AssociationWizardProps) {
+export function AssociationWizard({ onClose, federationId, federations }: AssociationWizardProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<WizardStep>("association");
   const [isSaving, setIsSaving] = useState(false);
@@ -84,10 +83,8 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   const stepIdx = STEPS.indexOf(step);
 
   useEffect(() => {
-    if (open) {
-      setAssocFedId(federationId || "");
-    }
-  }, [open, federationId]);
+    setAssocFedId(federationId || "");
+  }, [federationId]);
 
   const resetAll = useCallback(() => {
     setStep("association");
@@ -102,18 +99,36 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
   }, [federationId]);
 
   const handleClose = () => {
-    onOpenChange(false);
-    setTimeout(resetAll, 200);
+    resetAll();
+    onClose();
   };
 
   const goNext = () => {
+    if (step === "units" && buildings.length > 1 && currentBldIdx < buildings.length - 1) {
+      setCurrentBldIdx(prev => prev + 1);
+      return;
+    }
     const idx = STEPS.indexOf(step);
-    if (idx < STEPS.length - 1) setStep(STEPS[idx + 1]);
+    if (idx < STEPS.length - 1) {
+      if (STEPS[idx + 1] === "units") {
+        setCurrentBldIdx(0);
+      }
+      setStep(STEPS[idx + 1]);
+    }
   };
 
   const goBack = () => {
+    if (step === "units" && buildings.length > 1 && currentBldIdx > 0) {
+      setCurrentBldIdx(prev => prev - 1);
+      return;
+    }
     const idx = STEPS.indexOf(step);
-    if (idx > 0) setStep(STEPS[idx - 1]);
+    if (idx > 0) {
+      if (step === "units") {
+        setCurrentBldIdx(0);
+      }
+      setStep(STEPS[idx - 1]);
+    }
   };
 
   const updateAddr = (field: keyof AddressFields, value: string) => {
@@ -322,418 +337,445 @@ export function AssociationWizard({ open, onOpenChange, federationId, federation
     return `Etaj ${floor}`;
   };
 
+  const isLastBuilding = currentBldIdx >= buildings.length - 1;
+  const isFirstBuilding = currentBldIdx <= 0;
+
+  const getNextLabel = () => {
+    if (step === "units" && buildings.length > 1 && !isLastBuilding) {
+      return `${buildings[currentBldIdx + 1]?.name} →`;
+    }
+    return "Continua";
+  };
+
+  const getBackLabel = () => {
+    if (step === "units" && buildings.length > 1 && !isFirstBuilding) {
+      return `← ${buildings[currentBldIdx - 1]?.name}`;
+    }
+    if (step === "association") return "Anuleaza";
+    return "Inapoi";
+  };
+
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) handleClose(); else onOpenChange(v); }}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" data-testid="wizard-dialog">
-        <DialogHeader>
-          <DialogTitle className="text-base" data-testid="wizard-title">Wizard Creare Asociatie</DialogTitle>
-          <DialogDescription className="text-xs">
+    <div className="flex flex-col h-full" data-testid="wizard-panel">
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
+        <div>
+          <h2 className="text-sm font-semibold" data-testid="wizard-title">Wizard Creare Asociatie</h2>
+          <p className="text-[11px] text-muted-foreground">
             Pasul {stepIdx + 1} din {STEPS.length}: {STEP_LABELS[step]}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex items-center gap-1 mb-3">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex items-center gap-1">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium ${
-                i < stepIdx ? "bg-primary text-primary-foreground" :
-                i === stepIdx ? "bg-primary text-primary-foreground ring-2 ring-primary/30" :
-                "bg-muted text-muted-foreground"
-              }`}>
-                {i < stepIdx ? <Check className="w-3 h-3" /> : i + 1}
-              </div>
-              {i < STEPS.length - 1 && <div className={`w-4 h-0.5 ${i < stepIdx ? "bg-primary" : "bg-muted"}`} />}
-            </div>
-          ))}
+            {step === "units" && buildings.length > 1 && (
+              <span className="ml-2 text-primary font-medium">
+                — {buildings[currentBldIdx]?.name} ({currentBldIdx + 1}/{buildings.length})
+              </span>
+            )}
+          </p>
         </div>
+        <Button variant="ghost" size="icon" className="w-7 h-7" onClick={handleClose} data-testid="button-wizard-close">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
 
-        {step === "association" && (
-          <div className="space-y-3" data-testid="step-association">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Nume asociatie *</Label>
-              <Input
-                value={assocName}
-                onChange={e => setAssocName(e.target.value)}
-                placeholder="ex: Asociatia de Proprietari Bloc A1-A3"
-                className="h-8 text-sm"
-                data-testid="input-wizard-assoc-name"
-              />
+      <div className="flex items-center gap-1 px-4 py-2 border-b shrink-0">
+        {STEPS.map((s, i) => (
+          <div key={s} className="flex items-center gap-1">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-medium ${
+              i < stepIdx ? "bg-primary text-primary-foreground" :
+              i === stepIdx ? "bg-primary text-primary-foreground ring-2 ring-primary/30" :
+              "bg-muted text-muted-foreground"
+            }`}>
+              {i < stepIdx ? <Check className="w-3 h-3" /> : i + 1}
             </div>
+            {i < STEPS.length - 1 && <div className={`w-3 h-0.5 ${i < stepIdx ? "bg-primary" : "bg-muted"}`} />}
+          </div>
+        ))}
+      </div>
 
-            <AddressFieldsComponent
-              values={addr}
-              onChange={updateAddr}
-              onBatchChange={batchUpdateAddr}
-              idPrefix="wizard-"
-            />
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">CUI</Label>
-              <Input
-                value={assocCui}
-                onChange={e => setAssocCui(e.target.value)}
-                placeholder="ex: RO12345678"
-                className="h-8 text-sm"
-                data-testid="input-wizard-assoc-cui"
-              />
-            </div>
-
-            {federations && federations.length > 0 && (
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4 space-y-3">
+          {step === "association" && (
+            <div className="space-y-3" data-testid="step-association">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Federatie (optional)</Label>
-                <Select value={assocFedId || "__none__"} onValueChange={v => setAssocFedId(v === "__none__" ? "" : v)}>
-                  <SelectTrigger className="h-8 text-sm" data-testid="select-wizard-federation">
-                    <SelectValue placeholder="Fara federatie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Fara federatie</SelectItem>
-                    {federations.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs font-medium">Nume asociatie *</Label>
+                <Input
+                  value={assocName}
+                  onChange={e => setAssocName(e.target.value)}
+                  placeholder="ex: Asociatia de Proprietari Bloc A1-A3"
+                  className="h-8 text-sm"
+                  data-testid="input-wizard-assoc-name"
+                />
               </div>
-            )}
-          </div>
-        )}
 
-        {step === "buildings" && (
-          <div className="space-y-3" data-testid="step-buildings">
-            {buildings.length === 0 ? (
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">Cate blocuri are asociatia "{assocName}"?</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={buildingCount}
-                    onChange={e => setBuildingCount(e.target.value)}
-                    placeholder="Numar blocuri"
-                    className="h-8 text-sm w-32"
-                    data-testid="input-wizard-building-count"
-                  />
-                  <Button
-                    size="sm"
-                    className="h-8"
-                    onClick={handleBuildingCountConfirm}
-                    disabled={!buildingCount || parseInt(buildingCount) <= 0}
-                    data-testid="button-wizard-building-confirm"
-                  >
-                    Continua
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium">Denumire blocuri ({buildings.length})</Label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 px-2 text-[10px]"
-                    onClick={() => { setBuildings([]); setBuildingCount(""); }}
-                    data-testid="button-wizard-reset-buildings"
-                  >
-                    Schimba numarul
-                  </Button>
-                </div>
-                {buildings.map((b, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <Input
-                      value={b.name}
-                      onChange={e => updateBuildingName(i, e.target.value)}
-                      className="h-7 text-xs"
-                      data-testid={`input-wizard-building-name-${i}`}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              <AddressFieldsComponent
+                values={addr}
+                onChange={updateAddr}
+                onBatchChange={batchUpdateAddr}
+                idPrefix="wizard-"
+              />
 
-        {step === "staircases" && (
-          <div className="space-y-3" data-testid="step-staircases">
-            <Label className="text-xs font-medium">Cate scari si ascensoare are fiecare bloc?</Label>
-            {buildings.map((b, bi) => (
-              <Card key={bi} className="overflow-hidden">
-                <CardContent className="p-2 space-y-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">CUI</Label>
+                <Input
+                  value={assocCui}
+                  onChange={e => setAssocCui(e.target.value)}
+                  placeholder="ex: RO12345678"
+                  className="h-8 text-sm"
+                  data-testid="input-wizard-assoc-cui"
+                />
+              </div>
+
+              {federations && federations.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Federatie (optional)</Label>
+                  <Select value={assocFedId || "__none__"} onValueChange={v => setAssocFedId(v === "__none__" ? "" : v)}>
+                    <SelectTrigger className="h-8 text-sm" data-testid="select-wizard-federation">
+                      <SelectValue placeholder="Fara federatie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Fara federatie</SelectItem>
+                      {federations.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "buildings" && (
+            <div className="space-y-3" data-testid="step-buildings">
+              {buildings.length === 0 ? (
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Cate blocuri are asociatia "{assocName}"?</Label>
                   <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs font-medium">{b.name}</span>
-                    <div className="flex items-center gap-1 ml-auto">
-                      <Label className="text-[10px] text-muted-foreground">Scari:</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={buildingCount}
+                      onChange={e => setBuildingCount(e.target.value)}
+                      placeholder="Numar blocuri"
+                      className="h-8 text-sm w-32"
+                      data-testid="input-wizard-building-count"
+                    />
+                    <Button
+                      size="sm"
+                      className="h-8"
+                      onClick={handleBuildingCountConfirm}
+                      disabled={!buildingCount || parseInt(buildingCount) <= 0}
+                      data-testid="button-wizard-building-confirm"
+                    >
+                      Continua
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">Denumire blocuri ({buildings.length})</Label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => { setBuildings([]); setBuildingCount(""); }}
+                      data-testid="button-wizard-reset-buildings"
+                    >
+                      Schimba numarul
+                    </Button>
+                  </div>
+                  {buildings.map((b, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <Input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={b.staircases.length || ""}
-                        onChange={e => setStaircaseCount(bi, e.target.value)}
-                        className="h-6 text-xs w-16"
-                        data-testid={`input-wizard-staircase-count-${bi}`}
+                        value={b.name}
+                        onChange={e => updateBuildingName(i, e.target.value)}
+                        className="h-7 text-xs"
+                        data-testid={`input-wizard-building-name-${i}`}
                       />
                     </div>
-                  </div>
-                  {b.staircases.length > 0 && (
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "staircases" && (
+            <div className="space-y-3" data-testid="step-staircases">
+              <Label className="text-xs font-medium">Cate scari si ascensoare are fiecare bloc?</Label>
+              {buildings.map((b, bi) => (
+                <Card key={bi} className="overflow-hidden">
+                  <CardContent className="p-2 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="text-xs font-medium">{b.name}</span>
+                      <div className="flex items-center gap-1 ml-auto">
+                        <Label className="text-[10px] text-muted-foreground">Scari:</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={b.staircases.length || ""}
+                          onChange={e => setStaircaseCount(bi, e.target.value)}
+                          className="h-6 text-xs w-16"
+                          data-testid={`input-wizard-staircase-count-${bi}`}
+                        />
+                      </div>
+                    </div>
+                    {b.staircases.length > 0 && (
+                      <div className="pl-5 space-y-1">
+                        {b.staircases.map((s, si) => (
+                          <div key={si} className="flex items-center gap-2">
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
+                            <Input
+                              value={s.name}
+                              onChange={e => updateStaircaseName(bi, si, e.target.value)}
+                              className="h-6 text-xs flex-1"
+                              data-testid={`input-wizard-staircase-name-${bi}-${si}`}
+                            />
+                            <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Ascensoare:</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="10"
+                              value={s.elevators.toString()}
+                              onChange={e => updateStaircaseElevators(bi, si, parseInt(e.target.value) || 0)}
+                              className="h-6 text-xs w-14"
+                              data-testid={`input-wizard-elevators-${bi}-${si}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {step === "floors" && (
+            <div className="space-y-3" data-testid="step-floors">
+              <Label className="text-xs font-medium">Cate etaje are fiecare scara? (parterul se adauga automat, 0 = doar parter)</Label>
+              {buildings.map((b, bi) => (
+                <Card key={bi} className="overflow-hidden">
+                  <CardContent className="p-2 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="text-xs font-medium">{b.name}</span>
+                    </div>
                     <div className="pl-5 space-y-1">
                       {b.staircases.map((s, si) => (
                         <div key={si} className="flex items-center gap-2">
                           <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
-                          <Input
-                            value={s.name}
-                            onChange={e => updateStaircaseName(bi, si, e.target.value)}
-                            className="h-6 text-xs flex-1"
-                            data-testid={`input-wizard-staircase-name-${bi}-${si}`}
-                          />
-                          <Label className="text-[10px] text-muted-foreground whitespace-nowrap">Ascensoare:</Label>
+                          <span className="text-xs w-24 truncate">{s.name}</span>
+                          <Label className="text-[10px] text-muted-foreground">Etaje:</Label>
                           <Input
                             type="number"
                             min="0"
-                            max="10"
-                            value={s.elevators.toString()}
-                            onChange={e => updateStaircaseElevators(bi, si, parseInt(e.target.value) || 0)}
-                            className="h-6 text-xs w-14"
-                            data-testid={`input-wizard-elevators-${bi}-${si}`}
+                            max="50"
+                            value={s.floors.toString()}
+                            onChange={e => updateStaircaseFloors(bi, si, Math.max(0, parseInt(e.target.value) || 0))}
+                            className="h-6 text-xs w-16"
+                            data-testid={`input-wizard-floors-${bi}-${si}`}
                           />
+                          {s.floors > 0 && (
+                            <Badge variant="outline" className="text-[9px] py-0 shrink-0">
+                              Parter + {s.floors} etaje
+                            </Badge>
+                          )}
                         </div>
                       ))}
                     </div>
-                  )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {step === "units" && (
+            <div className="space-y-3" data-testid="step-units">
+              {buildings.length > 1 && (
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
+                  <Building2 className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-xs font-semibold text-primary">{buildings[currentBldIdx]?.name}</span>
+                  <Badge variant="default" className="text-[9px] py-0 px-1.5">
+                    {currentBldIdx + 1} / {buildings.length}
+                  </Badge>
+                  <div className="flex items-center gap-0.5 ml-auto">
+                    {buildings.map((b, bi) => (
+                      <button
+                        key={bi}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          bi === currentBldIdx ? "bg-primary" :
+                          b.staircases.some(s => s.units.length > 0) ? "bg-primary/40" : "bg-muted-foreground/30"
+                        }`}
+                        onClick={() => setCurrentBldIdx(bi)}
+                        title={b.name}
+                        data-testid={`button-wizard-unit-dot-${bi}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Label className="text-xs font-medium">Cate unitati are fiecare etaj?</Label>
+
+              {buildings[currentBldIdx] && (
+                <div className="space-y-3">
+                  {buildings[currentBldIdx].staircases.map((st, si) => (
+                    <Card key={`${currentBldIdx}-${si}`} className="overflow-hidden">
+                      <CardContent className="p-2 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <ArrowUpDown className="w-3.5 h-3.5 text-primary shrink-0" />
+                          <span className="text-xs font-medium">{st.name}</span>
+                          <Badge variant="secondary" className="text-[9px] py-0">{st.units.length} unitati</Badge>
+                        </div>
+                        <div className="pl-5 space-y-2">
+                          {Array.from({ length: (st.floors || 0) + 1 }, (_, f) => f).map(floor => {
+                            const floorUnits = st.units.filter(u => u.floor === floor);
+                            return (
+                              <div key={floor} className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
+                                  <span className="text-[11px] font-medium w-16">{getFloorLabel(floor)}</span>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    value={floorUnits.length || ""}
+                                    onChange={e => setUnitsForFloor(currentBldIdx, si, floor, e.target.value)}
+                                    className="h-6 text-xs w-14"
+                                    placeholder="0"
+                                    data-testid={`input-wizard-unit-count-${currentBldIdx}-${si}-${floor}`}
+                                  />
+                                  <span className="text-[10px] text-muted-foreground">unitati</span>
+                                </div>
+                                {floorUnits.length > 0 && (
+                                  <div className="pl-8 grid grid-cols-2 sm:grid-cols-3 gap-1">
+                                    {floorUnits.map((u, ui) => (
+                                      <div key={ui} className="flex items-center gap-1">
+                                        <Input
+                                          value={u.number}
+                                          onChange={e => updateUnitNumber(currentBldIdx, si, floor, ui, e.target.value)}
+                                          className="h-6 text-[11px] flex-1"
+                                          data-testid={`input-wizard-unit-number-${currentBldIdx}-${si}-${floor}-${ui}`}
+                                        />
+                                        <Select value={u.unitType} onValueChange={v => updateUnitType(currentBldIdx, si, floor, ui, v)}>
+                                          <SelectTrigger className="h-6 text-[10px] w-20" data-testid={`select-wizard-unit-type-${currentBldIdx}-${si}-${floor}-${ui}`}>
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {Object.entries(UNIT_TYPE_LABELS).map(([k, v]) => (
+                                              <SelectItem key={k} value={k}>{v}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "summary" && (
+            <div className="space-y-3" data-testid="step-summary">
+              <Card>
+                <CardContent className="p-3 space-y-2">
+                  <div className="text-xs font-medium">Asociatia: {assocName}</div>
+                  {composedAddress && <div className="text-[11px] text-muted-foreground">Adresa: {composedAddress}</div>}
+                  {assocCui && <div className="text-[11px] text-muted-foreground">CUI: {assocCui}</div>}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px]"><Building2 className="w-3 h-3 mr-0.5" />{buildings.length} blocuri</Badge>
+                    <Badge variant="secondary" className="text-[10px]"><ArrowUpDown className="w-3 h-3 mr-0.5" />{getTotalStaircases()} scari</Badge>
+                    <Badge variant="secondary" className="text-[10px]"><Home className="w-3 h-3 mr-0.5" />{getTotalUnits()} unitati</Badge>
+                    {getTotalElevators() > 0 && (
+                      <Badge variant="secondary" className="text-[10px]">{getTotalElevators()} ascensoare</Badge>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
 
-        {step === "floors" && (
-          <div className="space-y-3" data-testid="step-floors">
-            <Label className="text-xs font-medium">Cate etaje are fiecare scara? (parterul se adauga automat, 0 = doar parter)</Label>
-            {buildings.map((b, bi) => (
-              <Card key={bi} className="overflow-hidden">
-                <CardContent className="p-2 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs font-medium">{b.name}</span>
-                  </div>
-                  <div className="pl-5 space-y-1">
+              {buildings.map((b, bi) => (
+                <Card key={bi} className="overflow-hidden">
+                  <CardContent className="p-2 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="text-xs font-medium">{b.name}</span>
+                      <Badge variant="outline" className="text-[9px] py-0">{b.staircases.length} scari</Badge>
+                    </div>
                     {b.staircases.map((s, si) => (
-                      <div key={si} className="flex items-center gap-2">
-                        <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
-                        <span className="text-xs w-24 truncate">{s.name}</span>
-                        <Label className="text-[10px] text-muted-foreground">Etaje:</Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="50"
-                          value={s.floors.toString()}
-                          onChange={e => updateStaircaseFloors(bi, si, Math.max(0, parseInt(e.target.value) || 0))}
-                          className="h-6 text-xs w-16"
-                          data-testid={`input-wizard-floors-${bi}-${si}`}
-                        />
-                        {s.floors > 0 && (
-                          <Badge variant="outline" className="text-[9px] py-0 shrink-0">
-                            Parter + {s.floors} etaje
+                      <div key={si} className="pl-5 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
+                          <span className="text-[11px]">{s.name}</span>
+                          <Badge variant="outline" className="text-[9px] py-0">
+                            {s.floors} etaje, {s.units.length} unitati
+                            {s.elevators > 0 && `, ${s.elevators} asc.`}
                           </Badge>
+                        </div>
+                        {s.units.length > 0 && (
+                          <div className="pl-5 flex items-center gap-1 flex-wrap">
+                            {s.units.map((u, ui) => (
+                              <Badge key={ui} variant="outline" className="text-[9px] py-0">
+                                {UNIT_TYPE_LABELS[u.unitType as keyof typeof UNIT_TYPE_LABELS] || "Apt"} {u.number}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {step === "units" && (
-          <div className="space-y-3" data-testid="step-units">
-            <Label className="text-xs font-medium">Cate unitati are fiecare etaj?</Label>
-            {buildings.length > 1 && (
-              <div className="flex items-center gap-1 flex-wrap">
-                {buildings.map((b, bi) => (
-                  <Button
-                    key={bi}
-                    variant={currentBldIdx === bi ? "default" : "outline"}
-                    size="sm"
-                    className="h-6 px-2 text-[10px]"
-                    onClick={() => setCurrentBldIdx(bi)}
-                    data-testid={`button-wizard-unit-tab-${bi}`}
-                  >
-                    <Building2 className="w-3 h-3 mr-0.5" />{b.name}
-                    {b.staircases.reduce((s, st) => s + st.units.length, 0) > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-[8px] py-0 px-1">
-                        {b.staircases.reduce((s, st) => s + st.units.length, 0)}
-                      </Badge>
-                    )}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {buildings[currentBldIdx] && (
-              <div className="space-y-3">
-                {buildings.length > 1 && (
-                  <div className="text-xs font-medium text-primary flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5" />
-                    {buildings[currentBldIdx].name}
-                  </div>
-                )}
-                {buildings[currentBldIdx].staircases.map((st, si) => (
-                  <Card key={`${currentBldIdx}-${si}`} className="overflow-hidden">
-                    <CardContent className="p-2 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <ArrowUpDown className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span className="text-xs font-medium">{st.name}</span>
-                        <Badge variant="secondary" className="text-[9px] py-0">{st.units.length} unitati</Badge>
-                      </div>
-                      <div className="pl-5 space-y-2">
-                        {Array.from({ length: (st.floors || 0) + 1 }, (_, f) => f).map(floor => {
-                          const floorUnits = st.units.filter(u => u.floor === floor);
-                          return (
-                            <div key={floor} className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Layers className="w-3 h-3 text-muted-foreground shrink-0" />
-                                <span className="text-[11px] font-medium w-16">{getFloorLabel(floor)}</span>
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="20"
-                                  value={floorUnits.length || ""}
-                                  onChange={e => setUnitsForFloor(currentBldIdx, si, floor, e.target.value)}
-                                  className="h-6 text-xs w-14"
-                                  placeholder="0"
-                                  data-testid={`input-wizard-unit-count-${currentBldIdx}-${si}-${floor}`}
-                                />
-                                <span className="text-[10px] text-muted-foreground">unitati</span>
-                              </div>
-                              {floorUnits.length > 0 && (
-                                <div className="pl-8 grid grid-cols-2 sm:grid-cols-3 gap-1">
-                                  {floorUnits.map((u, ui) => (
-                                    <div key={ui} className="flex items-center gap-1">
-                                      <Input
-                                        value={u.number}
-                                        onChange={e => updateUnitNumber(currentBldIdx, si, floor, ui, e.target.value)}
-                                        className="h-6 text-[11px] flex-1"
-                                        data-testid={`input-wizard-unit-number-${currentBldIdx}-${si}-${floor}-${ui}`}
-                                      />
-                                      <Select value={u.unitType} onValueChange={v => updateUnitType(currentBldIdx, si, floor, ui, v)}>
-                                        <SelectTrigger className="h-6 text-[10px] w-20" data-testid={`select-wizard-unit-type-${currentBldIdx}-${si}-${floor}-${ui}`}>
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {Object.entries(UNIT_TYPE_LABELS).map(([k, v]) => (
-                                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {step === "summary" && (
-          <div className="space-y-3" data-testid="step-summary">
-            <Card>
-              <CardContent className="p-3 space-y-2">
-                <div className="text-xs font-medium">Asociatia: {assocName}</div>
-                {composedAddress && <div className="text-[11px] text-muted-foreground">Adresa: {composedAddress}</div>}
-                {assocCui && <div className="text-[11px] text-muted-foreground">CUI: {assocCui}</div>}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary" className="text-[10px]"><Building2 className="w-3 h-3 mr-0.5" />{buildings.length} blocuri</Badge>
-                  <Badge variant="secondary" className="text-[10px]"><ArrowUpDown className="w-3 h-3 mr-0.5" />{getTotalStaircases()} scari</Badge>
-                  <Badge variant="secondary" className="text-[10px]"><Home className="w-3 h-3 mr-0.5" />{getTotalUnits()} unitati</Badge>
-                  {getTotalElevators() > 0 && (
-                    <Badge variant="secondary" className="text-[10px]">{getTotalElevators()} ascensoare</Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {buildings.map((b, bi) => (
-              <Card key={bi} className="overflow-hidden">
-                <CardContent className="p-2 space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs font-medium">{b.name}</span>
-                    <Badge variant="outline" className="text-[9px] py-0">{b.staircases.length} scari</Badge>
-                  </div>
-                  {b.staircases.map((s, si) => (
-                    <div key={si} className="pl-5 space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <ArrowUpDown className="w-3 h-3 text-muted-foreground shrink-0" />
-                        <span className="text-[11px]">{s.name}</span>
-                        <Badge variant="outline" className="text-[9px] py-0">
-                          {s.floors} etaje, {s.units.length} unitati
-                          {s.elevators > 0 && `, ${s.elevators} asc.`}
-                        </Badge>
-                      </div>
-                      {s.units.length > 0 && (
-                        <div className="pl-5 flex items-center gap-1 flex-wrap">
-                          {s.units.map((u, ui) => (
-                            <Badge key={ui} variant="outline" className="text-[9px] py-0">
-                              {UNIT_TYPE_LABELS[u.unitType as keyof typeof UNIT_TYPE_LABELS] || "Apt"} {u.number}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={step === "association" ? handleClose : goBack}
-            disabled={isSaving}
-            data-testid="button-wizard-back"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />
-            {step === "association" ? "Anuleaza" : "Inapoi"}
-          </Button>
-
-          {step === "summary" ? (
-            <Button
-              size="sm"
-              className="h-8"
-              onClick={handleSave}
-              disabled={isSaving}
-              data-testid="button-wizard-save"
-            >
-              {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-0.5 animate-spin" /> : <Check className="w-3.5 h-3.5 mr-0.5" />}
-              {isSaving ? "Se creeaza..." : "Creeaza Asociatia"}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="h-8"
-              onClick={goNext}
-              disabled={!canGoNext()}
-              data-testid="button-wizard-next"
-            >
-              Continua
-              <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-            </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ScrollArea>
+
+      <div className="flex items-center justify-between px-4 py-2 border-t shrink-0 bg-background">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={step === "association" && isFirstBuilding ? handleClose : goBack}
+          disabled={isSaving}
+          data-testid="button-wizard-back"
+        >
+          <ChevronLeft className="w-3.5 h-3.5 mr-0.5" />
+          {getBackLabel()}
+        </Button>
+
+        {step === "summary" ? (
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={handleSave}
+            disabled={isSaving}
+            data-testid="button-wizard-save"
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 mr-0.5 animate-spin" /> : <Check className="w-3.5 h-3.5 mr-0.5" />}
+            {isSaving ? "Se creeaza..." : "Creeaza Asociatia"}
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="h-8"
+            onClick={goNext}
+            disabled={!canGoNext()}
+            data-testid="button-wizard-next"
+          >
+            {getNextLabel()}
+            <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }

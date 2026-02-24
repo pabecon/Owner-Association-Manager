@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,8 +31,7 @@ interface RoomEntry {
 }
 
 interface AddEntityDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   level: EntityLevel;
   parentId?: string;
   parentName?: string;
@@ -79,8 +78,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export function AddEntityDialog({
-  open,
-  onOpenChange,
+  onClose,
   level,
   parentId,
   parentName,
@@ -111,8 +109,8 @@ export function AddEntityDialog({
 
   const handleClose = useCallback(() => {
     resetForm();
-    onOpenChange(false);
-  }, [resetForm, onOpenChange]);
+    onClose();
+  }, [resetForm, onClose]);
 
   const updateField = useCallback((key: string, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -621,18 +619,21 @@ export function AddEntityDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) handleClose(); else onOpenChange(v); }}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle data-testid="text-add-entity-title">
-            Adauga {LEVEL_LABELS[level]}
-          </DialogTitle>
-          <DialogDescription>
+    <div className="flex flex-col h-full" data-testid="add-entity-panel">
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30 shrink-0">
+        <div>
+          <h2 className="text-sm font-semibold" data-testid="text-add-entity-title">Adauga {LEVEL_LABELS[level]}</h2>
+          <p className="text-[11px] text-muted-foreground">
             {parentName ? `In: ${parentName}` : `Completeaza datele pentru ${LEVEL_LABELS[level].toLowerCase()} noua`}
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleClose} data-testid="button-close-entity-panel">
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
 
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4 space-y-3">
           {renderFields()}
 
           <div className="pt-3 border-t space-y-3">
@@ -695,18 +696,18 @@ export function AddEntityDialog({
               </label>
             </div>
           </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={handleClose} disabled={isSaving || isUploading} data-testid="button-cancel-entity">
-              Anuleaza
-            </Button>
-            <Button onClick={handleSubmit} disabled={isSaving || isUploading} data-testid="button-save-entity">
-              {(isSaving || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salveaza
-            </Button>
-          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ScrollArea>
+
+      <div className="flex items-center justify-end gap-2 px-4 py-2 border-t shrink-0 bg-background">
+        <Button variant="outline" onClick={handleClose} disabled={isSaving || isUploading} data-testid="button-cancel-entity">
+          Anuleaza
+        </Button>
+        <Button onClick={handleSubmit} disabled={isSaving || isUploading} data-testid="button-save-entity">
+          {(isSaving || isUploading) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Salveaza
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -580,21 +580,22 @@ export default function Explorer() {
         </div>
       </div>
 
-      <AddEntityDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        level={addLevel}
-        parentId={addParentId}
-        parentName={addParentName}
-        federations={federations}
-        associations={associations}
-        buildings={buildings}
-        staircases={staircases}
-      />
+      {addDialogOpen && (
+        <AddEntityDialog
+          onClose={() => setAddDialogOpen(false)}
+          level={addLevel}
+          parentId={addParentId}
+          parentName={addParentName}
+          federations={federations}
+          associations={associations}
+          buildings={buildings}
+          staircases={staircases}
+        />
+      )}
 
       <EditEntityDialog
         open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
         level={editLevel}
         entity={editEntity}
         federations={federations}
