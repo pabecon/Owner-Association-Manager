@@ -5,13 +5,14 @@ import {
   listaConturiToshl, listaCotaTva, listaCursValutarBnr, listaOrasJudet,
   listaPrefixTelefon, listaSectorBucuresti, listaSerieCi, listaTari,
   listaTipDrumuri, listaTipFactura, listaTipMoneda, listaTvaPartenerAnaf,
-  listaUnitateMasura, listaTipCamera,
+  listaUnitateMasura, listaTipCamera, listaTipImobil, listaTipDocument,
   insertListaAtributeFiscaleSchema, insertListaBancaSchema, insertListaBanciConturiSchema,
   insertListaConexiuneBancareSchema, insertListaConturiToshlSchema, insertListaCotaTvaSchema,
   insertListaCursValutarBnrSchema, insertListaOrasJudetSchema, insertListaPrefixTelefonSchema,
   insertListaSectorBucurestiSchema, insertListaSerieCiSchema, insertListaTariSchema,
   insertListaTipDrumuriSchema, insertListaTipFacturaSchema, insertListaTipMonedaSchema,
   insertListaTvaPartenerAnafSchema, insertListaUnitateMasuraSchema, insertListaTipCameraSchema,
+  insertListaTipImobilSchema, insertListaTipDocumentSchema,
 } from "@shared/schema";
 
 export interface ListColumn {
@@ -226,6 +227,16 @@ const tipCameraColumns: ListColumn[] = [
   { key: "descriere", label: "Descriere", required: false },
 ];
 
+const tipImobilColumns: ListColumn[] = [
+  { key: "nume", label: "Nume Tip Imobil", required: true },
+  { key: "descriere", label: "Descriere", required: false },
+];
+
+const tipDocumentColumns: ListColumn[] = [
+  { key: "nume", label: "Nume Tip Document", required: true },
+  { key: "descriere", label: "Descriere", required: false },
+];
+
 export const referenceListConfigs: Record<string, ReferenceListConfig> = {
   "atribute-fiscale": {
     key: "atribute-fiscale",
@@ -388,6 +399,24 @@ export const referenceListConfigs: Record<string, ReferenceListConfig> = {
     insertSchema: insertListaTipCameraSchema,
     columns: tipCameraColumns,
     columnMap: buildColumnMap(tipCameraColumns),
+  },
+  "tip-imobil": {
+    key: "tip-imobil",
+    label: "Tipuri Imobil",
+    table: listaTipImobil,
+    supabaseTable: "lista_tip_imobil",
+    insertSchema: insertListaTipImobilSchema,
+    columns: tipImobilColumns,
+    columnMap: buildColumnMap(tipImobilColumns),
+  },
+  "tip-document": {
+    key: "tip-document",
+    label: "Tipuri Document",
+    table: listaTipDocument,
+    supabaseTable: "lista_tip_document",
+    insertSchema: insertListaTipDocumentSchema,
+    columns: tipDocumentColumns,
+    columnMap: buildColumnMap(tipDocumentColumns),
   },
 };
 

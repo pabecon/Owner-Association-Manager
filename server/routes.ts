@@ -1044,6 +1044,7 @@ export async function registerRoutes(
         const entityType = req.body.entityType;
         const entityId = req.body.entityId;
         const description = req.body.description || null;
+        const documentType = req.body.documentType || null;
         const floorNumber = req.body.floorNumber ? Number(req.body.floorNumber) : null;
         if (!entityType || !entityId) return res.status(400).json({ message: "entityType si entityId sunt obligatorii" });
         try {
@@ -1056,6 +1057,7 @@ export async function registerRoutes(
             entityType,
             entityId,
             floorNumber,
+            documentType,
             fileName: safeName,
             originalName: file.originalname,
             mimeType: file.mimetype,

@@ -8,7 +8,6 @@ import { Network, Users, Building2, ArrowUpDown, Layers, Home, Car, Package, Che
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
-import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
 import { BatchCreateDialog } from "@/components/batch-create-dialog";
 import { ExcelImportDialog } from "@/components/excel-import-dialog";
@@ -18,6 +17,8 @@ const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
   parking: Car,
+  apartament: Home,
+  "spatiu comercial": Building2,
 };
 
 interface StatBadge {
@@ -177,9 +178,18 @@ export default function HierarchyTree() {
   const totalAssoc = associations?.length || 0;
   const totalBld = buildings?.length || 0;
   const totalSt = staircases?.length || 0;
-  const totalAptOnly = apartments?.filter(a => (a.unitType || "apartment") === "apartment").length || 0;
-  const totalBoxes = apartments?.filter(a => a.unitType === "box").length || 0;
-  const totalParking = apartments?.filter(a => a.unitType === "parking").length || 0;
+  const totalAptOnly = apartments?.filter(a => {
+    const t = (a.unitType || "").toLowerCase();
+    return !t || t === "apartment" || t === "apartament";
+  }).length || 0;
+  const totalBoxes = apartments?.filter(a => {
+    const t = (a.unitType || "").toLowerCase();
+    return t === "box";
+  }).length || 0;
+  const totalParking = apartments?.filter(a => {
+    const t = (a.unitType || "").toLowerCase();
+    return t === "parking";
+  }).length || 0;
 
   const closeAllPanels = () => {
     setAddDialog(prev => ({ ...prev, open: false }));
@@ -251,9 +261,18 @@ export default function HierarchyTree() {
     const assocSts = staircases?.filter(s => bldIds.includes(s.buildingId)) || [];
     const stIds = assocSts.map(s => s.id);
     const assocApts = apartments?.filter(a => stIds.includes(a.staircaseId)) || [];
-    const aptCount = assocApts.filter(a => !a.unitType || a.unitType === "apartment").length;
-    const boxCount = assocApts.filter(a => a.unitType === "box").length;
-    const parkCount = assocApts.filter(a => a.unitType === "parking").length;
+    const aptCount = assocApts.filter(a => {
+      const t = (a.unitType || "").toLowerCase();
+      return !t || t === "apartment" || t === "apartament";
+    }).length;
+    const boxCount = assocApts.filter(a => {
+      const t = (a.unitType || "").toLowerCase();
+      return t === "box";
+    }).length;
+    const parkCount = assocApts.filter(a => {
+      const t = (a.unitType || "").toLowerCase();
+      return t === "parking";
+    }).length;
     const stats: StatBadge[] = [];
     if (assocBlds.length > 0) stats.push({ label: `${assocBlds.length} blocuri`, icon: Building2, variant: "secondary" });
     if (assocSts.length > 0) stats.push({ label: `${assocSts.length} scari`, icon: ArrowUpDown, variant: "outline" });
@@ -323,9 +342,9 @@ export default function HierarchyTree() {
                     onAdd={() => openBatch("unit", st.id, `${st.name} - ${getFloorLabel(floor)}`, st.id, floor)}
                   >
                     {floorUnits.map(unit => {
-                      const uType = (unit.unitType || "apartment") as UnitType;
-                      const UIcon = UNIT_TYPE_ICONS[uType] || Home;
-                      const typeLabel = UNIT_TYPE_LABELS[uType] || "Apt";
+                      const typeLabel = unit.unitType || "Apartament";
+                      const uTypeKey = typeLabel.toLowerCase();
+                      const UIcon = UNIT_TYPE_ICONS[uTypeKey] || Home;
                       return (
                         <TreeNode
                           key={unit.id}

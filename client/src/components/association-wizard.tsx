@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { UNIT_TYPE_LABELS } from "@shared/schema";
 import type { Federation } from "@shared/schema";
 import { AddressFields as AddressFieldsComponent, composeAddress } from "@/components/address-fields";
 import {
@@ -65,6 +64,12 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 export function AssociationWizard({ onClose, federationId, federations }: AssociationWizardProps) {
   const { toast } = useToast();
+
+  const { data: tipImobilItems } = useQuery<any[]>({
+    queryKey: ['/api/liste', 'tip-imobil'],
+    queryFn: () => fetch('/api/liste/tip-imobil').then(r => r.json()),
+  });
+
   const [step, setStep] = useState<WizardStep>("association");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -239,7 +244,7 @@ export function AssociationWizard({ onClose, federationId, federations }: Associ
           const otherUnits = s.units.filter(u => u.floor !== floor);
           const floorUnits = Array.from({ length: n }, (_, i) => ({
             number: `${floor === 0 ? "P" : floor}${String(i + 1).padStart(2, "0")}`,
-            unitType: "apartment",
+            unitType: tipImobilItems?.[0]?.nume || "Apartament",
             floor,
           }));
           return { ...s, units: [...otherUnits, ...floorUnits] };
@@ -663,8 +668,8 @@ export function AssociationWizard({ onClose, federationId, federations }: Associ
                                             <SelectValue />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            {Object.entries(UNIT_TYPE_LABELS).map(([k, v]) => (
-                                              <SelectItem key={k} value={k}>{v}</SelectItem>
+                                            {(tipImobilItems || []).map((tip: any) => (
+                                              <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
                                             ))}
                                           </SelectContent>
                                         </Select>
@@ -724,7 +729,7 @@ export function AssociationWizard({ onClose, federationId, federations }: Associ
                           <div className="pl-5 flex items-center gap-1 flex-wrap">
                             {s.units.map((u, ui) => (
                               <Badge key={ui} variant="outline" className="text-[9px] py-0">
-                                {UNIT_TYPE_LABELS[u.unitType as keyof typeof UNIT_TYPE_LABELS] || "Apt"} {u.number}
+                                {u.unitType || "Apartament"} {u.number}
                               </Badge>
                             ))}
                           </div>

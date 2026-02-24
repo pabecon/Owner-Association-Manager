@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Federation, Association, Building, Staircase } from "@shared/schema";
-import { UNIT_TYPE_LABELS } from "@shared/schema";
 import { AddressFields, composeAddress, isBucharestCity } from "@/components/address-fields";
 import {
   Upload, FileText, Image, File, Loader2, X, Plus, Trash2
@@ -88,6 +87,7 @@ export function AddEntityDialog({
   staircases,
 }: AddEntityDialogProps) {
   const { toast } = useToast();
+  const { data: tipImobilItems } = useQuery<any[]>({ queryKey: ['/api/liste', 'tip-imobil'], queryFn: () => fetch('/api/liste/tip-imobil').then(r => r.json()) });
   const { uploadFile, isUploading } = useUpload({
     onError: (error) => {
       toast({ title: "Eroare la incarcare fisier", description: error.message, variant: "destructive" });
@@ -531,9 +531,9 @@ export function AddEntityDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="apartment">{UNIT_TYPE_LABELS.apartment}</SelectItem>
-                    <SelectItem value="box">{UNIT_TYPE_LABELS.box}</SelectItem>
-                    <SelectItem value="parking">{UNIT_TYPE_LABELS.parking}</SelectItem>
+                    {(tipImobilItems || []).map((tip: any) => (
+                      <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

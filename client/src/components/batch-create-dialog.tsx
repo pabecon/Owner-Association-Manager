@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useUpload } from "@/hooks/use-upload";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { UNIT_TYPE_LABELS } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 import {
   Upload, FileText, Image, File, Loader2, X, Plus, Trash2
 } from "lucide-react";
@@ -72,6 +72,12 @@ export function BatchCreateDialog({
     },
   });
 
+  const { data: tipImobilItems } = useQuery<any[]>({
+    queryKey: ['/api/liste', 'tip-imobil'],
+    queryFn: () => fetch('/api/liste/tip-imobil').then(r => r.json()),
+    enabled: level === "unit",
+  });
+
   const [step, setStep] = useState<"count" | "details">("count");
   const [count, setCount] = useState("");
   const [items, setItems] = useState<BatchItem[]>([]);
@@ -111,13 +117,14 @@ export function BatchCreateDialog({
         newItems.push({ name: i === 0 ? "Parter" : `Etaj ${i}`, files: [], floorNum: i });
       }
     } else if (level === "unit") {
+      const defaultType = tipImobilItems?.[0]?.nume || "Apartament";
       for (let i = 0; i < n; i++) {
-        newItems.push({ name: `${i + 1}`, unitType: "apartment", files: [] });
+        newItems.push({ name: `${i + 1}`, unitType: defaultType, files: [] });
       }
     }
     setItems(newItems);
     setStep("details");
-  }, [count, level, toast]);
+  }, [count, level, toast, tipImobilItems]);
 
   const updateItemName = useCallback((idx: number, name: string) => {
     setItems(prev => prev.map((item, i) => i === idx ? { ...item, name } : item));
@@ -315,14 +322,14 @@ export function BatchCreateDialog({
                         </div>
                       ) : level === "unit" ? (
                         <div className="flex items-center gap-1.5 flex-1">
-                          <Select value={item.unitType || "apartment"} onValueChange={v => updateItemType(idx, v)}>
+                          <Select value={item.unitType || tipImobilItems?.[0]?.nume || "Apartament"} onValueChange={v => updateItemType(idx, v)}>
                             <SelectTrigger className="w-28 h-7 text-xs" data-testid={`select-batch-type-${idx}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="apartment">{UNIT_TYPE_LABELS.apartment}</SelectItem>
-                              <SelectItem value="box">{UNIT_TYPE_LABELS.box}</SelectItem>
-                              <SelectItem value="parking">{UNIT_TYPE_LABELS.parking}</SelectItem>
+                              {(tipImobilItems || []).map((tip: any) => (
+                                <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <Input
@@ -398,7 +405,7 @@ export function BatchCreateDialog({
                   className="text-xs"
                   onClick={() => {
                     const newItem: BatchItem = level === "unit"
-                      ? { name: `${items.length + 1}`, unitType: "apartment", files: [] }
+                      ? { name: `${items.length + 1}`, unitType: tipImobilItems?.[0]?.nume || "Apartament", files: [] }
                       : { name: "", files: [] };
                     setItems(prev => [...prev, newItem]);
                   }}

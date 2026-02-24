@@ -13,7 +13,6 @@ import { MeterManager } from "@/components/meter-manager";
 import { AddEntityDialog } from "@/components/add-entity-dialog";
 import { EditEntityDialog } from "@/components/edit-entity-dialog";
 import type { Federation, Association, Building, Staircase, Apartment } from "@shared/schema";
-import { UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
 
 interface BreadcrumbItem {
   label: string;
@@ -25,6 +24,8 @@ const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
   parking: Car,
+  apartament: Home,
+  "spatiu comercial": Home,
 };
 
 export default function Explorer() {
@@ -522,9 +523,8 @@ export default function Explorer() {
                 <div className="space-y-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {floorUnits.map(unit => {
-                      const uType = (unit.unitType || "apartment") as UnitType;
-                      const UIcon = UNIT_TYPE_ICONS[uType] || Home;
-                      const typeLabel = UNIT_TYPE_LABELS[uType] || "Apartament";
+                      const typeLabel = unit.unitType || "Apartament";
+                      const UIcon = UNIT_TYPE_ICONS[typeLabel.toLowerCase()] || Home;
                       return (
                         <Card key={unit.id} data-testid={`explorer-unit-${unit.id}`}>
                           <CardContent className="p-3">

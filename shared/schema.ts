@@ -249,6 +249,7 @@ export const documents = pgTable("documents", {
   entityType: text("entity_type").notNull(),
   entityId: text("entity_id").notNull(),
   floorNumber: integer("floor_number"),
+  documentType: text("document_type"),
   fileName: text("file_name").notNull(),
   originalName: text("original_name").notNull(),
   mimeType: text("mime_type").notNull(),
@@ -878,6 +879,18 @@ export const listaTipCamera = pgTable("lista_tip_camera", {
   descriere: text("descriere"),
 });
 
+export const listaTipImobil = pgTable("lista_tip_imobil", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nume: text("nume").notNull(),
+  descriere: text("descriere"),
+});
+
+export const listaTipDocument = pgTable("lista_tip_document", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nume: text("nume").notNull(),
+  descriere: text("descriere"),
+});
+
 export const insertListaAtributeFiscaleSchema = createInsertSchema(listaAtributeFiscale).omit({ id: true });
 export const insertListaBancaSchema = createInsertSchema(listaBanca).omit({ id: true });
 export const insertListaBanciConturiSchema = createInsertSchema(listaBanciConturi).omit({ id: true });
@@ -896,6 +909,8 @@ export const insertListaTipMonedaSchema = createInsertSchema(listaTipMoneda).omi
 export const insertListaTvaPartenerAnafSchema = createInsertSchema(listaTvaPartenerAnaf).omit({ id: true });
 export const insertListaUnitateMasuraSchema = createInsertSchema(listaUnitateMasura).omit({ id: true });
 export const insertListaTipCameraSchema = createInsertSchema(listaTipCamera).omit({ id: true });
+export const insertListaTipImobilSchema = createInsertSchema(listaTipImobil).omit({ id: true });
+export const insertListaTipDocumentSchema = createInsertSchema(listaTipDocument).omit({ id: true });
 
 export type InsertListaAtributeFiscale = z.infer<typeof insertListaAtributeFiscaleSchema>;
 export type ListaAtributeFiscale = typeof listaAtributeFiscale.$inferSelect;
@@ -933,3 +948,7 @@ export type InsertListaUnitateMasura = z.infer<typeof insertListaUnitateMasuraSc
 export type ListaUnitateMasura = typeof listaUnitateMasura.$inferSelect;
 export type InsertListaTipCamera = z.infer<typeof insertListaTipCameraSchema>;
 export type ListaTipCamera = typeof listaTipCamera.$inferSelect;
+export type InsertListaTipImobil = z.infer<typeof insertListaTipImobilSchema>;
+export type ListaTipImobil = typeof listaTipImobil.$inferSelect;
+export type InsertListaTipDocument = z.infer<typeof insertListaTipDocumentSchema>;
+export type ListaTipDocument = typeof listaTipDocument.$inferSelect;

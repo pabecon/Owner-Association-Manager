@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Federation, Association, Building, Staircase, Apartment, UnitRoom } from "@shared/schema";
-import { UNIT_TYPE_LABELS } from "@shared/schema";
 import { Loader2, Plus, Trash2, Building2, ArrowUpDown, Users, Network, X } from "lucide-react";
 import { AddressFields, composeAddress, isBucharestCity } from "@/components/address-fields";
 
@@ -60,6 +59,7 @@ export function EditEntityDialog({
   staircases,
 }: EditEntityDialogProps) {
   const { toast } = useToast();
+  const { data: tipImobilItems } = useQuery<any[]>({ queryKey: ['/api/liste', 'tip-imobil'], queryFn: () => fetch('/api/liste/tip-imobil').then(r => r.json()) });
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [rooms, setRooms] = useState<RoomEntry[]>([]);
@@ -524,9 +524,9 @@ export function EditEntityDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="apartment">{UNIT_TYPE_LABELS.apartment}</SelectItem>
-                    <SelectItem value="box">{UNIT_TYPE_LABELS.box}</SelectItem>
-                    <SelectItem value="parking">{UNIT_TYPE_LABELS.parking}</SelectItem>
+                    {(tipImobilItems || []).map((tip: any) => (
+                      <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

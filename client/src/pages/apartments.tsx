@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertApartmentSchema, UNIT_TYPE_LABELS, type UnitType } from "@shared/schema";
+import { insertApartmentSchema } from "@shared/schema";
 import type { Apartment, Building, Staircase } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Plus, Home, User, Phone, Mail, Search, Layers, ArrowUpDown, Building2, Car, Package } from "lucide-react";
@@ -22,6 +22,8 @@ const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Package,
   parking: Car,
+  apartament: Home,
+  "spatiu comercial": Home,
 };
 
 const formSchema = insertApartmentSchema.extend({
@@ -285,9 +287,8 @@ export default function Apartments() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {(() => {
-                          const uType = (apt.unitType || "apartment") as UnitType;
-                          const UIcon = UNIT_TYPE_ICONS[uType] || Home;
-                          const typeLabel = UNIT_TYPE_LABELS[uType] || "Apartament";
+                          const typeLabel = apt.unitType || "Apartament";
+                          const UIcon = UNIT_TYPE_ICONS[typeLabel.toLowerCase()] || Home;
                           return (
                             <>
                               <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">

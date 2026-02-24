@@ -14,12 +14,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ArrowLeft, Home, Box, Car, User, Phone, Mail, Ruler, DoorOpen, Layers, MapPin, FileText, CreditCard, Megaphone, Building2, Save, ExternalLink, Pencil, X, Upload, Trash2, Download, File, Image, Plus, Droplets, Zap, Flame, Calendar } from "lucide-react";
-import { UNIT_TYPE_LABELS, type UnitType, type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
+import { type Apartment, type Staircase, type Building, type Association, type UnitRoom, type Meter, type Document, METER_PLACEMENT_LABELS, type MeterPlacement, meterPlacementEnum } from "@shared/schema";
 
 const UNIT_TYPE_ICONS: Record<string, any> = {
   apartment: Home,
   box: Box,
   parking: Car,
+  apartament: Home,
+  "spatiu comercial": Building2,
 };
 
 const METER_TYPE_LABELS: Record<string, string> = {
@@ -92,6 +94,11 @@ export default function UnitDetail() {
     queryKey: ["/api/associations"],
   });
 
+  const { data: tipImobilItems } = useQuery<any[]>({
+    queryKey: ['/api/liste', 'tip-imobil'],
+    queryFn: () => fetch('/api/liste/tip-imobil').then(r => r.json()),
+  });
+
   const staircase = allStaircases?.find(s => s.id === unit?.staircaseId);
   const building = allBuildings?.find(b => b.id === staircase?.buildingId);
   const association = allAssociations?.find(a => a.id === building?.associationId);
@@ -100,7 +107,7 @@ export default function UnitDetail() {
   const form = useForm<EditUnitValues>({
     resolver: zodResolver(editUnitSchema),
     defaultValues: {
-      unitType: "apartment",
+      unitType: "Apartament",
       number: "",
       floor: 0,
       surface: "",
@@ -116,7 +123,7 @@ export default function UnitDetail() {
   useEffect(() => {
     if (unit) {
       form.reset({
-        unitType: unit.unitType || "apartment",
+        unitType: unit.unitType || "Apartament",
         number: unit.number,
         floor: unit.floor,
         surface: unit.surface || "",
@@ -191,9 +198,9 @@ export default function UnitDetail() {
     );
   }
 
-  const uType = (unit.unitType || "apartment") as UnitType;
-  const UIcon = UNIT_TYPE_ICONS[uType] || Home;
-  const typeLabel = UNIT_TYPE_LABELS[uType] || "Apartament";
+  const typeLabel = unit.unitType || "Apartament";
+  const iconKey = typeLabel.toLowerCase();
+  const UIcon = UNIT_TYPE_ICONS[iconKey] || Home;
 
   function getFloorLabel(floor: number) {
     if (floor < 0) return `Subsol ${Math.abs(floor)}`;
@@ -204,7 +211,7 @@ export default function UnitDetail() {
   function handleCancel() {
     if (unit) {
       form.reset({
-        unitType: unit.unitType || "apartment",
+        unitType: unit.unitType || "Apartament",
         number: unit.number,
         floor: unit.floor,
         surface: unit.surface || "",
@@ -332,9 +339,9 @@ export default function UnitDetail() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="apartment">Apartament</SelectItem>
-                                  <SelectItem value="box">Box</SelectItem>
-                                  <SelectItem value="parking">Parking</SelectItem>
+                                  {(tipImobilItems || []).map((tip: any) => (
+                                    <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -916,6 +923,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [docDescription, setDocDescription] = useState("");
+  const [docType, setDocType] = useState("");
 
   const { data: docs, isLoading } = useQuery<Document[]>({
     queryKey: ["/api/documents", "apartment", unitId],
@@ -926,6 +934,11 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
     },
   });
 
+  const { data: tipDocumentItems } = useQuery<any[]>({
+    queryKey: ['/api/liste', 'tip-document'],
+    queryFn: () => fetch('/api/liste/tip-document').then(r => r.json()),
+  });
+
   const uploadMutation = useMutation({
     mutationFn: async (file: globalThis.File) => {
       const formData = new FormData();
@@ -933,6 +946,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       formData.append("entityType", "apartment");
       formData.append("entityId", unitId);
       if (docDescription.trim()) formData.append("description", docDescription.trim());
+      if (docType) formData.append("documentType", docType);
       const res = await fetch("/api/documents/upload", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Upload failed");
       return res.json();
@@ -940,6 +954,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/documents", "apartment", unitId] });
       setDocDescription("");
+      setDocType("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast({ title: "Document incarcat" });
     },
@@ -956,7 +971,13 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
 
   const handleFileSelect = () => {
     const file = fileInputRef.current?.files?.[0];
-    if (file) uploadMutation.mutate(file);
+    if (!file) return;
+    if (!docType) {
+      toast({ title: "Selecteaza tipul documentului", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    uploadMutation.mutate(file);
   };
 
   const isImage = (mime: string) => mime.startsWith("image/");
@@ -971,33 +992,45 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       <h2 className="text-sm font-semibold">Documente</h2>
       <Card>
         <CardContent className="p-3 space-y-2">
-          <div className="flex items-center gap-1.5">
-            <Input
-              placeholder="Descriere (optional)"
-              value={docDescription}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
-              className="flex-1 h-7 text-xs"
-              data-testid="input-unit-doc-desc"
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-              className="hidden"
-              onChange={handleFileSelect}
-              data-testid="input-unit-doc-file"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-[11px]"
-              disabled={uploadMutation.isPending}
-              onClick={() => fileInputRef.current?.click()}
-              data-testid="button-upload-unit-doc"
-            >
-              <Upload className="w-3 h-3 mr-0.5" />
-              {uploadMutation.isPending ? "Incarca..." : "Incarca"}
-            </Button>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Select value={docType} onValueChange={setDocType}>
+                <SelectTrigger className="w-44 h-7 text-xs" data-testid="select-doc-type">
+                  <SelectValue placeholder="Tip document *" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(tipDocumentItems || []).map((tip: any) => (
+                    <SelectItem key={tip.id} value={tip.nume}>{tip.nume}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Denumire document (optional)"
+                value={docDescription}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDocDescription(e.target.value)}
+                className="flex-1 h-7 text-xs"
+                data-testid="input-unit-doc-desc"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                className="hidden"
+                onChange={handleFileSelect}
+                data-testid="input-unit-doc-file"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                disabled={uploadMutation.isPending || !docType}
+                onClick={() => fileInputRef.current?.click()}
+                data-testid="button-upload-unit-doc"
+              >
+                <Upload className="w-3 h-3 mr-0.5" />
+                {uploadMutation.isPending ? "Incarca..." : "Incarca"}
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
@@ -1019,6 +1052,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
                         {doc.description || doc.originalName}
                       </a>
                       <p className="text-xs text-muted-foreground">
+                        {doc.documentType && <Badge variant="outline" className="text-[9px] py-0 mr-1">{doc.documentType}</Badge>}
                         {doc.originalName} — {formatSize(doc.size)}
                         {doc.createdAt && ` — ${new Date(doc.createdAt).toLocaleDateString("ro-RO")}`}
                       </p>

@@ -63,7 +63,7 @@ const LIST_CATEGORIES: { label: string; icon: typeof Wallet; keys: string[] }[] 
   {
     label: "Imobiliar",
     icon: Building2,
-    keys: ["tip-camera"],
+    keys: ["tip-camera", "tip-imobil", "tip-document"],
   },
 ];
 
