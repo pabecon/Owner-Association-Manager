@@ -104,6 +104,8 @@ export interface IStorage {
   getLatestMeterReading(meterId: string): Promise<MeterReading | undefined>;
   createMeterReading(data: InsertMeterReading): Promise<MeterReading>;
   deleteMeterReading(id: string): Promise<void>;
+  getMetersWithLatestReading(scope: { associationId: string; scopeType?: string; buildingId?: string; staircaseId?: string }): Promise<Array<Meter & { latestReading?: MeterReading }>>;
+  getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any>;
 
   getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]>;
   getDocumentsByFloor(staircaseId: string, floorNumber: number): Promise<Document[]>;
@@ -466,6 +468,145 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMeterReading(id: string): Promise<void> {
     await db.delete(meterReadings).where(eq(meterReadings.id, id));
+  }
+
+  async getMetersWithLatestReading(scope: { associationId: string; scopeType?: string; buildingId?: string; staircaseId?: string }): Promise<Array<Meter & { latestReading?: MeterReading }>> {
+    const conditions = [eq(meters.associationId, scope.associationId)];
+    if (scope.scopeType) conditions.push(eq(meters.scopeType, scope.scopeType));
+    if (scope.buildingId) conditions.push(eq(meters.buildingId, scope.buildingId));
+    if (scope.staircaseId) conditions.push(eq(meters.staircaseId, scope.staircaseId));
+    
+    const meterList = await db.select().from(meters).where(and(...conditions)).orderBy(meters.meterType, meters.createdAt);
+    
+    const results: Array<Meter & { latestReading?: MeterReading }> = [];
+    for (const m of meterList) {
+      const latest = await this.getLatestMeterReading(m.id);
+      results.push({ ...m, latestReading: latest || undefined });
+    }
+    return results;
+  }
+
+  async getConsumptionDifferences(associationId: string, meterType: string, date?: string): Promise<any> {
+    const commonMeters = await db.select().from(meters)
+      .where(and(eq(meters.associationId, associationId), eq(meters.meterType, meterType), eq(meters.isActive, true)));
+    
+    const assocBuildings = await db.select().from(buildings).where(eq(buildings.associationId, associationId));
+    const buildingIds = assocBuildings.map(b => b.id);
+    
+    let allStaircases: any[] = [];
+    if (buildingIds.length > 0) {
+      allStaircases = await db.select().from(staircases).where(inArray(staircases.buildingId, buildingIds));
+    }
+    const staircaseIds = allStaircases.map(s => s.id);
+    
+    let allApartments: any[] = [];
+    if (staircaseIds.length > 0) {
+      allApartments = await db.select().from(apartments).where(inArray(apartments.staircaseId, staircaseIds));
+    }
+    const apartmentIds = allApartments.map(a => a.id);
+    
+    let aptMeters: any[] = [];
+    if (apartmentIds.length > 0) {
+      aptMeters = await db.select().from(meters)
+        .where(and(
+          inArray(meters.apartmentId, apartmentIds),
+          eq(meters.meterType, meterType),
+          eq(meters.isActive, true)
+        ));
+    }
+    
+    const getLatestConsumption = async (meterId: string, beforeDate?: string): Promise<{ reading: number; consumption: number; date: string } | null> => {
+      const conditions = [eq(meterReadings.meterId, meterId)];
+      if (beforeDate) conditions.push(sql`${meterReadings.readingDate} <= ${beforeDate}`);
+      const [latest] = await db.select().from(meterReadings)
+        .where(and(...conditions))
+        .orderBy(desc(meterReadings.readingDate))
+        .limit(1);
+      if (!latest) return null;
+      return { reading: Number(latest.readingValue), consumption: Number(latest.consumption || 0), date: latest.readingDate };
+    };
+    
+    const assocMeters = commonMeters.filter(m => m.scopeType === "association");
+    const buildingMetersMap = commonMeters.filter(m => m.scopeType === "building");
+    const staircaseMetersMap = commonMeters.filter(m => m.scopeType === "staircase");
+    
+    const result: any = {
+      meterType,
+      association: { meters: [] as any[], totalConsumption: 0 },
+      buildings: [] as any[],
+      exteriorCommonConsumption: 0,
+    };
+    
+    let assocTotalConsumption = 0;
+    for (const m of assocMeters) {
+      const data = await getLatestConsumption(m.id, date);
+      result.association.meters.push({ meter: m, latest: data });
+      if (data) assocTotalConsumption += data.consumption;
+    }
+    result.association.totalConsumption = assocTotalConsumption;
+    
+    let buildingsTotalConsumption = 0;
+    for (const bld of assocBuildings) {
+      const bldMeters = buildingMetersMap.filter(m => m.buildingId === bld.id);
+      let bldConsumption = 0;
+      const bldMeterData: any[] = [];
+      for (const m of bldMeters) {
+        const data = await getLatestConsumption(m.id, date);
+        bldMeterData.push({ meter: m, latest: data });
+        if (data) bldConsumption += data.consumption;
+      }
+      
+      const bldStaircases = allStaircases.filter(s => s.buildingId === bld.id);
+      let stcsTotalConsumption = 0;
+      const stcsData: any[] = [];
+      
+      for (const sc of bldStaircases) {
+        const scMeters = staircaseMetersMap.filter(m => m.staircaseId === sc.id);
+        let scConsumption = 0;
+        const scMeterData: any[] = [];
+        for (const m of scMeters) {
+          const data = await getLatestConsumption(m.id, date);
+          scMeterData.push({ meter: m, latest: data });
+          if (data) scConsumption += data.consumption;
+        }
+        
+        const scApts = allApartments.filter(a => a.staircaseId === sc.id);
+        const scAptMetersList = aptMeters.filter(m => scApts.some(a => a.id === m.apartmentId));
+        let aptsTotalConsumption = 0;
+        for (const m of scAptMetersList) {
+          const data = await getLatestConsumption(m.id, date);
+          if (data) aptsTotalConsumption += data.consumption;
+        }
+        
+        const scCommon = scConsumption - aptsTotalConsumption;
+        stcsData.push({
+          staircaseId: sc.id,
+          staircaseName: sc.name,
+          meters: scMeterData,
+          totalConsumption: scConsumption,
+          apartmentsTotalConsumption: aptsTotalConsumption,
+          commonConsumption: scCommon > 0 ? scCommon : 0,
+          apartmentMeterCount: scAptMetersList.length,
+        });
+        stcsTotalConsumption += scConsumption > 0 ? scConsumption : aptsTotalConsumption;
+      }
+      
+      const bldCommon = bldConsumption - stcsTotalConsumption;
+      result.buildings.push({
+        buildingId: bld.id,
+        buildingName: bld.name,
+        meters: bldMeterData,
+        totalConsumption: bldConsumption,
+        staircasesTotalConsumption: stcsTotalConsumption,
+        commonConsumption: bldCommon > 0 ? bldCommon : 0,
+        staircases: stcsData,
+      });
+      buildingsTotalConsumption += bldConsumption > 0 ? bldConsumption : stcsTotalConsumption;
+    }
+    
+    result.exteriorCommonConsumption = assocTotalConsumption > 0 ? Math.max(0, assocTotalConsumption - buildingsTotalConsumption) : 0;
+    
+    return result;
   }
 
   async getDocumentsByEntity(entityType: string, entityId: string): Promise<Document[]> {

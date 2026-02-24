@@ -645,6 +645,26 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  app.get("/api/meters-with-readings", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { associationId, scopeType, buildingId, staircaseId } = req.query;
+    if (!associationId) return res.status(400).json({ message: "associationId este obligatoriu" });
+    const scope: any = { associationId: associationId as string };
+    if (scopeType) scope.scopeType = scopeType as string;
+    if (buildingId) scope.buildingId = buildingId as string;
+    if (staircaseId) scope.staircaseId = staircaseId as string;
+    const result = await storage.getMetersWithLatestReading(scope);
+    res.json(result);
+  });
+
+  app.get("/api/consumption-differences", ...auth, async (req: AuthenticatedRequest, res) => {
+    const { associationId, meterType, date } = req.query;
+    if (!associationId || !meterType) return res.status(400).json({ message: "associationId si meterType sunt obligatorii" });
+    const result = await storage.getConsumptionDifferences(
+      associationId as string, meterType as string, date as string | undefined
+    );
+    res.json(result);
+  });
+
   // Expenses
   app.get("/api/expenses", ...auth, async (req: AuthenticatedRequest, res) => {
     if (req.permissions?.viewAllExpenses) {

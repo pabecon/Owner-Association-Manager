@@ -18,10 +18,11 @@ import {
   Building2, Home, ArrowUpDown, Layers, Car, Package, MapPin, User, Phone, Mail,
   FileText, Wallet, Receipt, CreditCard, Megaphone, ArrowDown,
   ChevronDown, ChevronRight, Trash2, Plus, Banknote, ExternalLink,
-  Gauge, DoorOpen, Calendar, Hash, Upload, Download, File, Image
+  Gauge, DoorOpen, Calendar, Hash, Upload, Download, File, Image,
+  BarChart3, Eye, EyeOff
 } from "lucide-react";
-import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, Document } from "@shared/schema";
-import { METER_TYPE_LABELS, meterTypeEnum } from "@shared/schema";
+import type { Association, Building, Staircase, Apartment, Expense, Payment, Announcement, Fund, FundCategory, UnitRoom, Meter, MeterType, MeterReading, Document } from "@shared/schema";
+import { METER_TYPE_LABELS, meterTypeEnum, METER_SCOPE_LABELS } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -1043,7 +1044,8 @@ function CommonMeterAddForm({ scopeType, associationId, buildingId, staircaseId,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/common-meters"] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/common-meters") });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
       setMeterType(""); setSerialNumber(""); setMeterNumber(""); setInstallDate(""); setInitialReading("");
       toast({ title: "Contor comun adaugat" });
     },
@@ -1078,12 +1080,109 @@ function CommonMeterAddForm({ scopeType, associationId, buildingId, staircaseId,
   );
 }
 
-function CommonMetersList({ meters, label }: { meters: Meter[]; label: string }) {
+function MeterReadingForm({ meterId, associationId }: { meterId: string; associationId: string }) {
   const { toast } = useToast();
+  const [readingDate, setReadingDate] = useState("");
+  const [readingValue, setReadingValue] = useState("");
+
+  const addReadingMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/meter-readings", {
+        meterId,
+        readingDate,
+        readingValue,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", meterId] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/common-meters") });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/meters-with-readings") });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
+      setReadingDate(""); setReadingValue("");
+      toast({ title: "Citire adaugata" });
+    },
+    onError: (err: any) => { toast({ title: err.message || "Eroare la adaugare citire", variant: "destructive" }); },
+  });
+
+  return (
+    <div className="flex items-center gap-1 mt-1">
+      <DatePicker value={readingDate} onChange={setReadingDate} placeholder="Data citire" className="h-6 text-[10px] w-28" data-testid={`datepicker-reading-${meterId}`} />
+      <Input type="number" step="0.001" value={readingValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReadingValue(e.target.value)} placeholder="Index" className="h-6 text-[10px] w-20" data-testid={`input-reading-value-${meterId}`} />
+      <Button size="sm" variant="outline" className="h-6 text-[10px] px-1.5" disabled={!readingDate || !readingValue || addReadingMutation.isPending} onClick={() => addReadingMutation.mutate()} data-testid={`button-add-reading-${meterId}`}>
+        <Plus className="w-3 h-3" />
+      </Button>
+    </div>
+  );
+}
+
+function MeterReadingsHistory({ meterId }: { meterId: string }) {
+  const { toast } = useToast();
+  const { data: readings } = useQuery<MeterReading[]>({
+    queryKey: ["/api/meter-readings", meterId],
+  });
+
+  const deleteReadingMutation = useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/meter-readings/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meter-readings", meterId] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
+      toast({ title: "Citire stearsa" });
+    },
+  });
+
+  if (!readings || readings.length === 0) {
+    return <p className="text-[9px] text-muted-foreground py-1">Nicio citire inregistrata</p>;
+  }
+
+  return (
+    <div className="mt-1">
+      <Table className="compact-table">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-[9px] py-0.5 px-1">Data</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right">Index</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right">Consum</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 text-right">Acumulat</TableHead>
+            <TableHead className="text-[9px] py-0.5 px-1 w-6"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {readings.map(r => (
+            <TableRow key={r.id} data-testid={`row-reading-${r.id}`}>
+              <TableCell className="text-[9px] py-0.5 px-1">{r.readingDate}</TableCell>
+              <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.readingValue}</TableCell>
+              <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.consumption || "-"}</TableCell>
+              <TableCell className="text-[9px] py-0.5 px-1 text-right tabular-nums">{r.accumulatedConsumption || "-"}</TableCell>
+              <TableCell className="py-0.5 px-1">
+                <Button size="icon" variant="ghost" className="h-4 w-4" onClick={() => deleteReadingMutation.mutate(r.id)} data-testid={`button-delete-reading-${r.id}`}>
+                  <Trash2 className="w-2 h-2 text-muted-foreground" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function CommonMetersList({ meters, label, associationId }: { meters: Meter[]; label: string; associationId: string }) {
+  const { toast } = useToast();
+  const [expandedMeters, setExpandedMeters] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (id: string) => {
+    setExpandedMeters(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/meters/${id}`); },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/common-meters"] });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/common-meters") });
+      queryClient.invalidateQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/consumption-differences") });
       toast({ title: "Contor sters" });
     },
   });
@@ -1091,23 +1190,136 @@ function CommonMetersList({ meters, label }: { meters: Meter[]; label: string })
   if (meters.length === 0) return null;
 
   return (
-    <div className="space-y-0.5">
-      {meters.map(m => (
-        <div key={m.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5" data-testid={`common-meter-${m.id}`}>
-          <div className="flex items-center gap-1 flex-1 min-w-0">
-            <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType}</Badge>
-            <span className="text-muted-foreground truncate">
-              <Hash className="w-2.5 h-2.5 inline" />{m.serialNumber} / {m.meterNumber}
-            </span>
-            {m.installDate && <span className="text-muted-foreground shrink-0"><Calendar className="w-2.5 h-2.5 inline" />{m.installDate}</span>}
-            <span className="text-muted-foreground shrink-0">init: {m.initialReading}</span>
+    <div className="space-y-1">
+      {meters.map(m => {
+        const isExpanded = expandedMeters.has(m.id);
+        return (
+          <div key={m.id} data-testid={`common-meter-${m.id}`}>
+            <div className="flex items-center justify-between gap-1 text-[10px] py-0.5">
+              <div className="flex items-center gap-1 flex-1 min-w-0 cursor-pointer" onClick={() => toggleExpanded(m.id)} data-testid={`button-expand-meter-${m.id}`}>
+                {isExpanded ? <ChevronDown className="w-2.5 h-2.5 shrink-0" /> : <ChevronRight className="w-2.5 h-2.5 shrink-0" />}
+                <Badge variant="secondary" className="text-[9px] py-0 shrink-0">{METER_TYPE_LABELS[m.meterType as MeterType] || m.meterType}</Badge>
+                <span className="text-muted-foreground truncate">
+                  <Hash className="w-2.5 h-2.5 inline" />{m.serialNumber} / {m.meterNumber}
+                </span>
+                {m.installDate && <span className="text-muted-foreground shrink-0"><Calendar className="w-2.5 h-2.5 inline" />{m.installDate}</span>}
+                <span className="text-muted-foreground shrink-0">init: {m.initialReading}</span>
+              </div>
+              <Button size="icon" variant="ghost" className="h-5 w-5" onClick={() => deleteMutation.mutate(m.id)} data-testid={`button-delete-common-meter-${m.id}`}>
+                <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
+              </Button>
+            </div>
+            {isExpanded && (
+              <div className="ml-4 border-l-2 border-muted pl-2">
+                <MeterReadingForm meterId={m.id} associationId={associationId} />
+                <MeterReadingsHistory meterId={m.id} />
+              </div>
+            )}
           </div>
-          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(m.id)} data-testid={`button-delete-common-meter-${m.id}`}>
-            <Trash2 className="w-2.5 h-2.5 text-muted-foreground" />
-          </Button>
-        </div>
-      ))}
+        );
+      })}
     </div>
+  );
+}
+
+function ConsumptionDifferencesPanel({ associationId }: { associationId: string }) {
+  const [selectedMeterType, setSelectedMeterType] = useState<string>("water");
+
+  const diffUrl = `/api/consumption-differences?associationId=${associationId}&meterType=${selectedMeterType}`;
+  const { data: diff, isLoading } = useQuery<any>({
+    queryKey: [diffUrl],
+    enabled: !!selectedMeterType,
+  });
+
+  return (
+    <Card data-testid="card-consumption-differences">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            Diferente Consum Ierarhice
+          </CardTitle>
+          <Select value={selectedMeterType} onValueChange={setSelectedMeterType}>
+            <SelectTrigger className="w-32 h-7 text-xs" data-testid="select-diff-meter-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {meterTypeEnum.map(t => (
+                <SelectItem key={t} value={t} data-testid={`select-diff-type-${t}`}>{METER_TYPE_LABELS[t]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {isLoading ? (
+          <Skeleton className="h-20" />
+        ) : !diff ? (
+          <p className="text-xs text-muted-foreground">Selectati un tip de contor</p>
+        ) : (
+          <div className="space-y-3">
+            {diff.association.meters.length > 0 && (
+              <div className="bg-primary/5 rounded-md p-2" data-testid="diff-association">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">Contor General Asociatie</span>
+                  <span className="font-bold tabular-nums" data-testid="text-assoc-consumption">{diff.association.totalConsumption.toFixed(3)}</span>
+                </div>
+                {diff.exteriorCommonConsumption > 0 && (
+                  <div className="flex items-center justify-between text-[10px] mt-1 text-orange-600 dark:text-orange-400">
+                    <span>Consum zone comune exterioare</span>
+                    <span className="font-bold tabular-nums" data-testid="text-exterior-common">{diff.exteriorCommonConsumption.toFixed(3)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {diff.buildings.map((bld: any) => (
+              <div key={bld.buildingId} className="border rounded-md p-2 space-y-1" data-testid={`diff-building-${bld.buildingId}`}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium">{bld.buildingName || bld.buildingId}</span>
+                  {bld.meters.length > 0 && (
+                    <span className="font-bold tabular-nums">{bld.totalConsumption.toFixed(3)}</span>
+                  )}
+                </div>
+                {bld.commonConsumption > 0 && (
+                  <div className="flex items-center justify-between text-[10px] text-orange-600 dark:text-orange-400">
+                    <span>Consum comun bloc</span>
+                    <span className="font-bold tabular-nums">{bld.commonConsumption.toFixed(3)}</span>
+                  </div>
+                )}
+
+                {bld.staircases.map((sc: any) => (
+                  <div key={sc.staircaseId} className="border-l-2 border-muted pl-2 ml-1 space-y-0.5" data-testid={`diff-staircase-${sc.staircaseId}`}>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-medium">{sc.staircaseName || "Scara"}</span>
+                      {sc.meters.length > 0 && (
+                        <span className="font-semibold tabular-nums">{sc.totalConsumption.toFixed(3)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>Suma contoare apartamente ({sc.apartmentMeterCount})</span>
+                      <span className="tabular-nums">{sc.apartmentsTotalConsumption.toFixed(3)}</span>
+                    </div>
+                    {sc.commonConsumption > 0 && (
+                      <div className="flex items-center justify-between text-[10px] text-orange-600 dark:text-orange-400">
+                        <span>Consum comun scara</span>
+                        <span className="font-bold tabular-nums">{sc.commonConsumption.toFixed(3)}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            {diff.association.meters.length === 0 && diff.buildings.length === 0 && (
+              <p className="text-xs text-muted-foreground" data-testid="text-no-diff-data">
+                Nu exista contoare cu citiri pentru {METER_TYPE_LABELS[selectedMeterType as MeterType]}. Adaugati contoare si citiri mai intai.
+              </p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1117,13 +1329,9 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
   staircases: Staircase[];
   apartments: Apartment[];
 }) {
+  const commonMetersUrl = `/api/common-meters?associationId=${associationId}`;
   const { data: commonMeters, isLoading } = useQuery<Meter[]>({
-    queryKey: ["/api/common-meters", associationId],
-    queryFn: async () => {
-      const res = await fetch(`/api/common-meters?associationId=${associationId}`);
-      if (!res.ok) throw new Error("Failed to fetch common meters");
-      return res.json();
-    },
+    queryKey: [commonMetersUrl],
   });
 
   const assocMeters = commonMeters?.filter(m => m.scopeType === "association") || [];
@@ -1146,7 +1354,7 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <CommonMetersList meters={assocMeters} label="Asociatie" />
+          <CommonMetersList meters={assocMeters} label="Asociatie" associationId={associationId} />
           <CommonMeterAddForm scopeType="association" associationId={associationId} />
         </CardContent>
       </Card>
@@ -1165,7 +1373,7 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              <CommonMetersList meters={bldM} label={bld.name} />
+              <CommonMetersList meters={bldM} label={bld.name} associationId={associationId} />
               <CommonMeterAddForm scopeType="building" associationId={associationId} buildingId={bld.id} />
 
               {bldScs.map(sc => {
@@ -1180,7 +1388,7 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
                       <span className="text-xs font-medium">{sc.name}</span>
                       <Badge variant="outline" className="text-[9px] py-0">{scM.length} contoare</Badge>
                     </div>
-                    <CommonMetersList meters={scM} label={sc.name} />
+                    <CommonMetersList meters={scM} label={sc.name} associationId={associationId} />
                     <CommonMeterAddForm scopeType="staircase" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} />
 
                     {floors.map(fl => {
@@ -1192,7 +1400,7 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
                             <span className="text-[10px] font-medium">{fl < 0 ? `Subsol ${Math.abs(fl)}` : fl === 0 ? "Parter" : `Etaj ${fl}`}</span>
                             <Badge variant="outline" className="text-[9px] py-0">{flM.length}</Badge>
                           </div>
-                          <CommonMetersList meters={flM} label={`Etaj ${fl}`} />
+                          <CommonMetersList meters={flM} label={`Etaj ${fl}`} associationId={associationId} />
                           <CommonMeterAddForm scopeType="floor" associationId={associationId} buildingId={bld.id} staircaseId={sc.id} floor={fl} />
                         </div>
                       );
@@ -1204,6 +1412,8 @@ function CommonMetersSection({ associationId, buildings, staircases, apartments 
           </Card>
         );
       })}
+
+      <ConsumptionDifferencesPanel associationId={associationId} />
     </div>
   );
 }
