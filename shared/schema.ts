@@ -256,6 +256,7 @@ export const documents = pgTable("documents", {
   mimeType: text("mime_type").notNull(),
   size: integer("size").notNull(),
   objectPath: text("object_path").notNull(),
+  fileData: text("file_data"),
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
 });

@@ -1014,16 +1014,47 @@ export async function registerRoutes(
     res.json({ ok: true });
   });
 
+  app.get("/api/documents/download/:id", ...auth, async (req, res) => {
+    try {
+      const doc = await storage.getDocument(req.params.id as string);
+      if (!doc) return res.status(404).json({ message: "Documentul nu a fost gasit" });
+      let fileBuffer: Buffer | null = null;
+      if (doc.fileData) {
+        fileBuffer = Buffer.from(doc.fileData, "base64");
+      }
+      if (!fileBuffer) {
+        try {
+          const { Client } = await import("@replit/object-storage");
+          const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+          const { ok, value: buffer } = await client.downloadAsBytes(doc.objectPath);
+          if (ok && buffer) fileBuffer = Buffer.from(buffer);
+        } catch (objErr) {
+          console.warn("Object storage download failed, no DB fallback available:", objErr);
+        }
+      }
+      if (!fileBuffer) return res.status(404).json({ message: "Fisierul nu a fost gasit" });
+      res.set({
+        "Content-Type": doc.mimeType,
+        "Content-Disposition": `inline; filename="${encodeURIComponent(doc.originalName)}"`,
+        "Content-Length": String(fileBuffer.length),
+      });
+      res.send(fileBuffer);
+    } catch (error: any) {
+      console.error("Error downloading document:", error);
+      res.status(500).json({ message: "Eroare la descarcarea documentului" });
+    }
+  });
+
   app.get("/api/documents/:entityType/:entityId", ...auth, async (req, res) => {
     const entityType = req.params.entityType as string;
     const entityId = req.params.entityId as string;
     const floorNumber = req.query.floorNumber as string | undefined;
     if (entityType === "floor" && floorNumber !== undefined) {
       const docs = await storage.getDocumentsByFloor(entityId, Number(floorNumber));
-      return res.json(docs);
+      return res.json(docs.map(({ fileData: _fd, ...rest }) => rest));
     }
     const docs = await storage.getDocumentsByEntity(entityType, entityId);
-    res.json(docs);
+    res.json(docs.map(({ fileData: _fd, ...rest }) => rest));
   });
 
   app.post("/api/documents", ...auth, async (req, res) => {
@@ -1036,9 +1067,12 @@ export async function registerRoutes(
   app.post("/api/documents/upload", ...auth, async (req: AuthenticatedRequest, res) => {
     try {
       const multer = (await import("multer")).default;
-      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+      const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
       upload.single("file")(req, res, async (err: any) => {
-        if (err) return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        if (err) {
+          if (err.code === "LIMIT_FILE_SIZE") return res.status(400).json({ message: "Fisierul depaseste limita de 10 MB" });
+          return res.status(400).json({ message: "Eroare la incarcarea fisierului" });
+        }
         const file = (req as any).file;
         if (!file) return res.status(400).json({ message: "Niciun fisier incarcat" });
         const entityType = req.body.entityType;
@@ -1049,11 +1083,16 @@ export async function registerRoutes(
         const floorNumber = req.body.floorNumber ? Number(req.body.floorNumber) : null;
         if (!entityType || !entityId) return res.status(400).json({ message: "entityType si entityId sunt obligatorii" });
         try {
-          const { Client } = await import("@replit/object-storage");
-          const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
           const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
           const path = `.private/documents/${entityType}/${entityId}/${Date.now()}_${safeName}`;
-          await client.uploadFromBytes(path, file.buffer);
+          const fileDataBase64 = file.buffer.toString("base64");
+          try {
+            const { Client } = await import("@replit/object-storage");
+            const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
+            await client.uploadFromBytes(path, file.buffer);
+          } catch (objErr) {
+            console.warn("Object storage upload failed, file saved to database only:", objErr);
+          }
           const doc = await storage.createDocument({
             entityType,
             entityId,
@@ -1065,9 +1104,11 @@ export async function registerRoutes(
             mimeType: file.mimetype,
             size: file.size,
             objectPath: path,
+            fileData: fileDataBase64,
             description,
           });
-          res.json(doc);
+          const { fileData: _, ...docWithoutData } = doc;
+          res.json(docWithoutData);
         } catch (uploadErr: any) {
           console.error("Error uploading document:", uploadErr);
           res.status(500).json({ message: "Eroare la salvarea documentului" });
@@ -1075,26 +1116,6 @@ export async function registerRoutes(
       });
     } catch (error: any) {
       res.status(500).json({ message: "Eroare interna" });
-    }
-  });
-
-  app.get("/api/documents/download/:id", ...auth, async (req, res) => {
-    try {
-      const doc = await storage.getDocument(req.params.id as string);
-      if (!doc) return res.status(404).json({ message: "Documentul nu a fost gasit" });
-      const { Client } = await import("@replit/object-storage");
-      const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
-      const { ok, value: buffer } = await client.downloadAsBytes(doc.objectPath);
-      if (!ok) return res.status(404).json({ message: "Fisierul nu a fost gasit in storage" });
-      res.set({
-        "Content-Type": doc.mimeType,
-        "Content-Disposition": `inline; filename="${encodeURIComponent(doc.originalName)}"`,
-        "Content-Length": String(buffer.length),
-      });
-      res.send(Buffer.from(buffer));
-    } catch (error: any) {
-      console.error("Error downloading document:", error);
-      res.status(500).json({ message: "Eroare la descarcarea documentului" });
     }
   });
 

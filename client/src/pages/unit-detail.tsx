@@ -930,6 +930,7 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
   const [docType, setDocType] = useState("");
   const [docDate, setDocDate] = useState<Date | undefined>(undefined);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<globalThis.File | null>(null);
 
   const { data: docs, isLoading } = useQuery<Document[]>({
     queryKey: ["/api/documents", "apartment", unitId],
@@ -968,10 +969,11 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
       setDocDescription("");
       setDocType("");
       setDocDate(undefined);
+      setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      toast({ title: "Document incarcat" });
+      toast({ title: "Document salvat cu succes" });
     },
-    onError: () => { toast({ title: "Eroare la incarcarea documentului", variant: "destructive" }); },
+    onError: () => { toast({ title: "Eroare la salvarea documentului", variant: "destructive" }); },
   });
 
   const deleteMutation = useMutation({
@@ -984,18 +986,28 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
 
   const handleFileSelect = () => {
     const file = fileInputRef.current?.files?.[0];
-    if (!file) return;
+    if (file) setSelectedFile(file);
+  };
+
+  const handleSave = () => {
+    if (!selectedFile) {
+      toast({ title: "Selecteaza un fisier", variant: "destructive" });
+      return;
+    }
     if (!docType) {
       toast({ title: "Selecteaza tipul documentului", variant: "destructive" });
-      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     if (!docDate) {
       toast({ title: "Selecteaza data documentului", variant: "destructive" });
-      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    uploadMutation.mutate(file);
+    uploadMutation.mutate(selectedFile);
+  };
+
+  const handleClearFile = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const isImage = (mime: string) => mime.startsWith("image/");
@@ -1075,12 +1087,33 @@ function UnitDocumentsTab({ unitId }: { unitId: string }) {
                 variant="outline"
                 size="sm"
                 className="h-7 px-2 text-[11px]"
-                disabled={uploadMutation.isPending || !docType || !docDate}
                 onClick={() => fileInputRef.current?.click()}
-                data-testid="button-upload-unit-doc"
+                data-testid="button-select-file"
               >
                 <Upload className="w-3 h-3 mr-0.5" />
-                {uploadMutation.isPending ? "Incarca..." : "Incarca"}
+                Alege fisier
+              </Button>
+            </div>
+            {selectedFile && (
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                <File className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <span className="text-xs flex-1 truncate" data-testid="text-selected-file">{selectedFile.name}</span>
+                <span className="text-[10px] text-muted-foreground">{formatSize(selectedFile.size)}</span>
+                <Button variant="ghost" size="icon" className="w-5 h-5" onClick={handleClearFile} data-testid="button-clear-file">
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                className="h-7 px-3 text-[11px]"
+                disabled={uploadMutation.isPending || !selectedFile || !docType || !docDate}
+                onClick={handleSave}
+                data-testid="button-save-doc"
+              >
+                <Save className="w-3 h-3 mr-0.5" />
+                {uploadMutation.isPending ? "Se salveaza..." : "Salveaza document"}
               </Button>
             </div>
           </div>
