@@ -711,9 +711,9 @@ export async function registerRoutes(
       res.set({
         "Content-Type": mimeMap[ext] || "image/jpeg",
         "Content-Disposition": `inline; filename="reading-${reading.id}.${ext}"`,
-        "Content-Length": String(Buffer.from(buffer).length),
+        "Content-Length": String(Buffer.from(buffer as any).length),
       });
-      res.send(Buffer.from(buffer));
+      res.send(Buffer.from(buffer as any));
     } catch (error: any) {
       res.status(500).json({ message: "Eroare la descarcarea fotografiei" });
     }
@@ -1189,7 +1189,7 @@ export async function registerRoutes(
           const { Client } = await import("@replit/object-storage");
           const client = new Client({ bucketId: process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID });
           const { ok, value: buffer } = await client.downloadAsBytes(doc.objectPath);
-          if (ok && buffer) fileBuffer = Buffer.from(buffer);
+          if (ok && buffer) fileBuffer = Buffer.from(buffer as any);
         } catch (objErr) {
           console.warn("Object storage download failed, no DB fallback available:", objErr);
         }
@@ -1509,7 +1509,7 @@ export async function registerRoutes(
 
   // App Settings (permission matrix overrides)
   app.get("/api/settings/:key", ...auth, async (req: AuthenticatedRequest, res) => {
-    const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, req.params.key));
+    const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, req.params.key as string));
     if (!setting) return res.json(null);
     try {
       res.json(JSON.parse(setting.value));
@@ -1520,7 +1520,7 @@ export async function registerRoutes(
 
   app.put("/api/settings/:key", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
     const value = JSON.stringify(req.body.value);
-    await db.insert(appSettings).values({ key: req.params.key, value, updatedAt: new Date() })
+    await db.insert(appSettings).values({ key: req.params.key as string, value, updatedAt: new Date() })
       .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: new Date() } });
     res.json({ success: true });
   });
@@ -1550,11 +1550,12 @@ export async function registerRoutes(
 
   app.get("/api/platform-users/:id", ...auth, async (req: AuthenticatedRequest, res) => {
     try {
-      const [user] = await db.select().from(platformUsers).where(eq(platformUsers.id, req.params.id));
+      const userId = req.params.id as string;
+      const [user] = await db.select().from(platformUsers).where(eq(platformUsers.id, userId));
       if (!user) return res.status(404).json({ message: "Utilizatorul nu a fost gasit" });
 
       const activities = await db.select().from(userActivityLog)
-        .where(eq(userActivityLog.platformUserId, req.params.id))
+        .where(eq(userActivityLog.platformUserId, userId))
         .orderBy(desc(userActivityLog.createdAt));
 
       const assoc = user.associationId ? (await db.select().from(associations).where(eq(associations.id, user.associationId)))[0] : null;
@@ -1596,7 +1597,8 @@ export async function registerRoutes(
 
   app.patch("/api/platform-users/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
     try {
-      const [existing] = await db.select().from(platformUsers).where(eq(platformUsers.id, req.params.id));
+      const pUserId = req.params.id as string;
+      const [existing] = await db.select().from(platformUsers).where(eq(platformUsers.id, pUserId));
       if (!existing) return res.status(404).json({ message: "Utilizatorul nu a fost gasit" });
 
       const updates = req.body;
@@ -1624,11 +1626,11 @@ export async function registerRoutes(
       if (updates.staircaseId !== undefined && updates.staircaseId !== existing.staircaseId) changes.push("Scara schimbata");
       if (updates.apartmentId !== undefined && updates.apartmentId !== existing.apartmentId) changes.push("Unitate schimbata");
 
-      const [updated] = await db.update(platformUsers).set(updates).where(eq(platformUsers.id, req.params.id)).returning();
+      const [updated] = await db.update(platformUsers).set(updates).where(eq(platformUsers.id, pUserId)).returning();
 
       if (changes.length > 0) {
         await db.insert(userActivityLog).values({
-          platformUserId: req.params.id,
+          platformUserId: pUserId,
           action: "Editare cont",
           details: changes.join("; "),
           performedBy: performer,
@@ -1643,7 +1645,7 @@ export async function registerRoutes(
 
   app.delete("/api/platform-users/:id", ...auth, requireRole("super_admin"), async (req: AuthenticatedRequest, res) => {
     try {
-      await db.delete(platformUsers).where(eq(platformUsers.id, req.params.id));
+      await db.delete(platformUsers).where(eq(platformUsers.id, req.params.id as string));
       res.json({ success: true });
     } catch (e: any) {
       res.status(500).json({ message: e.message });
@@ -1653,7 +1655,7 @@ export async function registerRoutes(
   app.get("/api/platform-users/:id/activities", ...auth, async (req: AuthenticatedRequest, res) => {
     try {
       const activities = await db.select().from(userActivityLog)
-        .where(eq(userActivityLog.platformUserId, req.params.id))
+        .where(eq(userActivityLog.platformUserId, req.params.id as string))
         .orderBy(desc(userActivityLog.createdAt));
       res.json(activities);
     } catch (e: any) {
