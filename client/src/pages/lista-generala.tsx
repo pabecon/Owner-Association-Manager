@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import CursValutarBnrPage from "@/pages/curs-valutar-bnr";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -728,6 +729,10 @@ export default function ListaGenerala() {
 
   if (listKey === "unitate-masura" && config && items) {
     return <CategoryGroupedView items={items} listKey={listKey} config={config} />;
+  }
+
+  if (listKey === "curs-valutar-bnr") {
+    return <CursValutarBnrPage />;
   }
 
   return (
