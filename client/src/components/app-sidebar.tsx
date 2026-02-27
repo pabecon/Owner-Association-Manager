@@ -13,7 +13,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck, Wallet, Receipt, Landmark, Calculator, MapPin, CreditCard, Ruler, TrendingUp } from "lucide-react";
+import { Building2, GitBranch, Shield, List, Scale, ChevronDown, ChevronRight, Users, FileText, Gavel, Grid3X3, ShieldCheck, Wallet, Receipt, Landmark, Calculator, MapPin, CreditCard, Ruler } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -114,7 +114,7 @@ export function AppSidebar() {
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte") || location.startsWith("/sabloane-contracte");
   const isUsersSection = location === "/matrice-permisiuni" || location === "/lista-utilizatori" || location.startsWith("/utilizator/");
-  const isFinanciarActive = location === "/facturi" || location === "/curs-valutar-bnr";
+  const isFinanciarActive = location === "/facturi";
   const isGdprActive = location.startsWith("/gdpr");
 
   const isListsExpanded = listsOpen !== null ? listsOpen : isListeActive;
@@ -357,14 +357,6 @@ export function AppSidebar() {
                           <Link href="/facturi" data-testid="link-nav-facturi">
                             <Receipt className="w-3.5 h-3.5" />
                             <span>Facturi</span>
-                          </Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild data-active={location === "/curs-valutar-bnr"} className={location === "/curs-valutar-bnr" ? "bg-sidebar-accent" : ""}>
-                          <Link href="/curs-valutar-bnr" data-testid="link-nav-curs-valutar-bnr">
-                            <TrendingUp className="w-3.5 h-3.5" />
-                            <span>Curs Valutar BNR</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
