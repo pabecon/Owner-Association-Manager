@@ -18,9 +18,13 @@ import {
   type Contract, type InsertContract,
   type ContractTemplate, type InsertContractTemplate,
   type ProformaInvoice, type InsertProformaInvoice,
+  type ChapterCatalog, type InsertChapterCatalog,
+  type TemplateChapter, type InsertTemplateChapter,
+  type TemplateArticle, type InsertTemplateArticle,
   buildings, apartments, expenses, payments, announcements,
   federations, associations, staircases, userRoles, documents, unitRooms,
   meters, meterReadings, estimationConfigs, funds, fundCategories, contracts, contractTemplates, proformaInvoices,
+  contractChapterCatalog, templateChapters, templateArticles,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
@@ -161,6 +165,21 @@ export interface IStorage {
   getRefListAll(table: PgTableWithColumns<any>): Promise<any[]>;
   createRefListItem(table: PgTableWithColumns<any>, data: any): Promise<any>;
   deleteRefListItem(table: PgTableWithColumns<any>, id: string): Promise<void>;
+
+  getChapterCatalog(): Promise<ChapterCatalog[]>;
+  createChapterCatalogEntry(data: InsertChapterCatalog): Promise<ChapterCatalog>;
+  deleteChapterCatalogEntry(id: string): Promise<void>;
+
+  getTemplateChapters(templateId: string): Promise<TemplateChapter[]>;
+  createTemplateChapter(data: InsertTemplateChapter): Promise<TemplateChapter>;
+  updateTemplateChapter(id: string, data: Partial<InsertTemplateChapter>): Promise<TemplateChapter | undefined>;
+  deleteTemplateChapter(id: string): Promise<void>;
+
+  getTemplateArticles(templateChapterId: string): Promise<TemplateArticle[]>;
+  getTemplateArticlesByTemplate(templateId: string): Promise<TemplateArticle[]>;
+  createTemplateArticle(data: InsertTemplateArticle): Promise<TemplateArticle>;
+  updateTemplateArticle(id: string, data: Partial<InsertTemplateArticle>): Promise<TemplateArticle | undefined>;
+  deleteTemplateArticle(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -999,6 +1018,68 @@ export class DatabaseStorage implements IStorage {
   async getNextInvoiceNumber(): Promise<number> {
     const result = await db.select({ maxNum: sql<number>`COALESCE(MAX(invoice_number), 0)` }).from(proformaInvoices);
     return (result[0]?.maxNum || 0) + 1;
+  }
+
+  async getChapterCatalog(): Promise<ChapterCatalog[]> {
+    return db.select().from(contractChapterCatalog).orderBy(contractChapterCatalog.name);
+  }
+
+  async createChapterCatalogEntry(data: InsertChapterCatalog): Promise<ChapterCatalog> {
+    const [entry] = await db.insert(contractChapterCatalog).values(data).returning();
+    return entry;
+  }
+
+  async deleteChapterCatalogEntry(id: string): Promise<void> {
+    await db.delete(contractChapterCatalog).where(eq(contractChapterCatalog.id, id));
+  }
+
+  async getTemplateChapters(templateId: string): Promise<TemplateChapter[]> {
+    return db.select().from(templateChapters)
+      .where(eq(templateChapters.templateId, templateId))
+      .orderBy(templateChapters.orderIndex);
+  }
+
+  async createTemplateChapter(data: InsertTemplateChapter): Promise<TemplateChapter> {
+    const [chapter] = await db.insert(templateChapters).values(data).returning();
+    return chapter;
+  }
+
+  async updateTemplateChapter(id: string, data: Partial<InsertTemplateChapter>): Promise<TemplateChapter | undefined> {
+    const [chapter] = await db.update(templateChapters).set(data).where(eq(templateChapters.id, id)).returning();
+    return chapter;
+  }
+
+  async deleteTemplateChapter(id: string): Promise<void> {
+    await db.delete(templateChapters).where(eq(templateChapters.id, id));
+  }
+
+  async getTemplateArticles(templateChapterId: string): Promise<TemplateArticle[]> {
+    return db.select().from(templateArticles)
+      .where(eq(templateArticles.templateChapterId, templateChapterId))
+      .orderBy(templateArticles.orderIndex);
+  }
+
+  async getTemplateArticlesByTemplate(templateId: string): Promise<TemplateArticle[]> {
+    const chapters = await this.getTemplateChapters(templateId);
+    if (!chapters.length) return [];
+    const chapterIds = chapters.map(c => c.id);
+    return db.select().from(templateArticles)
+      .where(inArray(templateArticles.templateChapterId, chapterIds))
+      .orderBy(templateArticles.orderIndex);
+  }
+
+  async createTemplateArticle(data: InsertTemplateArticle): Promise<TemplateArticle> {
+    const [article] = await db.insert(templateArticles).values(data).returning();
+    return article;
+  }
+
+  async updateTemplateArticle(id: string, data: Partial<InsertTemplateArticle>): Promise<TemplateArticle | undefined> {
+    const [article] = await db.update(templateArticles).set(data).where(eq(templateArticles.id, id)).returning();
+    return article;
+  }
+
+  async deleteTemplateArticle(id: string): Promise<void> {
+    await db.delete(templateArticles).where(eq(templateArticles.id, id));
   }
 }
 

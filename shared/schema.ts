@@ -352,8 +352,33 @@ export const contractTemplates = pgTable("contract_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
-  documentPath: text("document_path").notNull(),
-  documentName: text("document_name").notNull(),
+  documentPath: text("document_path"),
+  documentName: text("document_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const contractChapterCatalog = pgTable("contract_chapter_catalog", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const templateChapters = pgTable("template_chapters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => contractTemplates.id, { onDelete: "cascade" }),
+  chapterCatalogId: varchar("chapter_catalog_id").references(() => contractChapterCatalog.id),
+  customName: text("custom_name"),
+  orderIndex: integer("order_index").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const templateArticles = pgTable("template_articles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateChapterId: varchar("template_chapter_id").notNull().references(() => templateChapters.id, { onDelete: "cascade" }),
+  title: text("title"),
+  content: text("content").notNull().default(""),
+  orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -395,6 +420,18 @@ export type Contract = typeof contracts.$inferSelect;
 export const insertContractTemplateSchema = createInsertSchema(contractTemplates).omit({ id: true, createdAt: true });
 export type InsertContractTemplate = z.infer<typeof insertContractTemplateSchema>;
 export type ContractTemplate = typeof contractTemplates.$inferSelect;
+
+export const insertChapterCatalogSchema = createInsertSchema(contractChapterCatalog).omit({ id: true, createdAt: true });
+export type InsertChapterCatalog = z.infer<typeof insertChapterCatalogSchema>;
+export type ChapterCatalog = typeof contractChapterCatalog.$inferSelect;
+
+export const insertTemplateChapterSchema = createInsertSchema(templateChapters).omit({ id: true, createdAt: true });
+export type InsertTemplateChapter = z.infer<typeof insertTemplateChapterSchema>;
+export type TemplateChapter = typeof templateChapters.$inferSelect;
+
+export const insertTemplateArticleSchema = createInsertSchema(templateArticles).omit({ id: true, createdAt: true });
+export type InsertTemplateArticle = z.infer<typeof insertTemplateArticleSchema>;
+export type TemplateArticle = typeof templateArticles.$inferSelect;
 
 export const insertProformaInvoiceSchema = createInsertSchema(proformaInvoices).omit({ id: true, createdAt: true });
 export type InsertProformaInvoice = z.infer<typeof insertProformaInvoiceSchema>;

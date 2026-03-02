@@ -10,6 +10,7 @@ import {
   insertDocumentSchema, insertMeterSchema, insertMeterReadingSchema, insertEstimationConfigSchema,
   insertFundSchema, insertFundCategorySchema,
   insertContractSchema, insertContractTemplateSchema,
+  insertChapterCatalogSchema, insertTemplateChapterSchema, insertTemplateArticleSchema,
   insertPlatformUserSchema, insertUserActivityLogSchema,
   ROLE_HIERARCHY, type UserRole,
   type Contract, type InsertProformaInvoice,
@@ -1901,6 +1902,162 @@ export async function registerRoutes(
     }
     await storage.deleteContractTemplate(req.params.id as string);
     res.json({ success: true });
+  });
+
+  app.get("/api/contract-chapter-catalog", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const catalog = await storage.getChapterCatalog();
+    res.json(catalog);
+  });
+
+  app.post("/api/contract-chapter-catalog", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertChapterCatalogSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const entry = await storage.createChapterCatalogEntry(parsed.data);
+    res.json(entry);
+  });
+
+  app.delete("/api/contract-chapter-catalog/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteChapterCatalogEntry(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  app.get("/api/contract-templates/:id/chapters", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const chapters = await storage.getTemplateChapters(req.params.id as string);
+    res.json(chapters);
+  });
+
+  app.post("/api/contract-templates/:id/chapters", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertTemplateChapterSchema.safeParse({ ...req.body, templateId: req.params.id });
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const chapter = await storage.createTemplateChapter(parsed.data);
+    res.json(chapter);
+  });
+
+  app.patch("/api/template-chapters/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const chapter = await storage.updateTemplateChapter(req.params.id as string, req.body);
+    if (!chapter) return res.status(404).json({ message: "Capitol negasit" });
+    res.json(chapter);
+  });
+
+  app.delete("/api/template-chapters/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteTemplateChapter(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  app.put("/api/contract-templates/:id/chapters/reorder", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const { order } = req.body;
+    if (!Array.isArray(order)) return res.status(400).json({ message: "order trebuie sa fie un array" });
+    for (let i = 0; i < order.length; i++) {
+      await storage.updateTemplateChapter(order[i], { orderIndex: i });
+    }
+    const chapters = await storage.getTemplateChapters(req.params.id as string);
+    res.json(chapters);
+  });
+
+  app.get("/api/template-chapters/:chapterId/articles", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const articles = await storage.getTemplateArticles(req.params.chapterId as string);
+    res.json(articles);
+  });
+
+  app.post("/api/template-chapters/:chapterId/articles", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const parsed = insertTemplateArticleSchema.safeParse({ ...req.body, templateChapterId: req.params.chapterId });
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.message });
+    const article = await storage.createTemplateArticle(parsed.data);
+    res.json(article);
+  });
+
+  app.patch("/api/template-articles/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const article = await storage.updateTemplateArticle(req.params.id as string, req.body);
+    if (!article) return res.status(404).json({ message: "Articol negasit" });
+    res.json(article);
+  });
+
+  app.delete("/api/template-articles/:id", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    await storage.deleteTemplateArticle(req.params.id as string);
+    res.json({ success: true });
+  });
+
+  app.put("/api/template-chapters/:chapterId/articles/reorder", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    const { order } = req.body;
+    if (!Array.isArray(order)) return res.status(400).json({ message: "order trebuie sa fie un array" });
+    for (let i = 0; i < order.length; i++) {
+      await storage.updateTemplateArticle(order[i], { orderIndex: i });
+    }
+    const articles = await storage.getTemplateArticles(req.params.chapterId as string);
+    res.json(articles);
+  });
+
+  app.get("/api/contract-field-references", ...auth, requireRole("admin"), async (req: AuthenticatedRequest, res) => {
+    res.json([
+      {
+        category: "Asociație",
+        fields: [
+          { key: "association.name", label: "Numele Asociației" },
+          { key: "association.cui", label: "CUI Asociație" },
+          { key: "association.address", label: "Adresa Asociației" },
+          { key: "association.city", label: "Orașul Asociației" },
+          { key: "association.county", label: "Județul Asociației" },
+          { key: "association.sector", label: "Sectorul Asociației" },
+          { key: "association.presidentName", label: "Președinte Asociație" },
+          { key: "association.presidentPhone", label: "Telefon Președinte" },
+          { key: "association.presidentEmail", label: "Email Președinte" },
+          { key: "association.adminName", label: "Administrator Asociație" },
+          { key: "association.adminPhone", label: "Telefon Administrator" },
+          { key: "association.adminEmail", label: "Email Administrator" },
+        ],
+      },
+      {
+        category: "Federație",
+        fields: [
+          { key: "federation.name", label: "Numele Federației" },
+          { key: "federation.address", label: "Adresa Federației" },
+          { key: "federation.city", label: "Orașul Federației" },
+          { key: "federation.county", label: "Județul Federației" },
+          { key: "federation.presidentName", label: "Președinte Federație" },
+          { key: "federation.email", label: "Email Federație" },
+          { key: "federation.phone", label: "Telefon Federație" },
+        ],
+      },
+      {
+        category: "Imobil",
+        fields: [
+          { key: "building.name", label: "Numele Imobilului" },
+          { key: "building.address", label: "Adresa Imobilului" },
+          { key: "building.city", label: "Orașul Imobilului" },
+          { key: "building.county", label: "Județul Imobilului" },
+          { key: "building.totalApartments", label: "Nr. Total Apartamente" },
+          { key: "building.totalSurface", label: "Suprafața Totală" },
+        ],
+      },
+      {
+        category: "Contract",
+        fields: [
+          { key: "contract.serie", label: "Seria Contractului" },
+          { key: "contract.numar", label: "Numărul Contractului" },
+          { key: "contract.startDate", label: "Data Început" },
+          { key: "contract.endDate", label: "Data Sfârșit" },
+          { key: "contract.signingDate", label: "Data Semnării" },
+          { key: "contract.numberOfUnits", label: "Număr Unități" },
+          { key: "contract.pricePerUnit", label: "Preț per Unitate" },
+          { key: "contract.totalMonthly", label: "Total Lunar" },
+          { key: "contract.currency", label: "Moneda" },
+          { key: "contract.durationValue", label: "Durata (valoare)" },
+          { key: "contract.durationUnit", label: "Durata (unitate)" },
+        ],
+      },
+      {
+        category: "Prestator",
+        fields: [
+          { key: "contract.prestatorName", label: "Numele Prestatorului" },
+          { key: "contract.prestatorCui", label: "CUI Prestator" },
+          { key: "contract.prestatorAddress", label: "Adresa Prestatorului" },
+          { key: "contract.prestatorRegistruComert", label: "Reg. Comerțului Prestator" },
+          { key: "contract.prestatorRepresentative", label: "Reprezentant Prestator" },
+          { key: "contract.prestatorBank", label: "Banca Prestatorului" },
+          { key: "contract.prestatorIban", label: "IBAN Prestator" },
+        ],
+      },
+    ]);
   });
 
   // Contract file upload
