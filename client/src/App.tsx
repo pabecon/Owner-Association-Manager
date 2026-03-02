@@ -113,6 +113,9 @@ function AppRouter() {
       <Route path="/register" component={LandingPage} />
       <Route path="/asociatie/:id" component={AssociationPortal} />
       <Route path="/unitate/:id" component={UnitLayout} />
+      <Route path="/admin">
+        <SuperAdminLayout />
+      </Route>
       <Route path="/admin/:rest*">
         <SuperAdminLayout />
       </Route>
