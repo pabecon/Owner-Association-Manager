@@ -45,6 +45,7 @@ The application is built with a modern web stack, featuring a React, TypeScript,
 - **Contract Management (`/contracte`):** Allows creating, editing, and viewing condominium administration contracts, including file uploads to object storage.
 - **Facturi (`/facturi`):** Invoice management with manual invoice creation and auto-generated invoices from contracts. Invoice statuses: estimada (estimated), proforma (sent to client), factura_final (final invoice sent), platita (paid), anulata (cancelled). Each invoice has concept field, inline status change, preview/print capability. Replaces old "Venituri" page.
 - **User List & Detail (`/lista-utilizatori`, `/utilizator/:id`):** Tools for managing platform users, assigning roles, and tracking user activity.
+- **Legislatie (`/legislatie`):** Comprehensive legislation browser with 12 Romanian laws fully populated with real content. Features global search across all laws, table of contents navigation, and internal law cross-linking. Each law is stored as a structured `LawSection[]` in `client/src/lib/law-content-*.ts` files. Laws include: Legea 114/1996, Legea 10/1995, Legea 196/2018, Legea 307/2006, Legea 230/2007, OG 85/2001, HG 400/2003, HG 1386/2003, HG 1588/2007, Norme metodologice 2007, Ordinul 1058/2019, Ordinul 959/2023. Abrogated laws are marked as such.
 
 ## External Dependencies
 - **PostgreSQL:** Primary database for all application data.

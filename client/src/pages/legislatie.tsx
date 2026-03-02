@@ -7,11 +7,31 @@ import { Input } from "@/components/ui/input";
 import { LEGISLATION_ITEMS } from "@/lib/legislation-data";
 import { LAW_114_1996_CONTENT, type LawSection } from "@/lib/law-content-114-1996";
 import { LAW_10_1995_CONTENT } from "@/lib/law-content-10-1995";
+import { LAW_196_2018_CONTENT } from "@/lib/law-content-196-2018";
+import { LAW_307_2006_CONTENT } from "@/lib/law-content-307-2006";
+import { LAW_230_2007_CONTENT } from "@/lib/law-content-230-2007";
+import { OG_85_2001_CONTENT } from "@/lib/law-content-og-85-2001";
+import { HG_400_2003_CONTENT } from "@/lib/law-content-hg-400-2003";
+import { HG_1386_2003_CONTENT } from "@/lib/law-content-hg-1386-2003";
+import { HG_1588_2007_CONTENT } from "@/lib/law-content-hg-1588-2007";
+import { NORME_2007_CONTENT } from "@/lib/law-content-norme-2007";
+import { ORDIN_1058_2019_CONTENT } from "@/lib/law-content-ordin-1058-2019";
+import { ORDIN_959_2023_CONTENT } from "@/lib/law-content-ordin-959-2023";
 import { Scale, ExternalLink, FileText, BookOpen, ListOrdered, Search, X, ChevronRight } from "lucide-react";
 
 const LAW_CONTENT_MAP: Record<string, LawSection[]> = {
   "legea-114-1996": LAW_114_1996_CONTENT,
   "legea-10-1995": LAW_10_1995_CONTENT,
+  "legea-196-2018": LAW_196_2018_CONTENT,
+  "legea-307-2006": LAW_307_2006_CONTENT,
+  "legea-230-2007": LAW_230_2007_CONTENT,
+  "og-85-2001": OG_85_2001_CONTENT,
+  "hg-400-2003": HG_400_2003_CONTENT,
+  "hg-1386-2003": HG_1386_2003_CONTENT,
+  "hg-1588-2007": HG_1588_2007_CONTENT,
+  "norme-2007": NORME_2007_CONTENT,
+  "ordin-1058-2019": ORDIN_1058_2019_CONTENT,
+  "ordin-959-2023": ORDIN_959_2023_CONTENT,
 };
 
 function parseChapterInfo(title: string) {
