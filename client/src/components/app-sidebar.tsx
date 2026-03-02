@@ -109,7 +109,7 @@ export function AppSidebar() {
 
   const highestRole = roleInfo?.highestRole;
 
-  const isInfografieActive = location === "/";
+  const isInfografieActive = location === "/" || location === "/admin";
   const isListeActive = location.startsWith("/liste-generale");
   const isLegistatieActive = location.startsWith("/legislatie");
   const isJuridicActive = location.startsWith("/contracte") || location.startsWith("/sabloane-contracte");
@@ -134,7 +134,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-3 pb-2">
-        <div className="flex items-center gap-2">
+        <Link href="/" data-testid="link-sidebar-home" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <div className="flex items-center justify-center w-7 h-7 rounded bg-primary">
             <Building2 className="w-4 h-4 text-primary-foreground" />
           </div>
@@ -142,7 +142,7 @@ export function AppSidebar() {
             <span className="text-sm font-semibold tracking-tight" data-testid="text-app-name">AdminBloc</span>
             <span className="text-[10px] text-muted-foreground leading-tight">Asociatie Proprietari</span>
           </div>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -150,7 +150,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild data-active={isInfografieActive} className={`h-7 text-[12px] ${isInfografieActive ? "bg-sidebar-accent" : ""}`}>
-                  <Link href="/" data-testid="link-nav-infografie">
+                  <Link href="/admin" data-testid="link-nav-infografie">
                     <GitBranch className="w-4 h-4" />
                     <span>Infografie</span>
                   </Link>

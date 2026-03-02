@@ -30,6 +30,12 @@ The application is built with a modern web stack, featuring a React, TypeScript,
 - **Reference Lists:** A config-driven system for managing 17 different reference lists (e.g., Units of Measure, Currencies) with a generic CRUD interface, and a specialized view for categorized units of measure.
 - **Excel Import:** A wizard-based system for importing association and property hierarchy data from Excel files.
 
+**Application Entry Points:**
+- **Landing Page (`/`):** Public-facing promotional website that introduces AdminBloc. Contains Register and Login buttons, feature showcase cards, and temporary development shortcut buttons to Super Admin (`/admin`), Association Portal, and Unit Detail pages. No authentication required.
+- **Super Admin Dashboard (`/admin`):** Full administrative interface with sidebar navigation for super administrators.
+- **Association Portal (`/asociatie/:id`):** Scoped management for a specific association.
+- **Unit Detail (`/unitate/:id`):** Individual property owner view with unit-specific information.
+
 **Feature Specifications:**
 - **Hierarchy Tree (Infografie):** Displays federations, associations, buildings, staircases, floors, and units with expandable nodes, summary statistics, and direct CRUD actions. Add buttons ("+") and portal links ("Deschide") are always visible (not hover-only). Edit buttons (pencil icons) on federation, association, building, and staircase nodes for inline editing. Uses batch wizard dialogs for creating buildings, staircases, floors, and units: first asks "how many?", then shows naming/configuration form for each item with file upload support. Floors are virtual (derived from staircase.floors count + apartment floor numbers); floor documents stored with entityType="staircase" + floorNumber. Unit creation is simplified (just type + number); detailed info is completed on the unit detail page.
 - **Association Creation Wizard:** A 6-step guided wizard (opened via "+Asoc" button) that creates a complete association hierarchy in one flow: (1) Association info (name, address, CUI), (2) Building count + naming, (3) Staircase count per building + naming, (4) Floor count per staircase, (5) Unit count per floor + naming/type, (6) Summary. All data is created in a single database transaction via POST /api/association-wizard. Buildings automatically inherit the association's address.

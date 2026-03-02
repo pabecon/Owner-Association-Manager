@@ -23,12 +23,26 @@ import Gdpr from "@/pages/gdpr";
 import ContractTemplatesPage from "@/pages/contract-templates";
 import FacturiPage from "@/pages/venituri";
 import CursValutarBnrPage from "@/pages/curs-valutar-bnr";
+import LandingPage from "@/pages/landing";
 import { CookieConsent } from "@/components/cookie-consent";
 
 function SuperAdminRouter() {
   return (
     <Switch>
-      <Route path="/" component={HierarchyTree} />
+      <Route path="/admin" component={HierarchyTree} />
+      <Route path="/admin/liste-generale/:listKey" component={ListaGenerala} />
+      <Route path="/admin/legislatie/:lawId" component={Legislatie} />
+      <Route path="/admin/legislatie" component={Legislatie} />
+      <Route path="/admin/utilizatori" component={UsersPage} />
+      <Route path="/admin/matrice-permisiuni" component={PermissionsMatrix} />
+      <Route path="/admin/lista-utilizatori" component={ListaUtilizatoriPage} />
+      <Route path="/admin/utilizator/:id" component={UtilizatorDetail} />
+      <Route path="/admin/contracte" component={ContractsPage} />
+      <Route path="/admin/sabloane-contracte" component={ContractTemplatesPage} />
+      <Route path="/admin/facturi" component={FacturiPage} />
+      <Route path="/admin/curs-valutar-bnr" component={CursValutarBnrPage} />
+      <Route path="/admin/gdpr/:docId" component={Gdpr} />
+      <Route path="/admin/gdpr" component={Gdpr} />
       <Route path="/liste-generale/:listKey" component={ListaGenerala} />
       <Route path="/legislatie/:lawId" component={Legislatie} />
       <Route path="/legislatie" component={Legislatie} />
@@ -94,11 +108,48 @@ function UnitLayout() {
 function AppRouter() {
   return (
     <Switch>
+      <Route path="/" component={LandingPage} />
+      <Route path="/login" component={LandingPage} />
+      <Route path="/register" component={LandingPage} />
       <Route path="/asociatie/:id" component={AssociationPortal} />
       <Route path="/unitate/:id" component={UnitLayout} />
-      <Route>
+      <Route path="/admin/:rest*">
         <SuperAdminLayout />
       </Route>
+      <Route path="/liste-generale/:listKey">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/legislatie/:rest*">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/utilizatori">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/matrice-permisiuni">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/lista-utilizatori">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/utilizator/:id">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/contracte">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/sabloane-contracte">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/facturi">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/curs-valutar-bnr">
+        <SuperAdminLayout />
+      </Route>
+      <Route path="/gdpr/:docId?">
+        <SuperAdminLayout />
+      </Route>
+      <Route component={NotFound} />
     </Switch>
   );
 }
