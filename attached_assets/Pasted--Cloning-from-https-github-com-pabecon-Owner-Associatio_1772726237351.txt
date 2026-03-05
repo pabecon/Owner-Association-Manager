@@ -1,0 +1,50 @@
+==> Cloning from https://github.com/pabecon/Owner-Association-Manager
+==> Checking out commit c391df0d5ad4d35e73c1824226276fd2a8809a89 in branch main
+==> Using Node.js version 22.22.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+added 639 packages, and audited 640 packages in 14s
+101 packages are looking for funding
+  run `npm fund` for details
+12 vulnerabilities (8 low, 4 high)
+To address issues that do not require attention, run:
+  npm audit fix
+Some issues need review, and may require choosing
+a different dependency.
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> tsx script/build.ts
+building client...
+vite v7.3.0 building client environment for production...
+transforming...
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2715 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                     2.23 kB │ gzip:   0.87 kB
+../dist/public/assets/index-CpSWjVfB.css     86.57 kB │ gzip:  14.05 kB
+../dist/public/assets/index-CO4eijUy.js   1,710.52 kB │ gzip: 424.77 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.19s
+building server...
+  dist/index.cjs  2.6mb ⚠️
+⚡ Done in 315ms
+==> Uploading build...
+==> Uploaded in 10.6s. Compression took 5.8s
+==> Build successful 🎉
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+[auth] Replit Auth not available (REPL_ID missing). Running with session-only auth.
+/opt/render/project/src/dist/index.cjs:74
+Menu
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

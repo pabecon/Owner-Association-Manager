@@ -60,28 +60,66 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  if (process.env.REPL_ID) {
-    const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
-    await setupAuth(app);
-    registerAuthRoutes(app);
-  } else {
-    const session = (await import("express-session")).default;
-    app.use(session({
-      secret: process.env.SESSION_SECRET || "adminbloc-session-secret",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 7 * 24 * 60 * 60 * 1000 },
-    }));
-    console.log("[auth] Replit Auth not available (REPL_ID missing). Running with session-only auth.");
+  try {
+    if (process.env.REPL_ID) {
+      const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+      await setupAuth(app);
+      registerAuthRoutes(app);
+    } else {
+      const session = (await import("express-session")).default;
+      if (process.env.DATABASE_URL) {
+        const connectPg = (await import("connect-pg-simple")).default;
+        const pgStore = connectPg(session);
+        const store = new pgStore({
+          conString: process.env.DATABASE_URL,
+          createTableIfMissing: true,
+          tableName: "sessions",
+        });
+        app.set("trust proxy", 1);
+        app.use(session({
+          store,
+          secret: process.env.SESSION_SECRET || "adminbloc-session-secret",
+          resave: false,
+          saveUninitialized: false,
+          cookie: { httpOnly: true, secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
+        }));
+        console.log("[auth] Using PostgreSQL session store.");
+      } else {
+        app.use(session({
+          secret: process.env.SESSION_SECRET || "adminbloc-session-secret",
+          resave: false,
+          saveUninitialized: false,
+          cookie: { httpOnly: true, secure: false, maxAge: 7 * 24 * 60 * 60 * 1000 },
+        }));
+        console.log("[auth] Warning: Using MemoryStore (no DATABASE_URL).");
+      }
+      console.log("[auth] Replit Auth not available (REPL_ID missing). Running with session-only auth.");
+    }
+  } catch (err) {
+    console.error("[auth] Failed to initialize auth:", err);
+    process.exit(1);
   }
 
-  const { seedDatabase } = await import("./seed");
-  await seedDatabase();
+  try {
+    const { seedDatabase } = await import("./seed");
+    await seedDatabase();
+  } catch (err) {
+    console.error("[seed] Failed to seed database:", err);
+  }
 
-  await registerRoutes(httpServer, app);
+  try {
+    await registerRoutes(httpServer, app);
+  } catch (err) {
+    console.error("[routes] Failed to register routes:", err);
+    process.exit(1);
+  }
 
-  const { startDailySync } = await import("./bnr-sync");
-  startDailySync();
+  try {
+    const { startDailySync } = await import("./bnr-sync");
+    startDailySync();
+  } catch (err) {
+    console.error("[bnr-sync] Failed to start daily sync:", err);
+  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -96,9 +134,6 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
@@ -106,10 +141,6 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {

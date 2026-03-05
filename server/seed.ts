@@ -1,20 +1,32 @@
 import { db } from "./db";
-import { buildings, apartments, expenses, payments, announcements, federations, associations, staircases, userRoles } from "@shared/schema";
+import { buildings, apartments, expenses, payments, announcements, federations, associations, staircases, userRoles, contractChapterCatalog } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function seedDatabase() {
-  const existingAdminRole = await db.select().from(userRoles)
-    .where(and(eq(userRoles.userId, "default-admin"), eq(userRoles.role, "super_admin")));
-  if (existingAdminRole.length === 0) {
-    await db.insert(userRoles).values({
-      userId: "default-admin",
-      role: "super_admin",
-    });
-    console.log("Default super_admin role created.");
+  try {
+    const existingAdminRole = await db.select().from(userRoles)
+      .where(and(eq(userRoles.userId, "default-admin"), eq(userRoles.role, "super_admin")));
+    if (existingAdminRole.length === 0) {
+      await db.insert(userRoles).values({
+        userId: "default-admin",
+        role: "super_admin",
+      });
+      console.log("Default super_admin role created.");
+    }
+  } catch (err: any) {
+    console.error("[seed] Could not seed admin role (tables may not exist yet):", err?.message || err);
+    return;
   }
 
-  const existingBuildings = await db.select().from(buildings);
-  if (existingBuildings.length > 0) return;
+  await seedChapterCatalog();
+
+  try {
+    const existingBuildings = await db.select().from(buildings);
+    if (existingBuildings.length > 0) return;
+  } catch (err: any) {
+    console.error("[seed] Could not check buildings table:", err?.message || err);
+    return;
+  }
 
   console.log("Seeding database with initial data...");
 
@@ -169,4 +181,38 @@ export async function seedDatabase() {
   await db.insert(announcements).values(announcementData);
 
   console.log("Database seeded successfully!");
+}
+
+async function seedChapterCatalog() {
+  try {
+    const existing = await db.select().from(contractChapterCatalog);
+    if (existing.length > 0) return;
+
+    const defaultChapters = [
+      { name: "Antet", description: "Antetul contractului cu datele de identificare" },
+      { name: "Identificarea Părților", description: "Datele de identificare ale părților contractante" },
+      { name: "Preambul (Considerente)", description: "Considerente și context legal al contractului" },
+      { name: "Obiectul Contractului", description: "Descrierea obiectului și scopului contractului" },
+      { name: "Durata Contractului", description: "Perioada de valabilitate și condițiile de prelungire" },
+      { name: "Prețul", description: "Valoarea contractului și modalitatea de calcul" },
+      { name: "Condițiile de Plată", description: "Termene și modalități de plată" },
+      { name: "Obligațiile Părților", description: "Obligațiile prestatorului și ale beneficiarului" },
+      { name: "Drepturi de Proprietate Intelectuală", description: "Clauze privind drepturile de proprietate intelectuală" },
+      { name: "Confidențialitate", description: "Obligații de confidențialitate ale părților" },
+      { name: "Garanții și Răspundere", description: "Garanțiile oferite și limitele de răspundere" },
+      { name: "Modificarea Contractului", description: "Condițiile în care contractul poate fi modificat" },
+      { name: "Rezilierea și Încetarea Contractului", description: "Condițiile de reziliere și încetare" },
+      { name: "Forța Majoră și Cazul Fortuit", description: "Clauze de forță majoră" },
+      { name: "Dreptul Aplicabil și Soluționarea Litigiilor", description: "Jurisdicția și modalitatea de soluționare a disputelor" },
+      { name: "Clauze Finale", description: "Dispoziții finale ale contractului" },
+      { name: "Data", description: "Data semnării contractului" },
+      { name: "Semnături", description: "Semnăturile părților contractante" },
+      { name: "Anexe", description: "Lista anexelor la contract" },
+    ];
+
+    await db.insert(contractChapterCatalog).values(defaultChapters);
+    console.log("[seed] Contract chapter catalog seeded with 19 default entries.");
+  } catch (err: any) {
+    console.error("[seed] Could not seed chapter catalog:", err?.message || err);
+  }
 }
