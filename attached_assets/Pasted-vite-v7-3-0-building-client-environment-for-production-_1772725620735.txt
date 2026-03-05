@@ -1,0 +1,43 @@
+vite v7.3.0 building client environment for production...
+transforming...
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 2715 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                     2.23 kB │ gzip:   0.87 kB
+../dist/public/assets/index-CpSWjVfB.css     86.57 kB │ gzip:  14.05 kB
+../dist/public/assets/index-CO4eijUy.js   1,710.52 kB │ gzip: 424.77 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 6.42s
+building server...
+  dist/index.cjs  2.6mb ⚠️
+⚡ Done in 350ms
+==> Uploading build...
+==> Uploaded in 6.7s. Compression took 3.7s
+==> Build successful 🎉
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+file:///opt/render/project/src/node_modules/openid-client/build/index.js:89
+    const err = new TypeError(message, { cause });
+                ^
+TypeError: "clientId" must be a non-empty string
+    at CodedTypeError (file:///opt/render/project/src/node_modules/openid-client/build/index.js:89:17)
+    at new Configuration (file:///opt/render/project/src/node_modules/openid-client/build/index.js:463:19)
+    at Object.discovery (file:///opt/render/project/src/node_modules/openid-client/build/index.js:244:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async pL.maxAge (/opt/render/project/src/dist/index.cjs:420:11724)
+    at async dL (/opt/render/project/src/dist/index.cjs:420:10598)
+    at async /opt/render/project/src/dist/index.cjs:435:69396 {
+  code: 'ERR_INVALID_ARG_TYPE',
+Menu
+  [cause]: undefined
+}
+Node.js v22.22.0
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

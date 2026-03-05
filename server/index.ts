@@ -60,9 +60,20 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
-  await setupAuth(app);
-  registerAuthRoutes(app);
+  if (process.env.REPL_ID) {
+    const { setupAuth, registerAuthRoutes } = await import("./replit_integrations/auth");
+    await setupAuth(app);
+    registerAuthRoutes(app);
+  } else {
+    const session = (await import("express-session")).default;
+    app.use(session({
+      secret: process.env.SESSION_SECRET || "adminbloc-session-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: { httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 7 * 24 * 60 * 60 * 1000 },
+    }));
+    console.log("[auth] Replit Auth not available (REPL_ID missing). Running with session-only auth.");
+  }
 
   const { seedDatabase } = await import("./seed");
   await seedDatabase();
